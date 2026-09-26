@@ -55,7 +55,7 @@ npx skills add rhiever/evident-charts
 
 ### GitHub CLI
 
-Works for Copilot, Claude Code, Cursor, Codex, and Gemini CLI; set `--agent` to yours.
+Set `--agent` to `claude-code`, `codex`, `cursor`, `gemini`, `github-copilot`, or `antigravity`.
 
 ```text
 gh skill install rhiever/evident-charts evident-charts --agent claude-code --scope user
