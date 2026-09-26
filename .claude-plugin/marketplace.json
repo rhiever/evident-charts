@@ -1,0 +1,15 @@
+{
+  "name": "evident-charts",
+  "description": "Explanatory chart guidance for AI coding agents",
+  "owner": {
+    "name": "Randy Olson",
+    "url": "https://randalolson.com"
+  },
+  "plugins": [
+    {
+      "name": "evident-charts",
+      "source": "./",
+      "category": "data-visualization"
+    }
+  ]
+}

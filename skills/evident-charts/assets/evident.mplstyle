@@ -1,0 +1,78 @@
+# evident-charts house look for matplotlib.
+# Usage: plt.style.use("<skill>/assets/evident.mplstyle")
+# Sizes below are the blog preset (8 x 6 in canvas). For other destinations take
+# sizes from presets.json (pt = pct/100 * width_in * 72) or use scripts/evident.py.
+# Accent #D55E00 (text #C15500), alt accent #0072B2, context gray #BDBDBD.
+
+font.family:          sans-serif     # first installed font in font.sans-serif wins; DejaVu Sans ships with matplotlib
+font.sans-serif:      Helvetica Neue, Helvetica, Arial, Liberation Sans, DejaVu Sans
+font.size:            11.5
+text.color:           595959
+
+figure.figsize:       8, 6
+figure.dpi:           100
+figure.facecolor:     white
+figure.titlesize:     18.4
+figure.titleweight:   bold
+
+savefig.dpi:          200
+savefig.facecolor:    white
+savefig.bbox:         standard
+savefig.pad_inches:   0
+
+axes.facecolor:       white
+axes.edgecolor:       8C8C8C
+axes.linewidth:       0.8
+axes.spines.top:      False
+axes.spines.right:    False
+axes.grid:            True
+axes.grid.axis:       y
+axes.axisbelow:       True
+axes.titlesize:       10.9
+axes.titleweight:     bold
+axes.titlecolor:      333333
+axes.titlelocation:   left
+axes.titlepad:        8
+axes.labelsize:       10.9
+axes.labelcolor:      595959
+axes.labelpad:        6
+axes.xmargin:         0.02
+axes.ymargin:         0.04
+axes.unicode_minus:   True
+axes.prop_cycle:      cycler('color', ['0072B2', 'D55E00', '009E73', 'CC79A7', 'E69F00', '56B4E9'])
+
+grid.color:           E6E6E6
+grid.linewidth:       0.8
+grid.linestyle:       -
+
+xtick.color:          8C8C8C
+xtick.labelcolor:     595959
+xtick.labelsize:      10.9
+xtick.major.size:     4
+xtick.major.width:    0.8
+xtick.minor.visible:  False
+ytick.color:          8C8C8C
+ytick.labelcolor:     595959
+ytick.labelsize:      10.9
+ytick.major.size:     4
+ytick.major.width:    0.8
+ytick.minor.visible:  False
+
+lines.linewidth:      1.6
+lines.markersize:     8
+lines.solid_capstyle: butt
+lines.solid_joinstyle: round
+lines.dash_capstyle:  butt
+
+patch.linewidth:      0
+patch.edgecolor:      white
+scatter.edgecolors:   white
+
+legend.frameon:       False
+legend.fontsize:      10.9
+legend.labelcolor:    595959
+legend.handlelength:  1.2
+legend.borderaxespad: 0
+
+image.cmap:           viridis
+date.converter:       concise

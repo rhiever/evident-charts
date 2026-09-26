@@ -1,0 +1,17 @@
+{
+  "name": "evident-charts",
+  "version": "0.1.0",
+  "description": "Explanatory charts whose point is evident, plus an evidence-tagged chart critique.",
+  "author": { "name": "Randy Olson", "url": "https://randalolson.com" },
+  "repository": "https://github.com/rhiever/evident-charts",
+  "license": "MIT",
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Evident Charts",
+    "shortDescription": "Charts that make their point, and a critique that says why",
+    "developerName": "Randy Olson",
+    "category": "Developer Tools",
+    "capabilities": ["Read", "Write"],
+    "defaultPrompt": ["Critique this chart and list fixes.", "Chart this CSV to show the main trend."]
+  }
+}

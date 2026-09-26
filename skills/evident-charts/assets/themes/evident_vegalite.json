@@ -1,0 +1,43 @@
+{
+  "$comment": "evident-charts Vega-Lite config, blog preset (800x600 px total via autosize fit; export scale 2). Merge as the spec's top-level \"config\" or pass to vegaEmbed(el, spec, {config}). Other destinations: view sizes = preset width/height and font sizes = pct/100 * width from ../presets.json.",
+  "config": {
+    "background": "white",
+    "padding": {"left": 40, "right": 32, "top": 40, "bottom": 24},
+    "autosize": {"type": "fit", "contains": "padding"},
+    "font": "Helvetica Neue, Helvetica, Arial, Liberation Sans, DejaVu Sans, sans-serif",
+    "view": {"stroke": null, "continuousWidth": 800, "continuousHeight": 600, "discreteWidth": 800, "discreteHeight": 600},
+    "title": {
+      "anchor": "start", "frame": "bounds", "offset": 28,
+      "fontSize": 25.6, "fontWeight": "bold", "color": "#333333", "lineHeight": 30,
+      "subtitleFontSize": 17.6, "subtitleColor": "#767676", "subtitleFontWeight": "normal",
+      "subtitlePadding": 8, "subtitleLineHeight": 22
+    },
+    "axis": {
+      "grid": false, "domainColor": "#8C8C8C", "domainWidth": 1.1, "tickColor": "#8C8C8C", "tickWidth": 1.1,
+      "tickSize": 5, "labelFontSize": 15.2, "labelColor": "#595959", "labelPadding": 5,
+      "titleFontSize": 15.2, "titleColor": "#595959", "titleFontWeight": "normal", "titlePadding": 8,
+      "gridColor": "#E6E6E6", "gridWidth": 1.1
+    },
+    "axisY": {"grid": true, "tickCount": 5},
+    "axisYBand": {"grid": false, "ticks": false},
+    "axisXBand": {"grid": false, "ticks": false},
+    "legend": {
+      "orient": "top", "direction": "horizontal", "title": null,
+      "labelFontSize": 15.2, "labelColor": "#595959", "symbolStrokeWidth": 0
+    },
+    "header": {"labelFontSize": 15.2, "labelFontWeight": "bold", "labelColor": "#333333", "labelAnchor": "start", "title": null},
+    "range": {
+      "category": ["#0072B2", "#D55E00", "#009E73", "#CC79A7", "#E69F00", "#56B4E9"],
+      "ramp": {"scheme": "viridis", "extent": [0, 0.85]},
+      "heatmap": {"scheme": "viridis", "extent": [0, 0.85]},
+      "diverging": {"scheme": "redblue"}
+    },
+    "line": {"strokeWidth": 2.2, "strokeCap": "butt", "strokeJoin": "round"},
+    "rule": {"strokeCap": "butt", "color": "#8C8C8C"},
+    "point": {"size": 120, "filled": true, "strokeWidth": 0},
+    "circle": {"size": 120, "strokeWidth": 0},
+    "scale": {"bandPaddingInner": 0.32},
+    "bar": {"binSpacing": 1},
+    "text": {"fontSize": 16, "color": "#595959"}
+  }
+}

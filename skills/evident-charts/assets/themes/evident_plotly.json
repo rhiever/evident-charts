@@ -1,0 +1,45 @@
+{
+  "_doc": "evident-charts Plotly template, blog preset (800x600 CSS px; export scale=2). Other destinations: set width/height and font sizes = pct/100 * width from ../presets.json. Load: pio.templates['evident'] = go.layout.Template(json.load(f)); drop the _doc key first. Bold the title with <b>...</b>; subtitle via title.subtitle (Plotly >= 5.23) or a second line in <span style='font-size:17.6px;color:#767676'>. Two-line title: add 18 to title.pad.t and 34 to margin.t (Plotly lifts multi-line titles).",
+  "layout": {
+    "width": 800,
+    "height": 600,
+    "font": {"family": "Helvetica Neue, Helvetica, Arial, Liberation Sans, DejaVu Sans, sans-serif", "size": 15.2, "color": "#595959"},
+    "title": {
+      "font": {"size": 25.6, "color": "#333333"},
+      "x": 0, "xref": "container", "xanchor": "left",
+      "y": 1, "yref": "container", "yanchor": "top",
+      "pad": {"l": 40, "t": 40},
+      "subtitle": {"font": {"size": 17.6, "color": "#767676"}}
+    },
+    "colorway": ["#0072B2", "#D55E00", "#009E73", "#CC79A7", "#E69F00", "#56B4E9"],
+    "paper_bgcolor": "white",
+    "plot_bgcolor": "white",
+    "showlegend": false,
+    "margin": {"l": 40, "r": 32, "t": 140, "b": 70, "pad": 0},
+    "bargap": 0.32,
+    "xaxis": {
+      "showgrid": false, "zeroline": false, "automargin": true,
+      "showline": true, "linecolor": "#8C8C8C", "linewidth": 1.1,
+      "ticks": "outside", "tickcolor": "#8C8C8C", "ticklen": 5, "tickwidth": 1.1,
+      "tickfont": {"size": 15.2, "color": "#595959"},
+      "title": {"font": {"size": 15.2, "color": "#595959"}, "standoff": 8}
+    },
+    "yaxis": {
+      "showgrid": true, "gridcolor": "#E6E6E6", "gridwidth": 1.1, "zeroline": false, "automargin": true, "nticks": 6,
+      "showline": true, "linecolor": "#8C8C8C", "linewidth": 1.1,
+      "ticks": "outside", "tickcolor": "#8C8C8C", "ticklen": 5, "tickwidth": 1.1,
+      "tickfont": {"size": 15.2, "color": "#595959"},
+      "title": {"font": {"size": 15.2, "color": "#595959"}, "standoff": 8}
+    },
+    "legend": {"orientation": "h", "x": 0, "xanchor": "left", "y": 1.02, "yanchor": "bottom",
+               "font": {"size": 15.2, "color": "#595959"}},
+    "annotationdefaults": {"font": {"size": 16, "color": "#595959"}, "arrowcolor": "#595959", "arrowwidth": 1.1,
+                           "showarrow": false},
+    "hoverlabel": {"font": {"family": "Helvetica Neue, Helvetica, Arial, Liberation Sans, DejaVu Sans, sans-serif"}},
+    "coloraxis": {"colorscale": "Viridis"}
+  },
+  "data": {
+    "scatter": [{"line": {"width": 2.2}, "marker": {"size": 11, "line": {"width": 0}}}],
+    "bar": [{"marker": {"line": {"width": 0}}}]
+  }
+}

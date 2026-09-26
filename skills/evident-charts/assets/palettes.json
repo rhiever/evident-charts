@@ -1,0 +1,67 @@
+{
+ "about": "evident-charts house colors. Light background only in v1. cr = WCAG contrast vs #FFFFFF. Validate any change with scripts/check_palette.py --preset all.",
+ "background": "#FFFFFF",
+ "tokens": {
+  "accent": "#D55E00",
+  "accent_text": "#C15500",
+  "accent_alt": "#0072B2",
+  "context_gray": "#BDBDBD",
+  "text": {"title": "#333333", "axis": "#595959", "secondary": "#767676"},
+  "gridline": "#E6E6E6",
+  "spine": "#8C8C8C"
+ },
+ "token_notes": {
+  "accent": "focal series/bar; cr 3.87, marks and large text only",
+  "accent_text": "accent-colored labels; cr 4.60",
+  "accent_alt": "focal series when warm reads as alarm or topic is neutral; cr 5.19, text ok",
+  "context_gray": "non-focal series; cr 1.88, below 3:1 only when focal data is accented and direct-labeled",
+  "text": "title 12.63; axis titles, tick labels, annotations 7.00; subtitle, source 4.54 (floor on white)",
+  "gridline": "value axis only; cr 1.25 by design",
+  "spine": "left/bottom only, or remove when value labels replace the axis; cr 3.36",
+  "max_accents": 2
+ },
+ "categorical": {
+  "name": "Okabe-Ito",
+  "default_cap": 4,
+  "hard_cap": 7,
+  "slots": [
+   {"hex": "#0072B2", "name": "blue", "cr": 5.19, "use": "lines, marks, text"},
+   {"hex": "#D55E00", "name": "vermillion", "cr": 3.87, "use": "lines, marks; large text only"},
+   {"hex": "#009E73", "name": "bluish green", "cr": 3.42, "use": "lines, marks; same lightness as vermillion, direct-label"},
+   {"hex": "#CC79A7", "name": "reddish purple", "cr": 3.06, "use": "lines, marks"},
+   {"hex": "#E69F00", "name": "orange", "cr": 2.25, "use": "fills with dark outline, or direct-labeled only"},
+   {"hex": "#56B4E9", "name": "sky blue", "cr": 2.31, "use": "fills with dark outline, or direct-labeled only"},
+   {"hex": "#F0E442", "name": "yellow", "cr": 1.32, "use": "never lines or text on white; outlined fills only"}
+  ]
+ },
+ "sequential": {
+  "viridis": {"use": "default continuous", "hex": ["#440154", "#443983", "#31688E", "#21918C", "#35B779", "#90D743", "#FDE725"], "hex_marks": ["#440154", "#46327E", "#375B8D", "#277E8E", "#1FA188", "#48C16E", "#9BD93C"], "marks_note": "hex_marks = viridis 0.0-0.85 for dots/lines/bars on white; full ramp for heatmaps/choropleths"},
+  "cividis": {"use": "CVD-optimized alt", "hex": ["#00224E", "#2A3F6D", "#575D6D", "#7D7C78", "#A59C74", "#D2C060", "#FEE838"]},
+  "blues": {"use": "<=5 classes or semantic blue", "hex": ["#EFF3FF", "#C6DBEF", "#9ECAE1", "#6BAED6", "#4292C6", "#2171B5", "#084594"]},
+  "banned": ["jet", "rainbow", "gist_rainbow", "hsv", "nipy_spectral", "turbo", "sinebow"]
+ },
+ "diverging": {
+  "rdbu": {"use": "default", "hex": ["#B2182B", "#EF8A62", "#FDDBC7", "#F7F7F7", "#D1E5F0", "#67A9CF", "#2166AC"]},
+  "puor": {"use": "when red/blue implies US parties", "hex": ["#B35806", "#F1A340", "#FEE0B6", "#F7F7F7", "#D8DAEB", "#998EC3", "#542788"]},
+  "domain": "symmetric [-m, 0, m], m = max(|min|, |max|); never TwoSlopeNorm or unequal arms",
+  "order": "hex lists run low->high in ColorBrewer order (RdBu red->blue, PuOr orange->purple), same as matplotlib; d3 and Vega PuOr run purple->orange. Flip: matplotlib '_r', ggplot2 direction, reverse the range elsewhere"
+ },
+ "library_names": {
+  "okabe_ito": {
+   "matplotlib": "mpl.rcParams['axes.prop_cycle'] = mpl.cycler(color=[...slots])",
+   "ggplot2": "scale_colour_manual(values = c(...slots)); not palette.colors('Okabe-Ito'), whose order differs",
+   "plotly": "color_discrete_sequence=[...slots]",
+   "vega_lite": "\"scale\": {\"range\": [...slots]}",
+   "d3": "d3.scaleOrdinal([...slots])"
+  },
+  "viridis": {"matplotlib": "viridis", "ggplot2": "scale_fill_viridis_c() / _d()", "plotly": "px.colors.sequential.Viridis", "vega": "viridis", "d3": "d3.interpolateViridis"},
+  "viridis_marks": {"matplotlib": "ListedColormap(mpl.colormaps['viridis'](np.linspace(0, 0.85, 256)))", "ggplot2": "scale_colour_viridis_c(end = 0.85)", "vega": "{\"scheme\": {\"name\": \"viridis\", \"extent\": [0, 0.85]}}", "d3": "t => d3.interpolateViridis(0.85 * t)"},
+  "cividis": {"matplotlib": "cividis", "ggplot2": "scale_fill_viridis_c(option = \"cividis\")", "plotly": "px.colors.sequential.Cividis", "vega": "cividis", "d3": "d3.interpolateCividis"},
+  "blues": {"matplotlib": "Blues", "ggplot2": "scale_fill_distiller(palette = \"Blues\", direction = 1) / scale_fill_brewer(palette = \"Blues\")", "plotly": "px.colors.sequential.Blues", "vega": "blues (Vega's own ramp, not ColorBrewer hexes)", "d3": "d3.interpolateBlues / d3.schemeBlues[k]"},
+  "rdbu": {"matplotlib": "RdBu (RdBu_r = red high)", "ggplot2": "scale_fill_distiller(palette = \"RdBu\", limits = c(-m, m))", "plotly": "px.colors.diverging.RdBu", "vega": "redblue", "d3": "d3.interpolateRdBu / d3.schemeRdBu[k]"},
+  "puor": {"matplotlib": "PuOr", "ggplot2": "scale_fill_distiller(palette = \"PuOr\", limits = c(-m, m))", "plotly": "px.colors.diverging.PuOr", "vega": "purpleorange", "d3": "d3.interpolatePuOr / d3.schemePuOr[k]"},
+  "centered_midpoint": {"matplotlib": "vmin=-m, vmax=m (or CenteredNorm(vcenter=0))", "ggplot2": "limits = c(-m, m)", "plotly": "color_continuous_midpoint=0", "vega_lite": "\"domain\": [-m, m]", "d3": ".domain([-m, 0, m])"},
+  "override_defaults": ["matplotlib tab10", "ggplot2 hue wheel", "Plotly 'Plotly'", "Vega-Lite tableau10", "D3 schemeCategory10"]
+ },
+ "sources": "Okabe & Ito (jfly.uni-koeln.de/color); ColorBrewer (Apache-2.0); viridis/cividis (CC0, sampled from matplotlib 3.10)"
+}

@@ -1,0 +1,29 @@
+/* evident-charts house look for D3/SVG charts. Put class="ev-chart" on the <svg>.
+   Colors are literal (house values). Sizes are SVG user units for an 800-wide viewBox (blog);
+   evApply(svg, dest) in evident_d3_tokens.js sets --ev-* for other presets. Each sized rule
+   repeats a literal first so SVG renderers without var() support (librsvg, Inkscape) still work. */
+.ev-chart { font-family: "Helvetica Neue", Helvetica, Arial, "Liberation Sans", "DejaVu Sans", sans-serif; background: #fff; }
+.ev-chart text { fill: #595959; font-size: 15.2px; font-size: var(--ev-label, 15.2px); font-variant-numeric: tabular-nums; }
+.ev-chart .ev-title { fill: #333333; font-weight: 700; font-size: 25.6px; font-size: var(--ev-title, 25.6px); }
+.ev-chart .ev-subtitle { fill: #767676; font-size: 17.6px; font-size: var(--ev-subtitle, 17.6px); }
+.ev-chart .ev-source, .ev-chart .ev-note { fill: #767676; font-size: 12.8px; font-size: var(--ev-source, 12.8px); }
+.ev-chart .ev-annotation { fill: #595959; font-size: 16px; font-size: var(--ev-annotation, 16px); }
+.ev-chart .ev-annotation-line { stroke: #595959; fill: none; stroke-width: 1.1px; stroke-width: var(--ev-hair, 1.1px); }
+
+/* d3.axisLeft/axisBottom output (CSS beats the axis's font-size/fill attributes) */
+.ev-axis .domain, .ev-axis .tick line { stroke: #8C8C8C; stroke-width: 1.1px; stroke-width: var(--ev-hair, 1.1px); }
+.ev-axis .tick text { fill: #595959; }
+.ev-axis--bare .domain, .ev-axis--bare .tick line { display: none; }  /* category axis, or value axis replaced by labels */
+.ev-grid .domain, .ev-grid .tick text { display: none; }
+.ev-grid .tick line { stroke: #E6E6E6; stroke-width: 1.1px; stroke-width: var(--ev-hair, 1.1px); }
+
+/* marks: highlight + gray */
+.ev-chart .ev-context { stroke: #BDBDBD; fill: #BDBDBD; }
+.ev-chart .ev-accent { stroke: #D55E00; fill: #D55E00; }
+.ev-chart .ev-alt { stroke: #0072B2; fill: #0072B2; }
+.ev-chart path.ev-series { fill: none; stroke-linejoin: round; stroke-linecap: butt; stroke-width: 2.2px; stroke-width: var(--ev-line, 2.2px); }
+.ev-chart path.ev-series.ev-accent, .ev-chart path.ev-series.ev-alt { stroke-width: 4.4px; stroke-width: var(--ev-accent-line, 4.4px); }
+.ev-chart line.ev-stem { stroke: #BDBDBD; stroke-linecap: butt; stroke-width: 3.1px; stroke-width: calc(var(--ev-line, 2.2px) * 1.4); }
+.ev-chart text.ev-label { fill: #767676; stroke: none; }
+.ev-chart text.ev-label.ev-accent { fill: #C15500; font-weight: 700; }
+.ev-chart text.ev-label.ev-alt { fill: #0072B2; font-weight: 700; }

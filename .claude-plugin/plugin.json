@@ -1,0 +1,10 @@
+{
+  "name": "evident-charts",
+  "version": "0.1.0",
+  "description": "Explanatory charts whose point is evident: chart choice by takeaway and data shape, rendered candidates, deterministic checks, and an evidence-tagged critique.",
+  "author": { "name": "Randy Olson", "url": "https://randalolson.com" },
+  "homepage": "https://github.com/rhiever/evident-charts",
+  "repository": "https://github.com/rhiever/evident-charts",
+  "license": "MIT",
+  "keywords": ["data-visualization", "charts", "matplotlib", "ggplot2", "plotly", "vega-lite", "d3", "critique"]
+}

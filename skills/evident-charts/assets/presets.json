@@ -1,0 +1,208 @@
+{
+  "_doc": {
+    "units": "type and stroke values are % of canvas width; points = pct/100 * width_in * 72. Margins are fractions of canvas width on all four sides.",
+    "canvas": "Author at width_in x height_in with figure dpi 100 (1 in = 1 canvas px / 100). Export at export_dpi. display_px is the width the reader sees; min_text_px is checked there.",
+    "roles": "title (bold, #333333), subtitle (#767676), label (ticks, axis titles, direct labels, value labels), annotation (#595959), source (source, notes, credit).",
+    "strokes": "line = context/default line width, accent_line = highlighted series, marker = dot diameter, grid = gridline/spine width.",
+    "title_chars_2_lines": "characters that fit across both title lines at the preset's title size and block width (canvas minus left and right margins), the minimum over sample takeaway sentences measured by evident.fits_title in Helvetica Neue (Helvetica and Arial metrics are within 2%; DejaVu Sans fits about 15% fewer). A rough guide only: fits_title(text, dest) measures a specific text exactly, and check_chart's title-too-long uses it.",
+    "subtitle_chars_2_lines": "the same for the subtitle's two lines (evident.fits_subtitle).",
+    "default": "blog",
+    "bar_rows": "horizontal-bar rows whose category labels fit at row pitch >= 1.6 label heights under a one-line title and subtitle, measured with evident.figure and titles. fixed_height: the destination cannot grow taller, so more rows means fewer rows or more panels, not a taller canvas.",
+    "plot_aspect": "band for the main plot box (width / height, after the title block and labels) on any preset: widest 3.5:1 (one-line title and subtitle on the 16:9 slide leave about 3.2:1), tallest 1:2; horizontal-bar and category-row charts may run taller (their height follows the row count). evident.titles warns and check_chart's plot-aspect flags a plot outside it."
+  },
+  "_plot_aspect": {
+    "widest": 3.5,
+    "tallest": 0.5
+  },
+  "blog": {
+    "desc": "Inline blog/article image, desktop-first content column. Default when destination is unknown.",
+    "width_in": 8.0,
+    "height_in": 6.0,
+    "export_dpi": 200,
+    "vector": false,
+    "display_px": 800,
+    "min_text_px": 12,
+    "type": {
+      "title": 3.2,
+      "subtitle": 2.2,
+      "label": 1.9,
+      "annotation": 2.0,
+      "source": 1.6
+    },
+    "strokes": {
+      "line": 0.28,
+      "accent_line": 0.55,
+      "marker": 1.4,
+      "grid": 0.14
+    },
+    "margins": {
+      "left": 0.05,
+      "right": 0.04,
+      "top": 0.05,
+      "bottom": 0.03
+    },
+    "title_chars_2_lines": 105,
+    "subtitle_chars_2_lines": 171,
+    "bar_rows": 17
+  },
+  "social": {
+    "desc": "1080x1080 feed image; use for X (and any square feed). Type scale approved by Randy.",
+    "width_in": 10.8,
+    "height_in": 10.8,
+    "export_dpi": 200,
+    "vector": false,
+    "display_px": 1080,
+    "feed_display_px": 390,
+    "min_text_px": 12,
+    "type": {
+      "title": 4.6,
+      "subtitle": 3.0,
+      "label": 2.8,
+      "annotation": 2.9,
+      "source": 2.2
+    },
+    "strokes": {
+      "line": 0.28,
+      "accent_line": 0.58,
+      "marker": 1.6,
+      "grid": 0.13
+    },
+    "margins": {
+      "left": 0.07,
+      "right": 0.05,
+      "top": 0.05,
+      "bottom": 0.03
+    },
+    "title_chars_2_lines": 65,
+    "subtitle_chars_2_lines": 119,
+    "bar_rows": 14,
+    "fixed_height": true
+  },
+  "social_portrait": {
+    "desc": "1080x1350 (4:5) feed image; use for LinkedIn and Instagram (most feed space). 25% more height for a two-line title and annotations.",
+    "width_in": 10.8,
+    "height_in": 13.5,
+    "export_dpi": 200,
+    "vector": false,
+    "display_px": 1080,
+    "feed_display_px": 390,
+    "min_text_px": 12,
+    "type": {
+      "title": 4.6,
+      "subtitle": 3.0,
+      "label": 2.8,
+      "annotation": 2.9,
+      "source": 2.2
+    },
+    "strokes": {
+      "line": 0.28,
+      "accent_line": 0.58,
+      "marker": 1.6,
+      "grid": 0.13
+    },
+    "margins": {
+      "left": 0.07,
+      "right": 0.05,
+      "top": 0.05,
+      "bottom": 0.03
+    },
+    "title_chars_2_lines": 65,
+    "subtitle_chars_2_lines": 119,
+    "bar_rows": 19,
+    "fixed_height": true
+  },
+  "slide": {
+    "desc": "16:9 slide, 1920x1080 (13.333 x 7.5 in in PowerPoint). Title ~36 pt, labels ~20 pt, source ~15 pt on the slide.",
+    "width_in": 19.2,
+    "height_in": 10.8,
+    "export_dpi": 200,
+    "vector": false,
+    "display_px": 1920,
+    "min_text_px": 12,
+    "type": {
+      "title": 3.75,
+      "subtitle": 2.5,
+      "label": 2.1,
+      "annotation": 2.3,
+      "source": 1.6
+    },
+    "strokes": {
+      "line": 0.22,
+      "accent_line": 0.45,
+      "marker": 1.2,
+      "grid": 0.1
+    },
+    "margins": {
+      "left": 0.05,
+      "right": 0.04,
+      "top": 0.045,
+      "bottom": 0.03
+    },
+    "title_chars_2_lines": 91,
+    "subtitle_chars_2_lines": 152,
+    "bar_rows": 9,
+    "fixed_height": true
+  },
+  "report": {
+    "desc": "Full-width report/PDF figure, 6.25 in wide; save .pdf or .svg (vector). Title 13 pt, labels 9 pt, source 9 pt.",
+    "width_in": 6.25,
+    "height_in": 4.6875,
+    "export_dpi": 300,
+    "vector": true,
+    "display_px": 600,
+    "min_text_px": 12,
+    "type": {
+      "title": 2.9,
+      "subtitle": 2.35,
+      "label": 2.0,
+      "annotation": 2.1,
+      "source": 2.0
+    },
+    "strokes": {
+      "line": 0.3,
+      "accent_line": 0.6,
+      "marker": 1.6,
+      "grid": 0.15
+    },
+    "margins": {
+      "left": 0.02,
+      "right": 0.02,
+      "top": 0.02,
+      "bottom": 0.015
+    },
+    "title_chars_2_lines": 130,
+    "subtitle_chars_2_lines": 171,
+    "bar_rows": 17
+  },
+  "mobile": {
+    "desc": "Separate small-screen version shown 360 CSS px wide (4:5), exported 3x. Cut content before shrinking type.",
+    "width_in": 3.6,
+    "height_in": 4.5,
+    "export_dpi": 300,
+    "vector": false,
+    "display_px": 360,
+    "min_text_px": 12,
+    "type": {
+      "title": 5.6,
+      "subtitle": 3.9,
+      "label": 3.6,
+      "annotation": 3.6,
+      "source": 3.4
+    },
+    "strokes": {
+      "line": 0.4,
+      "accent_line": 0.8,
+      "marker": 2.2,
+      "grid": 0.2
+    },
+    "margins": {
+      "left": 0.05,
+      "right": 0.04,
+      "top": 0.05,
+      "bottom": 0.035
+    },
+    "title_chars_2_lines": 61,
+    "subtitle_chars_2_lines": 91,
+    "bar_rows": 15
+  }
+}

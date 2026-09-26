@@ -1,0 +1,6 @@
+workspace/
+.DS_Store
+__pycache__/
+.venv/
+examples/output/
+.local/
