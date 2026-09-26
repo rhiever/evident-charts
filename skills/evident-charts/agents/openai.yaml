@@ -1,4 +1,4 @@
 interface:
   display_name: "Evident Charts"
-  short_description: "Explanatory charts and chart critique"
+  short_description: "Clear, honest charts from your coding agent"
   default_prompt: "Use $evident-charts to critique chart.png and list prioritized fixes."

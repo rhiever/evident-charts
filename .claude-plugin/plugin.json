@@ -1,7 +1,7 @@
 {
   "name": "evident-charts",
   "version": "0.1.0",
-  "description": "Explanatory charts whose point is evident: chart choice by takeaway and data shape, rendered candidates, deterministic checks, and an evidence-tagged critique.",
+  "description": "Teaches AI coding agents to make clear, honest charts, and checks each one before you see it.",
   "author": { "name": "Randy Olson", "url": "https://randalolson.com" },
   "homepage": "https://github.com/rhiever/evident-charts",
   "repository": "https://github.com/rhiever/evident-charts",

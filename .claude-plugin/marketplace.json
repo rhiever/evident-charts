@@ -1,6 +1,6 @@
 {
   "name": "evident-charts",
-  "description": "Explanatory chart guidance for AI coding agents",
+  "description": "Teaches AI coding agents to make clear, honest charts, and checks each one before you see it.",
   "owner": {
     "name": "Randy Olson",
     "url": "https://randalolson.com"
