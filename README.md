@@ -78,7 +78,7 @@ gemini extensions install https://github.com/rhiever/evident-charts --auto-updat
 
 ## Requirements
 
-Your agent runs the skill's check scripts on your machine with your project's Python. The data check needs pandas; matplotlib charts need matplotlib. Other libraries are checked through an SVG export in headless Chrome (Plotly's image export already installs one); without Chrome, only the chart-spec checks and the image review run.
+Your agent runs the skill's check scripts on your machine with your project's Python. matplotlib charts need matplotlib. Other libraries are checked through an SVG export in headless Chrome (Plotly's image export already installs one); without Chrome, only the chart-spec checks and the image review run.
 
 ## Update
 

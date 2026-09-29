@@ -36,7 +36,7 @@ def cli(*args, cwd=None):
 @pytest.mark.parametrize("name", ["good_line.py", "slope_good.py", "lollipop.py", "bar_good.py", "label_clear.py",
                                   "label_points_ev.py", "source_ok.py", "value_labels_ok.py", "inverted_ok.py",
                                   "log_labeled.py", "label_lines_ev.py", "strip_ev.py",
-                                  "reference_ev.py", "group_label_ev.py"])
+                                  "reference_ev.py", "group_label_ev.py", "split_series_ok.py", "baseline_header_ok.py"])
 def test_clean_charts_have_no_findings(name):
     res = lint(name)
     assert res["result"] == "pass"
@@ -99,6 +99,32 @@ def test_annotation_arrow_through_other_text_fails():
 def test_line_threading_between_lines_of_a_label_fails():
     hits = [f for f in lint("multiline_on_line.py")["findings"] if f["check"] == "text-on-line"]
     assert len(hits) == 1 and "'Target / set in 2012' on 'Target'" in hits[0]["where"]
+
+
+def test_callout_on_split_series_junction_fails():
+    hits = [f for f in lint("split_series_junction.py")["findings"] if f["check"] == "text-on-line"]
+    assert len(hits) == 1 and "'Low'" in hits[0]["where"]
+
+
+def test_split_series_end_label_and_callout_beside_junction_pass():
+    assert "text-on-line" not in checks(lint("split_series_ok.py"))
+
+
+def test_continued_ends_marks_only_junctions():
+    import numpy as np
+    ctx = np.array([[0, 5], [1, 4], [2, 2]], float)        # gray context, ends where the highlight starts
+    hl = np.array([[2, 2], [3, 6], [4, 8]], float)         # accent highlight, true series end at x=4
+    rival = np.array([[0, 0], [2, 4], [4, 8]], float)      # another series ending at the same point
+    assert check_chart.continued_ends([ctx, hl, rival], 0.5) == [(False, True), (True, False), (False, False)]
+
+
+def test_text_across_value_labels_zero_line_fails():
+    hits = [f for f in lint("baseline_header.py")["findings"] if f["check"] == "text-on-line"]
+    assert len(hits) == 2 and all("rule" in f["where"] for f in hits)
+
+
+def test_text_beside_zero_and_reference_lines_passes():
+    assert "text-on-line" not in checks(lint("baseline_header_ok.py"))
 
 
 # --- text-clipped ---------------------------------------------------------------

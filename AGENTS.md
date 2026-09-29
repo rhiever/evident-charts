@@ -7,7 +7,6 @@ evident-charts is an agent skill for explanatory charts. The installable skill i
 - Tests: `uv run --with matplotlib --with numpy --with pandas --with pytest pytest -q tests`
 - Lint a matplotlib chart: `python skills/evident-charts/scripts/check_chart.py <chart.py> --dest <preset>` (`--list-checks` for names)
 - Lint an SVG from any other stack: `python skills/evident-charts/scripts/check_svg.py <chart.svg> --dest <preset> [--spec <json>]` (needs Chrome)
-- Check a data table: `python skills/evident-charts/scripts/check_data.py <data.csv>`
 - Validate palettes: `python skills/evident-charts/scripts/check_palette.py --preset all`
 - Release: bump the version (kept in sync by `tests/test_versions.py`), update `CHANGELOG.md`, run tests plus `gh skill publish --dry-run`, `claude plugin validate --strict .` and `uvx --from "git+https://github.com/agentskills/agentskills#subdirectory=skills-ref" skills-ref validate skills/evident-charts`, push, then `gh skill publish --tag vX.Y.Z`.
 
@@ -25,7 +24,7 @@ evident-charts is an agent skill for explanatory charts. The installable skill i
 
 - Tag each new or changed rule honestly and key its citation in `references/sources.md` to the same ID.
 - Renumber cleanly (no suffixed IDs) and update every cross-reference.
-- `check:` names must match `--list-checks` of `check_chart.py` or `check_data.py`, or `palette`; `check_svg.py` reuses a subset of check_chart names.
+- `check:` names must match `check_chart.py --list-checks` or `palette`; `check_svg.py` reuses a subset of them.
 - Any script behavior change gets a fixture and a test in `tests/`.
 
 ## Evaluating

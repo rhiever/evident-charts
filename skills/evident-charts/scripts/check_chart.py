@@ -635,7 +635,7 @@ def collect_texts(fig, renderer) -> list[TextRec]:
 
 @dataclass
 class SegOwner:
-    kind: str          # line, collection, arrow
+    kind: str          # line, collection, rule (axhline/axvline), arrow
     name: str
     zorder: float
     ann_id: int | None = None
@@ -667,24 +667,67 @@ def line_name(artist, color, kind="line") -> str:
         return kind
 
 
-def collect_segments(fig, renderer):
-    """Return (segments array [N, 13], owners). Columns: x0 y0 x1 y1, clip box
-    (4, NaN if unclipped), line start (2), line end (2), owner index."""
-    rows, owners = [], []
+def is_axis_rule(line: Line2D, ax) -> bool:
+    """Solid, visible axhline/axvline (zero baseline, drawn reference): a rule text must not run across."""
+    tr = line.get_transform()
+    if not (tr is ax.get_xaxis_transform(which="grid") or tr is ax.get_yaxis_transform(which="grid")):
+        return False
+    if line.get_linestyle() in ("None", "none", " ", "") or line.get_linewidth() <= 0:
+        return False
+    alpha = to_rgba(line.get_color(), line.get_alpha())[3]
+    return alpha >= 0.2 and not (line.get_linestyle() in (":", "--", "-.") and alpha < 0.6)
 
-    def add_polyline(pts, owner_idx, clip, endpoints=None):
+
+def continued_ends(polys, tol):
+    """(start, end) flags per polyline: True where another data polyline carries on from that end (a series drawn
+    as gray context meeting an accent highlight). It does when it has a vertex within tol there that is not its own
+    end of the same kind (start or end), or is but heads the other way. Series that merely end together stay ends."""
+    grid: dict = {}
+    for j, q in enumerate(polys):
+        for k, (x, y) in enumerate(q):
+            grid.setdefault((int(x // tol), int(y // tol)), []).append((j, k))
+
+    def carries_on(i, side, e, back, j, k):
+        q = polys[j]
+        if j == i or math.hypot(*(q[k] - e)) > tol:
+            return False
+        if k != (0 if side == 0 else len(q) - 1):
+            return True
+        return np.dot(q[1 if side == 0 else -2] - q[k], back) < 0
+
+    out = []
+    for i, pts in enumerate(polys):
+        flags = []
+        for side, (e, n) in enumerate(((pts[0], pts[1]), (pts[-1], pts[-2]))):
+            cx, cy = int(e[0] // tol), int(e[1] // tol)
+            near = [jk for dx in (-1, 0, 1) for dy in (-1, 0, 1) for jk in grid.get((cx + dx, cy + dy), ())]
+            flags.append(any(carries_on(i, side, e, n - e, j, k) for j, k in near))
+        out.append(tuple(flags))
+    return out
+
+
+def collect_segments(fig, renderer):
+    """Return (segments array [N, 15], owners). Columns: x0 y0 x1 y1, clip box
+    (4, NaN if unclipped), line start (2), line end (2), owner index, start and
+    end continued (1 if another data line carries on from that end, 0 if not)."""
+    rows, owners, data_polys = [], [], []
+
+    def add_polyline(pts, owner_idx, clip, endpoints=None, cont=(False, False)):
         pts = pts[np.all(np.isfinite(pts), axis=1)]
         if len(pts) < 2:
             return
         s, e = endpoints if endpoints is not None else (pts[0], pts[-1])
         for i in range(len(pts) - 1):
-            rows.append([*pts[i], *pts[i + 1], *clip, *s, *e, owner_idx])
+            rows.append([*pts[i], *pts[i + 1], *clip, *s, *e, owner_idx, *cont])
 
     for ax in fig.axes:
         if not ax.get_visible():
             continue
         for line in ax.lines:
-            if not line.get_visible() or is_reference_line(line, ax):
+            if not line.get_visible():
+                continue
+            rule = is_axis_rule(line, ax)
+            if not rule and is_reference_line(line, ax):
                 continue
             xy = np.asarray(line.get_xydata(), dtype=float)
             if len(xy) < 2:
@@ -694,8 +737,12 @@ def collect_segments(fig, renderer):
                 xy = np.column_stack(STEP_LOOKUP_MAP[ds](xy[:, 0], xy[:, 1]))
             pts = line.get_transform().transform(xy)
             clip = line.get_clip_box().extents if line.get_clip_on() and line.get_clip_box() else [np.nan] * 4
+            if rule:
+                owners.append(SegOwner("rule", line_name(line, line.get_color(), "rule"), line.get_zorder()))
+                add_polyline(pts, len(owners) - 1, clip)
+                continue
             owners.append(SegOwner("line", line_name(line, line.get_color()), line.get_zorder()))
-            add_polyline(pts, len(owners) - 1, clip)
+            data_polys.append((len(owners) - 1, pts, clip))
         for coll in ax.collections:
             if not isinstance(coll, LineCollection) or not coll.get_visible():
                 continue
@@ -713,7 +760,13 @@ def collect_segments(fig, renderer):
             tr = coll.get_transform()
             for seg in coll.get_segments():
                 if len(seg) >= 2:
-                    add_polyline(tr.transform(np.asarray(seg, dtype=float)), len(owners) - 1, clip)
+                    data_polys.append((len(owners) - 1, tr.transform(np.asarray(seg, dtype=float)), clip))
+
+    data_polys = [(o, p[np.all(np.isfinite(p), axis=1)], clip) for o, p, clip in data_polys]
+    data_polys = [d for d in data_polys if len(d[1]) >= 2]
+    conts = continued_ends([p for _, p, _ in data_polys], 0.5 * fig.dpi / 72)
+    for (o, pts, clip), cont in zip(data_polys, conts):
+        add_polyline(pts, o, clip, cont=cont)
 
     # Annotation arrows and free-standing arrow patches.
     arrows = []
@@ -740,7 +793,7 @@ def collect_segments(fig, renderer):
         owners.append(SegOwner("arrow", "annotation arrow", ap.get_zorder(), ann_id))
         for poly in polys:
             add_polyline(np.asarray(poly, dtype=float), len(owners) - 1, [np.nan] * 4, ends)
-    arr = np.array(rows, dtype=float) if rows else np.zeros((0, 13))
+    arr = np.array(rows, dtype=float) if rows else np.zeros((0, 15))
     return arr, owners
 
 
@@ -987,7 +1040,9 @@ def check_text_on_line(c: Ctx):
         # text box within R of either end of the line (or arrow shaft) is
         # ignored, R = max(font size, ENDPOINT_MIN_RADIUS_PT). A label sitting
         # mid-line, or centered on the end so the line runs through its
-        # glyphs, still accumulates path beyond R and fails.
+        # glyphs, still accumulates path beyond R and fails. An end where
+        # another data line carries on (a series drawn as context plus
+        # highlight) is mid-line to the reader, so it gets no exemption.
         radius = max(r.size, ENDPOINT_MIN_RADIUS_PT) * c.px_per_pt
         per_owner: dict[int, float] = {}
         for k in idx:
@@ -1003,7 +1058,8 @@ def check_text_on_line(c: Ctx):
             p0, p1 = clipped
             seg_len = math.hypot(p1[0] - p0[0], p1[1] - p0[1])
             for poly in shapes:
-                inside = inside_length(p0, p1, seg_len, poly, (row[8], row[9]), (row[10], row[11]), radius)
+                ends = [pt for pt, cont in (((row[8], row[9]), row[13]), ((row[10], row[11]), row[14])) if not cont]
+                inside = inside_length(p0, p1, seg_len, poly, ends, radius)
                 if inside > 0:
                     per_owner[int(row[12])] = per_owner.get(int(row[12]), 0.0) + inside
         hits = [(o, L) for o, L in per_owner.items() if L >= min_path]
@@ -1029,15 +1085,15 @@ def line_gaps(r: TextRec, pad: float) -> list:
     return out
 
 
-def inside_length(p0, p1, seg_len, poly, start, end, radius) -> float:
+def inside_length(p0, p1, seg_len, poly, ends, radius) -> float:
     """Length of segment p0->p1 inside `poly`, excluding the parts within
-    `radius` of the owning line's start or end point."""
+    `radius` of the owning line's exempt end points."""
     tt = seg_clip_convex(p0, p1, poly)
     if tt is None or tt[1] <= tt[0]:
         return 0.0
     ta, tb = tt
     covered = []
-    for pt in (start, end):
+    for pt in ends:
         iv = circle_interval(p0, p1, pt, radius)
         if iv and min(iv[1], tb) > max(iv[0], ta):
             covered.append((max(iv[0], ta), min(iv[1], tb)))
@@ -1797,7 +1853,7 @@ def leader_ends(c: Ctx) -> list:
     counts = np.bincount(owner)
     _, first = np.unique(owner, return_index=True)
     return [(c.segs[i, 8:10], c.segs[i, 10:12], c.owners[owner[i]].kind == "arrow") for i in first
-            if c.owners[owner[i]].kind == "arrow" or counts[owner[i]] == 1]
+            if c.owners[owner[i]].kind == "arrow" or (counts[owner[i]] == 1 and c.owners[owner[i]].kind != "rule")]
 
 
 def has_leader(r: TextRec, leaders, xy, rad, lh, tol) -> bool:

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.1
+
+- Removed `check_data.py`. In test runs it raised false alarms and added nothing agents didn't already catch; the data checks are back to short written rules.
+- `check_chart.py` now flags text on a line where a gray context line meets its accent-colored part, and text crossing a zero or reference line.
+
 ## 0.2.0
 
 - `check_data.py` checks a data table before charting: total rows mixed with members, duplicate keys, trailing zero periods, status flags, sentinel codes, mixed units, gaps, frozen values.

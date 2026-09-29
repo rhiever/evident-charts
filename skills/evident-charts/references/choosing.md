@@ -67,7 +67,7 @@ TIME-2 [E] About 8 or fewer discrete period totals compared one to one: columns.
 TIME-3 [P] Time runs left to right on x with true spacing; show gaps in irregular sampling instead of equalizing them. Break: vertical timelines in mobile scroll stories. check: category-order
 TIME-4 [E] No stacked area when readers must compare any layer except the bottom one or the total. Break: total plus rough composition, 4 or fewer layers, key layer on the baseline. check: stacked-area
 TIME-5 [E] Connected scatter only for two co-evolving series when the loop or path is the story, with the direction of time annotated.
-TIME-6 [P] A missing period in a regular series stays missing: break the line (keep NaN; never zero-fill, drop the row, or interpolate silently), mark an isolated point between gaps, and name the gap in the note. Break: a bridge the claim needs, dashed and noted. check: gaps
+TIME-6 [P] A missing period in a regular series stays missing: break the line (keep NaN; never zero-fill, drop the row, or interpolate silently), mark an isolated point between gaps, and name the gap in the note. Break: a bridge the claim needs, dashed and noted.
 
 ## Part-to-whole
 
