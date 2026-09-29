@@ -1,0 +1,109 @@
+{
+ "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+ "width": 400,
+ "height": 250,
+ "title": {
+  "text": "Sales by region",
+  "fontSize": 9
+ },
+ "data": {
+  "values": [
+   {
+    "region": "North",
+    "sales": 92,
+    "margin": 0.12
+   },
+   {
+    "region": "South",
+    "sales": 95,
+    "margin": 0.18
+   },
+   {
+    "region": "East",
+    "sales": 97,
+    "margin": 0.15
+   },
+   {
+    "region": "West",
+    "sales": 99,
+    "margin": 0.21
+   }
+  ]
+ },
+ "layer": [
+  {
+   "mark": {
+    "type": "bar",
+    "clip": true
+   },
+   "encoding": {
+    "x": {
+     "field": "region",
+     "type": "nominal"
+    },
+    "y": {
+     "field": "sales",
+     "type": "quantitative",
+     "scale": {
+      "domain": [
+       90,
+       100
+      ]
+     }
+    },
+    "color": {
+     "field": "region",
+     "scale": {
+      "range": [
+       "#D55E00",
+       "#009E73",
+       "#E69F00",
+       "#56B4E9"
+      ]
+     }
+    }
+   }
+  },
+  {
+   "mark": {
+    "type": "line",
+    "color": "#999999"
+   },
+   "encoding": {
+    "x": {
+     "field": "region",
+     "type": "nominal"
+    },
+    "y": {
+     "field": "margin",
+     "type": "quantitative"
+    }
+   }
+  },
+  {
+   "mark": {
+    "type": "text",
+    "dy": -8,
+    "fontSize": 14
+   },
+   "encoding": {
+    "x": {
+     "field": "region",
+     "type": "nominal"
+    },
+    "y": {
+     "field": "margin",
+     "type": "quantitative"
+    },
+    "text": {
+     "value": "Margin rising fast across all regions"
+    }
+   }
+  }
+ ],
+ "resolve": {
+  "scale": {
+   "y": "independent"
+  }
+ }
+}

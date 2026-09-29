@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.0
+
+- `check_data.py` checks a data table before charting: total rows mixed with members, duplicate keys, trailing zero periods, status flags, sentinel codes, mixed units, gaps, frozen values.
+- `check_svg.py` runs the overlap, clipping, text size, contrast, and color-blindness checks on SVG exports from Plotly, Vega-Lite/Altair, ggplot2, and D3 (needs Chrome).
+- `check_chart.py` adds `number-format` (offset text like "1e6", fractional year ticks, mixed decimals), `category-order` (unsorted bars, lines across categories), `segment-edges` (touching fills with no border), and `invisible-arrow` (annotation arrows the house style hides).
+- New rules: margins of error for poll leads, both absolute levels for relative risks, fitted lines inside the data, gaps in lines for missing periods, white edges between filled segments.
+
 ## 0.1.0
 
 First release.

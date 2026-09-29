@@ -48,6 +48,7 @@ TIME-2: Zacks & Tversky 1999; FT.
 TIME-3: FT; data-to-viz.
 TIME-4: C&M 1984; Talbot 2014; data-to-viz.
 TIME-5: Haroz, Kosara & Franconeri 2016 https://doi.org/10.1109/TVCG.2015.2502587
+TIME-6: GAF, Data visualisation: charts (never join points across a gap) https://analysisfunction.civilservice.gov.uk/policy-store/data-visualisation-charts/ ; ONS Service Manual, line charts https://service-manual.ons.gov.uk/data-visualisation/chart-types/line-chart ; Urban (explain missing data). Dashed bridge for a needed claim: house call (GAF bans it; Datawrapper allows it).
 PART-1: Spence & Lewandowsky 1991, Applied Cognitive Psychology https://doi.org/10.1002/acp.2350050106 ; Skau & Kosara 2016 (donut as accurate as pie), CGF https://doi.org/10.1111/cgf.12888 ; Kosara & Skau 2016 (pie variants raise error), EuroVis short https://doi.org/10.2312/eurovisshort.20161167 ; Kosara 2019, IEEE VIS short https://doi.org/10.1109/VISUAL.2019.8933547 ; Wilke ch. 10 https://clauswilke.com/dataviz/visualizing-proportions.html ; slice cap from house call. Evidence on pies conflicts; see C&M 1984.
 PART-2: C&M 1984; Wilke ch. 10.
 PART-3: C&M 1984; Talbot 2014; Indratmo et al. 2018, Visual Informatics https://doi.org/10.1016/j.visinf.2018.09.002
@@ -133,6 +134,7 @@ C13: Szafir 2018, IEEE TVCG https://doi.org/10.1109/TVCG.2017.2744359 ; Hye, McN
 C14: WCAG SC 1.4.3 and 1.4.11; Chartability (low contrast); GAF (sequential palettes cannot all meet 3:1). Context-gray escape from house call.
 C15: GAF; Tol, Colour schemes https://sronpersonalpages.nl/~pault/
 C16: Schloss et al. 2019; WCAG. Scope from house call.
+C17: WCAG 2.2 Understanding SC 1.4.11 (adjacent pie slices under 3:1 fail; a border fixes it) https://www.w3.org/WAI/WCAG22/Understanding/non-text-contrast.html ; GAF colours (3:1 between adjacent colours, white border around pie sectors). Edge width: house call.
 
 ## integrity.md
 
@@ -160,7 +162,9 @@ H21: Olson skill (difference-of-rates axes).
 H22: agency practice (Census and BLS same-period-last-year headlines; ONS three-month averages for noisy months); transforms only when the standard view misleads: house call; trailing-window lag: arithmetic.
 H23: Wainer 2007, The most dangerous equation (small samples dominate extremes), American Scientist https://www.americanscientist.org/article/the-most-dangerous-equation ; statistical-agency flags for small-n rates (e.g., NCHS, fewer than 20 events).
 H24: U.S. Bureau of Labor Statistics, Current Population Survey definitions (long-term unemployed: 27+ weeks); dropped-record, sentinel-code, unreleased-period, and carried-forward checks: house call.
-U1: Hullman 2020, Why authors don't visualize uncertainty (3% of inference charts showed it), IEEE TVCG https://doi.org/10.1109/TVCG.2019.2934287 ; mandatory-when-comparing policy from house call. Difference test from published MOEs: U.S. Census Bureau 2020, Understanding and Using American Community Survey Data https://www.census.gov/programs-surveys/acs/library/handbooks/general.html ; hedged records: house call.
+H25: Akl et al. 2011, Cochrane review (relative risk seen as larger and more persuasive than absolute; natural frequencies understood better) https://doi.org/10.1002/14651858.CD006776.pub2 ; Garcia-Retamero, Galesic & Gigerenzer 2010 (icon arrays remove denominator neglect), Medical Decision Making https://doi.org/10.1177/0272989X10369000 ; UK Office for Statistics Regulation 2021 (vaccinated vs unvaccinated rates) https://osr.statisticsauthority.gov.uk/blog/communicating-data-is-more-than-just-presenting-the-numbers/ ; Lisnic et al. 2023, CHI https://doi.org/10.1145/3544548.3580910
+H26: Lo et al. 2022 (trend line on random data; questionable prediction) https://doi.org/10.1111/cgf.14559 ; no controlled study; scope to the data's range and naming the model: house call.
+U1: Hullman 2020, Why authors don't visualize uncertainty (3% of inference charts showed it), IEEE TVCG https://doi.org/10.1109/TVCG.2019.2934287 ; mandatory-when-comparing policy from house call. Difference test from published MOEs: U.S. Census Bureau 2020, Understanding and Using American Community Survey Data https://www.census.gov/programs-surveys/acs/library/handbooks/general.html ; hedged records: house call. Lead within one poll (about twice the reported MOE): Pew Research Center 2016, Understanding the margin of error in election polls https://www.pewresearch.org/short-reads/2016/09/08/understanding-the-margin-of-error-in-election-polls/
 U2: Belia, Fidler, Williams & Cumming 2005, Psychological Methods https://doi.org/10.1037/1082-989X.10.4.389 ; Cumming & Finch 2005, American Psychologist https://doi.org/10.1037/0003-066X.60.2.170 ; publisher's level: U.S. Census Bureau 2020 (U1).
 U3: Hofman, Goldstein & Hullman 2020, CHI https://doi.org/10.1145/3313831.3376454
 U4: Kay, Kola, Hullman & Munson 2016, CHI https://doi.org/10.1145/2858036.2858558 ; Fernandes et al. 2018, CHI https://doi.org/10.1145/3173574.3173718

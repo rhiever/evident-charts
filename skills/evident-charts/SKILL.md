@@ -13,7 +13,7 @@ description: >-
 license: MIT
 metadata:
   author: Randy Olson
-  version: "0.1.0"
+  version: "0.2.0"
 ---
 
 # evident-charts
@@ -24,23 +24,24 @@ Critique, review, or a chart image with a question: follow `references/critique.
 
 ## Rules
 
-Rule lines read `ID [tag] rule. Break: escape. check: name`. `[E]` experimental evidence: break only with a stated reason. `[P]` practitioner consensus: break for a clear reason. `[T]` taste: bend freely. A project's style guide overrides the house look (`assets/`) and `[T]` rules, never `[E]` integrity rules. `check:` names a `scripts/check_chart.py` check; `palette` means `scripts/check_palette.py`. Citations: `references/sources.md`, only when asked why.
+Rule lines read `ID [tag] rule. Break: escape. check: name`. `[E]` experimental evidence: break only with a stated reason. `[P]` practitioner consensus: break for a clear reason. `[T]` taste: bend freely. A project's style guide overrides the house look (`assets/`) and `[T]` rules, never `[E]` integrity rules. `check:` names a check in `scripts/check_chart.py` (`scripts/check_svg.py` runs a subset of them on other stacks) or `scripts/check_data.py`, each with `--list-checks`; `palette` means `scripts/check_palette.py`. Citations: `references/sources.md`, only when asked why.
 
 ## Workflow
 
-1. **Analyze.** Load the data, print summary stats, confirm units and scope, run the checks below.
+1. **Analyze.** Load the data, print summary stats, confirm units and scope; run `python scripts/check_data.py <file>` on each input (`--total LABEL` when the source publishes a total), then the checks below.
 2. **Brief** in one line: `Takeaway: <claim the data supports> | Audience: <lay/expert> | Destination: <preset>`. The takeaway answers every part of the request (HI-1). Ask at most two questions, only if the takeaway is ambiguous. Presets (`assets/presets.json`): `blog` (default), `mobile` (phone, phone-read newsletters), `social` (X), `social_portrait` (LinkedIn, Instagram), `slide` (deck), `report` (print, memos, docs).
 3. **Choose the form** from the takeaway and data shape; open `references/choosing.md` only when the form is not obvious. It may be a table or one hero number over a sparkline or part bar (`stats_size="hero"`, LY-6). Render alternatives (`references/candidates.md`) only when unsure between two honest forms.
 4. **Build** in the project's stack; otherwise Python + matplotlib with `scripts/evident.py` (other stacks: `references/libraries.md`). Fit title and subtitle with `ev.fits_title` and `ev.fits_subtitle`.
-5. **Check.** matplotlib: `python scripts/check_chart.py <chart.py> --dest <preset>` (includes color-blindness and contrast); other stacks: `python scripts/check_palette.py "<hex,...>" --role <role> --mark <mark>`. Fix all failures together.
+5. **Check.** matplotlib: `python scripts/check_chart.py <chart.py> --dest <preset>`; other stacks: export an SVG with live text and run `python scripts/check_svg.py <chart.svg> --dest <preset> --spec <figure or Vega JSON>` (its docstring gives each stack's export). Both include color-blindness and contrast. Data: `python scripts/check_data.py <plotted.csv> --plotted` on the table the chart plots. Fix all failures together.
 6. **Review** the rendered PNG, never the code (`references/critique.md`, Review loop): a fresh-context subagent given only the PNG, request, and destination, else a self-review of the reopened image. Fix every P0 and P1, re-render, recheck, re-review; stop at a round without P0/P1, at most 3 rounds.
 7. **Deliver** the format asked for (`report` may add a PDF): absolute paths to the image and script; the brief; analysis choices a reader should know (any transform, exclusions, thresholds, minimum n); how you identified the source, your confidence, and anything unconfirmed (SRC-1); alt text (A1); any rule broken, with the reason; the one-line review log.
 
 ## Analysis checks
 
 - Use the field's standard comparison: same period last year, calendar months or quarters, named members the audience acts on, standard thresholds; pool, smooth, roll, or rebase only when it would mislead, named in the subtitle (H22, H24).
-- Flag a preliminary last point, never pool it away; compare a partial last period like-for-like (year to date, trailing 12 months, or within the only measure covering it) (H17, H15, H12).
-- Parts sum to the published total; remainder = aggregate minus members; check duplicates, sentinel codes (0, 888, 999, blank), future-dated zero rows (unreleased), split events, and frozen values; compute every number from the data (H11, H24).
+- Fix every check_data FAIL; resolve each WARN or name it in Deliver. It cannot see split events: link rows that split one event before counting (H11, H24).
+- Draw provisional points distinct, never pool them away; compare a partial last period like-for-like (year to date, trailing 12 months, or within the only measure covering it) (H17, H15, H12).
+- Compute every number shown or claimed from the data (H11).
 - Show n or intervals for small samples, never rank tiny ones; test survey differences at the publisher's MOE level (H23, U1).
 
 ## Chart defaults

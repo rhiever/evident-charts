@@ -23,6 +23,7 @@
 .ev-chart .ev-alt { stroke: #0072B2; fill: #0072B2; }
 .ev-chart path.ev-series { fill: none; stroke-linejoin: round; stroke-linecap: butt; stroke-width: 2.2px; stroke-width: var(--ev-line, 2.2px); }
 .ev-chart path.ev-series.ev-accent, .ev-chart path.ev-series.ev-alt { stroke-width: 4.4px; stroke-width: var(--ev-accent-line, 4.4px); }
+.ev-chart .ev-segment { stroke: #FFFFFF; stroke-width: 1px; } /* stack segments, pie slices, tiles (C17) */
 .ev-chart line.ev-stem { stroke: #BDBDBD; stroke-linecap: butt; stroke-width: 3.1px; stroke-width: calc(var(--ev-line, 2.2px) * 1.4); }
 .ev-chart text.ev-label { fill: #767676; stroke: none; }
 .ev-chart text.ev-label.ev-accent { fill: #C15500; font-weight: 700; }

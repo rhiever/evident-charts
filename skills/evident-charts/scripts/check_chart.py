@@ -41,6 +41,8 @@ import matplotlib  # noqa: E402
 
 matplotlib.use("Agg")
 import matplotlib.figure  # noqa: E402
+import matplotlib.patches  # noqa: E402
+import matplotlib.text  # noqa: E402
 import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
 from matplotlib import patheffects  # noqa: E402
@@ -57,6 +59,7 @@ from matplotlib.markers import MarkerStyle  # noqa: E402
 from matplotlib.patches import FancyArrowPatch, PathPatch, Polygon, Rectangle, Wedge  # noqa: E402
 from matplotlib.path import Path as MplPath  # noqa: E402
 from matplotlib.text import Annotation, Text  # noqa: E402
+from matplotlib.ticker import ScalarFormatter  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # Tunable constants. Lengths in points are converted to pixels with fig.dpi.
@@ -139,6 +142,13 @@ CUMULATIVE_MIN_POINTS = 6      # shorter series rise monotonically by chance
 CUMULATIVE_START_MULT = 2.0    # a running total of n similar periods starts near 1/n of its end: allow this multiple
 CUMULATIVE_STEP_FRAC = 0.8     # and increase on at least this share of steps (plateaus are not running totals)
 STACK_MAX_LAYERS = 2           # stacked-area: more layers than this warn
+# segment-edges: touching fills of different colors (stack segments, wedges, stacked layers) need a background-colored
+# edge at least SEGMENT_EDGE_MIN_PX wide at display size (within SEGMENT_BG_DE dE00 of the background). Segments or
+# shared boundaries under SEGMENT_MIN_PX at display size are skipped: an edge would erase them (daily bars, fine bins).
+SEGMENT_MIN_PX = 3.0
+SEGMENT_EDGE_MIN_PX = 0.5
+SEGMENT_BG_DE = 5.0
+SEGMENT_TOUCH_PX = 0.5         # boundaries this close (figure px) touch
 PLOT_TINY_FRAC = 0.15          # plot-area-tiny: axes narrower or shorter than this share of the figure (per 3 panels)
 PLOT_UNDERUSED_FRAC = 0.65     # plot-area-underused: one plot box narrower than this share of the usable width...
 PLOT_EMPTY_FRAC = 0.15         # ...while its labels leave at least this share of the usable width empty at the sides
@@ -153,6 +163,29 @@ FILL_MIN_ALPHA = 0.3
 AREA_OVERLAP_FRAC = TEXT_OVERLAP_MIN_FRAC
 LOG_WORD_RE = re.compile(r"\blog(arithmic)?(?![a-z])", re.I)
 RANK_RE = re.compile(r"\b(rank|depth)|\b\d+(st|nd|rd|th)\b", re.I)   # H5 escape hatches: ranks, ordinals, depth
+# number-format: scientific tick text (1e6, 2.5x10^3), and numeric ticks on a non-value axis read as years: all within
+# YEAR_MIN..YEAR_MAX at a median step of at most YEAR_MAX_STEP.
+SCI_TICK_RE = re.compile(r"[-+]?\d+(\.\d+)?[eE][-+]?\d+|([-+]?\d+(\.\d+)?\s*(\\times|\\cdot|×)\s*)?10\^\{?[-+]?\d+\}?")
+YEAR_MIN, YEAR_MAX, YEAR_MAX_STEP = 1000, 2200, 10
+YEAR_RE = re.compile(r"(1[89]|2[01])\d\d")
+# category-order: labels with digits (ranges, quarters, ranks), comparators, or these words have a natural order;
+# tail rows (Other, Total, benchmarks) sit outside the sort. Rows further apart than CATEGORY_GAP_STEPS x the usual
+# spacing start a new section, and steps within CATEGORY_TIE_FRAC of the value range are ties.
+CATEGORY_ORDINAL_RE = re.compile(
+    r"\d|^\W*[<>≤≥~+]|\b(jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec|january|february|march|april|"
+    r"june|july|august|september|october|november|december|mon|tue|wed|thu|fri|sat|sun|monday|tuesday|wednesday|"
+    r"thursday|friday|saturday|sunday|spring|summer|autumn|fall|winter|morning|afternoon|evening|night|early|mid|"
+    r"late|strongly|somewhat|very|neither|neutral|agree|disagree|never|rarely|sometimes|often|always|daily|weekly|"
+    r"monthly|yearly|poor|fair|good|excellent|low|lower|medium|middle|upper|high|higher|small|large|mild|moderate|"
+    r"severe|none|some|most|all|less|more|under|over|before|after|pre|post|baseline|first|second|third|last|grade|"
+    r"level|tier|stage|phase|step|round|wave|week|day|month|year|quarter|beginner|intermediate|advanced|expert|"
+    r"junior|senior|freshman|sophomore|infant|child|teen|adult|school|college|bachelor'?s?|master'?s?|doctorate|phd|"
+    r"graduate|degree)\b", re.I)
+CATEGORY_TAIL_RE = re.compile(r"\b(other|others|rest|all|total|average|avg|median|overall|national|world|eu|us)\b",
+                              re.I)
+CATEGORY_MIN_BARS = 4
+CATEGORY_GAP_STEPS = 1.3
+CATEGORY_TIE_FRAC = 0.02
 
 RAINBOW_CMAPS = {"jet", "rainbow", "hsv", "gist_rainbow", "nipy_spectral", "gist_ncar"}
 SPECTRAL_CMAPS = {"Spectral"}
@@ -189,6 +222,11 @@ CHECKS = {
     "process-note": ("fail", "Chart text addressed to the user (confirm, TODO, inferred, ...) or a data file name."),
     "missing-source": ("warn", "No text contains 'Source:' or has a line (or ' | ' part) starting 'Source' or 'Data:'."),
     "value-labels-and-axis": ("warn", "Bars carry value labels while the value axis ticks are also shown."),
+    "number-format": ("fail", "Axis offset text or scientific-notation ticks (1e6, +2.019e3), or year ticks with "
+                              "decimals or separators (2019.5, 2,019); warn: mixed decimals across an axis's ticks "
+                              "or a set of bar value labels."),
+    "category-order": ("warn", "Bars on a nominal category axis neither ascending nor descending, a line drawn across "
+                               "nominal categories, or year categories with uneven gaps drawn evenly spaced."),
     "title-too-long": ("warn", "Title wraps past 2 lines or does not fit 2 lines at the destination (ev.fits_title)."),
     "inverted-axis": ("fail", "Value axis inverted, and its label and ticks do not say 'rank'."),
     "log-unlabeled": ("fail", "Log-scaled axis; no axis label, title, subtitle, or in-axes note says 'log'."),
@@ -196,6 +234,11 @@ CHECKS = {
                                    "axis label or title promises a rate, share, %, or per-unit value."),
     "stacked-area": ("warn", "Stacked area (stackplot or stacked fill_between) with 3+ layers: only the bottom layer "
                              "has a flat baseline."),
+    "invisible-arrow": ("fail", "Annotation arrow drawn with no visible stroke or fill (zero width, or a color matching "
+                                "the background), as unstyled arrows are under the house style."),
+    "segment-edges": ("warn", "Touching fills of different colors (stacked or adjacent bars, pie wedges, stacked area "
+                              "layers) share a boundary with no background-colored edge on either; narrow segments, "
+                              "same-color neighbors, and heatmaps are skipped."),
     "plot-area-underused": ("warn", "Mobile and social presets: a single plot box under 65% of the usable canvas "
                                     "width with 15%+ of it left empty beside the axes (a square aspect on a narrow "
                                     "canvas, hand-set margins)."),
@@ -1215,7 +1258,7 @@ def check_missing_axis_label(c: Ctx):
             vals = [parse_tick(t) for t in ticks]
             if any(v is None for v in vals):
                 continue  # categorical or date labels
-            if name == "x" and all(1000 <= v <= 2200 for v in vals):
+            if name == "x" and all(YEAR_MIN <= v <= YEAR_MAX for v in vals):
                 continue  # year axis explains itself
             if name == "y" and any(
                     r.kind in ("text", "figtext", "annotation") and r.aabb[1] >= axbox.y1 - 2
@@ -1315,6 +1358,38 @@ def number_matches(label: str, value: float) -> bool:
     return False
 
 
+def bar_value_labels(c: Ctx, ax, conts, horizontal):
+    """(bars, labels): the count of nonzero bars in `conts` and, per labeled bar, (value, TextRec) for the first
+    numeric text within the bar's width and along its length (or VALUE_LABEL_REACH_LINES past either end) that
+    prints its value."""
+    texts = [r for r in c.texts if r.kind in ("text", "annotation") and r.ax is ax and not r.rotated
+             and re.search(r"\d", r.label)]
+    bars, labels = 0, []
+    for ct in conts:
+        vals = getattr(ct, "datavalues", None)
+        for k, p in enumerate(ct.patches):
+            if not (isinstance(p, Rectangle) and p.get_visible()):
+                continue
+            v = vals[k] if vals is not None else (p.get_width() if horizontal else p.get_height())
+            if not np.isfinite(v) or v == 0:
+                continue
+            bars += 1
+            x0, y0, x1, y1 = p.get_window_extent(c.renderer).extents
+            for r in texts:
+                lh = r.h / max(len(r.lines), 1)
+                reach = VALUE_LABEL_REACH_LINES * lh
+                if horizontal:
+                    across = y0 <= r.cy <= y1
+                    along = r.aabb[2] >= x0 - reach and r.aabb[0] <= x1 + reach
+                else:
+                    across = x0 <= r.cx <= x1
+                    along = r.aabb[3] >= y0 - reach and r.aabb[1] <= y1 + reach
+                if across and along and number_matches(r.label, v):
+                    labels.append((float(v), r))
+                    break
+    return bars, labels
+
+
 def check_value_labels_and_axis(c: Ctx):
     for i, ax in data_axes(c.fig):
         conts = [ct for ct in ax.containers if isinstance(ct, BarContainer) and ct.patches]
@@ -1327,35 +1402,201 @@ def check_value_labels_and_axis(c: Ctx):
                  and r.obj is not axis.get_offset_text() and value_tick(r.label)]
         if len(ticks) < 2:
             continue
-        texts = [r for r in c.texts if r.kind in ("text", "annotation") and r.ax is ax and not r.rotated
-                 and re.search(r"\d", r.label)]
-        bars = labeled = 0
-        for ct in conts:
-            vals = getattr(ct, "datavalues", None)
-            for k, p in enumerate(ct.patches):
-                if not (isinstance(p, Rectangle) and p.get_visible()):
-                    continue
-                v = vals[k] if vals is not None else (p.get_width() if horizontal else p.get_height())
-                if not np.isfinite(v) or v == 0:
-                    continue
-                bars += 1
-                x0, y0, x1, y1 = p.get_window_extent(c.renderer).extents
-                for r in texts:
-                    lh = r.h / max(len(r.lines), 1)
-                    reach = VALUE_LABEL_REACH_LINES * lh
-                    if horizontal:
-                        across = y0 <= r.cy <= y1
-                        along = r.aabb[2] >= x0 - reach and r.aabb[0] <= x1 + reach
-                    else:
-                        across = x0 <= r.cx <= x1
-                        along = r.aabb[3] >= y0 - reach and r.aabb[1] <= y1 + reach
-                    if across and along and number_matches(r.label, v):
-                        labeled += 1
-                        break
+        bars, labels = bar_value_labels(c, ax, conts, horizontal)
+        labeled = len(labels)
         if labeled >= VALUE_LABEL_MIN_BARS and labeled >= VALUE_LABEL_MIN_FRAC * bars:
             c.add("value-labels-and-axis", c.where(ax, f"{name}-axis"),
                   f"{labeled} of {bars} bars carry value labels and the {name}-axis shows {len(ticks)} numeric ticks",
                   f"Keep one readout: hide the {name}-axis ticks, spine, and gridlines, or drop the value labels.")
+
+
+def plain_tick(s: str) -> str:
+    """Tick text without its mathtext wrapping (mathdefault, $...$) and with an ASCII minus."""
+    s = re.sub(r"\\mathdefault\{(.*?)\}", r"\1", s).replace("\u2212", "-").strip()
+    return s[1:-1].strip() if len(s) > 1 and s[0] == s[-1] == "$" else s
+
+
+def first_number(s: str):
+    """The first number printed in `s` (1,234.5 or .5), or None."""
+    m = re.search(r"\d[\d,]*(\.\d+)?|\.\d+", s)
+    return None if m is None else m.group(0)
+
+
+def decimals(s: str):
+    """Digits after the point in the first number printed in `s` (None if it prints none)."""
+    num = first_number(s)
+    return None if num is None else len(num.partition(".")[2])
+
+
+def check_number_format(c: Ctx):
+    for i, ax in data_axes(c.fig):
+        for name in ("x", "y"):
+            axis = getattr(ax, f"{name}axis")
+            off = axis.get_offset_text()
+            recs = [r for r in c.texts if r.kind == "tick" and r.ax is ax and r.axis == name]
+            where = c.where(ax, f"{name}-axis")
+            # ScalarFormatter's offset shifts every value; a date formatter's offset (2021-Apr) is a date label
+            if any(r.obj is off for r in recs) and isinstance(axis.get_major_formatter(), ScalarFormatter):
+                c.add("number-format", where, f"offset text {snip(off.get_text())} changes every tick's value",
+                      "Format the ticks yourself (FuncFormatter: 2M, $1.5bn, 2019) or "
+                      "ax.ticklabel_format(useOffset=False, style='plain').")
+                continue
+            ticks = [plain_tick(r.label) for r in recs if r.obj is not off]
+            if len(ticks) < 2:
+                continue
+            linear = axis.get_scale() == "linear"
+            if linear and any(SCI_TICK_RE.fullmatch(t) for t in ticks):
+                c.add("number-format", where, f"scientific-notation ticks ({', '.join(ticks[:4])})",
+                      "Abbreviate with k, M, bn in a FuncFormatter and name the unit in the axis label.")
+                continue
+            vals = [parse_tick(t) for t in ticks]
+            # only time/category axes hold years: a value axis at 1010.25 hPa or 1,005 members is a measurement
+            if name not in value_axes(ax) and None not in vals and all(YEAR_MIN <= v <= YEAR_MAX for v in vals) and \
+                    0 < np.median(np.diff(sorted(vals))) <= YEAR_MAX_STEP and any("." in t or "," in t for t in ticks):
+                c.add("number-format", where, f"year ticks print as {', '.join(ticks[:4])}",
+                      "Use whole-year ticks without separators: MaxNLocator(integer=True) with "
+                      "FormatStrFormatter('%d'), or plot real dates.")
+                continue
+            if not linear or len(ticks) < 3 or not all(value_tick(t) for t in ticks):
+                continue
+            # a bare 0 beside 0.5, 1.0 is house style, not a precision change
+            ds = {decimals(t) for t in ticks if first_number(t) != "0"} - {None}
+            if len(ds) > 1:
+                c.add("number-format", where, f"ticks mix {sorted(ds)} decimals ({', '.join(ticks[:5])})",
+                      "Give every tick the same decimals (StrMethodFormatter('{x:.1f}'), or ticks at whole numbers).",
+                      severity="warn")
+        # bar value labels: the number that prints each bar's value, grouped by label shape ("$#M", "#%")
+        conts = [ct for ct in ax.containers if isinstance(ct, BarContainer) and ct.patches]
+        if not conts:
+            continue
+        _, labels = bar_value_labels(c, ax, conts, getattr(conts[0], "orientation", "vertical") == "horizontal")
+        groups = {}
+        for v, r in labels:
+            for m in re.finditer(r"\d[\d,]*(\.\d+)?", r.label):
+                if number_matches(m.group(0), v):
+                    shape = re.sub(r"\d[\d,]*(\.\d+)?", "#", r.label.replace(m.group(0), "N", 1))
+                    groups.setdefault(shape, []).append((m.group(0), decimals(m.group(0))))
+                    break
+        for toks in groups.values():
+            ds = {d for _, d in toks}
+            if len(toks) >= 3 and len(ds) > 1:
+                c.add("number-format", c.where(ax, "value labels"),
+                      f"value labels mix {sorted(ds)} decimals ({', '.join(t for t, _ in toks[:4])})",
+                      "Format every label with one precision: ev.value_labels(ax, bars, fmt=ev.num(1)) or "
+                      "ax.bar_label(bars, fmt='{:,.1f}').", severity="warn")
+
+
+def category_ticks(ax, name) -> list:
+    """[(position, label)] of a visible tick axis with 3+ labels that are text or bare years, else []."""
+    axis = getattr(ax, f"{name}axis")
+    if not (ax.axison and axis.get_visible()):
+        return []
+    out = []
+    for t in drawn_ticks(axis):
+        lab = t.label1 if t.label1.get_visible() else t.label2
+        s = lab.get_text().strip() if lab.get_visible() else ""
+        if s:
+            out.append((float(t.get_loc()), s))
+    if len(out) < 3 or any(value_tick(s) and not YEAR_RE.fullmatch(s) for _, s in out):
+        return []
+    return out
+
+
+def unsorted_steps(vals, pos, tol) -> int:
+    """Direction reversals in `vals` (at positions `pos`) beyond near-ties. A sign change (gainers, then losers) or a
+    spacing gap (sections under header rows) starts a new section, sorted on its own."""
+    step = np.median(np.diff(pos))
+    bad, sign = 0, 0
+    for k in range(1, len(vals)):
+        if np.sign(vals[k]) != np.sign(vals[k - 1]) or pos[k] - pos[k - 1] > CATEGORY_GAP_STEPS * step:
+            sign = 0
+            continue
+        d = vals[k] - vals[k - 1]
+        st = 0 if abs(d) <= tol else np.sign(d)
+        if st and sign and st != sign:
+            bad += 1
+            sign = 0
+        elif st:
+            sign = st
+    return bad
+
+
+def category_bars(ax, name, ticks):
+    """(positions, values) of one bar per labeled tick on category axis `name`, tail rows (Other, Total) dropped;
+    None for grouped, stacked, floating, or off-tick bars."""
+    conts = [ct for ct in ax.containers if isinstance(ct, BarContainer) and ct.patches]
+    horizontal = name == "y"
+    if not conts or any((getattr(ct, "orientation", "vertical") == "horizontal") != horizontal for ct in conts):
+        return None
+    locs = np.array([p for p, _ in ticks])
+    tol = 0.05 * (np.median(np.diff(np.sort(locs))) or 1)
+    rows = {}
+    for ct in conts:
+        vals = getattr(ct, "datavalues", None)
+        for k, p in enumerate(ct.patches):
+            if not (isinstance(p, Rectangle) and p.get_visible()):
+                continue
+            if abs(p.get_x() if horizontal else p.get_y()) > 1e-9:
+                return None  # floating (waterfall) or stacked segments
+            ctr = p.get_y() + p.get_height() / 2 if horizontal else p.get_x() + p.get_width() / 2
+            j = int(np.argmin(abs(locs - ctr)))
+            if abs(locs[j] - ctr) > tol or j in rows:
+                return None  # grouped (off-tick) bars or two bars in one row
+            v = vals[k] if vals is not None else (p.get_width() if horizontal else p.get_height())
+            rows[j] = float(v)
+    keep = sorted(j for j in rows if np.isfinite(rows[j]) and not CATEGORY_TAIL_RE.search(ticks[j][1]))
+    return [locs[j] for j in keep], [rows[j] for j in keep]
+
+
+def check_category_order(c: Ctx):
+    axes = data_axes(c.fig)
+    for i, ax in axes:
+        for name in ("x", "y"):
+            ticks = category_ticks(ax, name)
+            if not ticks:
+                continue
+            labels = [s for _, s in ticks]
+            locs = [p for p, _ in ticks]
+            where = c.where(ax, f"{name}-axis")
+            if all(YEAR_RE.fullmatch(s) for s in labels):
+                years = [int(s) for s in labels]
+                gaps = sorted({int(g) for g in np.diff(years)})
+                even = np.ptp(np.diff(locs)) <= 1e-6 * max(abs(locs[-1] - locs[0]), 1)
+                if not np.allclose(locs, years) and len(gaps) > 1 and even:
+                    c.add("category-order", where,
+                          f"years {labels[0]}-{labels[-1]} evenly spaced as categories, hiding gaps of {gaps} years",
+                          "Plot years as numbers so spacing is true (pass ints, not strings), or mark the gaps.")
+                continue
+            if all(len(s) <= 2 for s in labels):
+                continue  # month initials (J F M) and codes: cannot tell nominal from time
+            if sum(bool(CATEGORY_ORDINAL_RE.search(s)) for s in labels) >= 0.5 * len(labels):
+                continue  # time, ranges, ranks, scales: natural order is right
+            pos = {round(p, 6) for p in locs}
+            for ln in data_lines(ax):
+                xy = np.asarray(ln.get_xydata(), float)
+                along = xy[np.isfinite(xy).all(axis=1), 0 if name == "x" else 1]
+                cats = {round(v, 6) for v in along}
+                if len(cats) >= 3 and cats <= pos:
+                    c.add("category-order", where, f"line drawn across nominal categories ({', '.join(labels[:3])}, "
+                          "...)", "Use bars or dots: a line implies order and continuity between categories.")
+                    break
+            # shared rows follow another panel's sort, or one order kept across panels
+            siblings = [a for a in getattr(ax, f"get_shared_{name}_axes")().get_siblings(ax) if a is not ax]
+            if any(isinstance(ct, BarContainer) for a in siblings for ct in a.containers) or \
+                    any(a is not ax and [s for _, s in category_ticks(a, name)] == labels for _, a in axes):
+                continue
+            bars = category_bars(ax, name, ticks)
+            if bars is None or len(bars[1]) < CATEGORY_MIN_BARS:
+                continue
+            bpos, vals = bars
+            tol = CATEGORY_TIE_FRAC * (max(vals) - min(vals) or 1)
+            if unsorted_steps(vals, bpos, tol) and unsorted_steps([abs(v) for v in vals], bpos, tol):
+                n = len(vals)
+                inv = sum(vals[a] < vals[b] for a in range(n) for b in range(a + 1, n))
+                pairs = n * (n - 1) // 2
+                c.add("category-order", where,
+                      f"{n} nominal bars unsorted ({min(inv, pairs - inv)} of {pairs} pairs out of order)",
+                      "Sort the bars by value; keep natural order only for time or ordinal categories.")
 
 
 def value_axes(ax) -> list:
@@ -1772,6 +2013,131 @@ def stack_depth(layers, tol):
             memo[j] = 1 + max([depth(i, seen + (j,)) for i in on[j] if i not in seen], default=0)
         return memo[j]
     return max((depth(j) for j in range(len(layers))), default=0)
+
+
+ARROW_MIN_PX = 0.5  # thinner arrow strokes vanish at display size
+ARROW_FILLED = (matplotlib.patches.ArrowStyle.Fancy, matplotlib.patches.ArrowStyle.Simple,
+                matplotlib.patches.ArrowStyle.Wedge)
+SEGMENT_FIX = {
+    "bar": 'ax.bar(..., edgecolor={bg}, linewidth=ev.size("grid")) (barh alike)',
+    "wedge": 'ax.pie(..., wedgeprops=dict(edgecolor={bg}, linewidth=ev.size("grid")))',
+    "area": 'ax.stackplot(..., edgecolor={bg}, linewidth=ev.size("grid")) (fill_between alike)',
+}
+SEGMENT_NAME = {"bar": "bar segments", "wedge": "pie wedges", "area": "stacked area layers"}
+
+
+def edge_separates(ec, lw_pt, bg, c, disp) -> bool:
+    """True if an edge of color ec and width lw_pt (points) reads as a background-colored gap at display size."""
+    if ec is None or len(ec) < 4 or ec[3] < 0.5 or lw_pt * c.px_per_pt * disp < SEGMENT_EDGE_MIN_PX:
+        return False
+    return de(Color(over(ec, bg)), Color(bg)) <= SEGMENT_BG_DE
+
+
+def touching_rects(c, ax, bg, disp, min_px):
+    """Pairs of touching data rectangles (bars, tiles) of different fills with no separating edge."""
+    rs = []
+    for p in ax.patches:
+        if not (isinstance(p, Rectangle) and p.get_visible() and p.get_fill()) or p.get_angle() % 90 or \
+                p.get_data_transform() is not ax.transData or p.get_facecolor()[3] < FILL_MIN_ALPHA:
+            continue
+        x0, y0, x1, y1 = p.get_window_extent(c.renderer).extents
+        if x1 - x0 >= min_px and y1 - y0 >= min_px:
+            rs.append((x0, y0, x1, y1, over(p.get_facecolor(), bg),
+                       edge_separates(p.get_edgecolor(), p.get_linewidth(), bg, c, disp)))
+    if len(rs) < 2:
+        return 0
+    x0, y0, x1, y1 = (np.array([r[k] for r in rs]) for k in range(4))
+    keys = np.array([r[4] for r in rs])
+    sep = np.array([r[5] for r in rs])
+    over_x = np.minimum(x1[:, None], x1[None, :]) - np.maximum(x0[:, None], x0[None, :])
+    over_y = np.minimum(y1[:, None], y1[None, :]) - np.maximum(y0[:, None], y0[None, :])
+    touch = (np.abs(y1[:, None] - y0[None, :]) <= SEGMENT_TOUCH_PX) & (over_x >= min_px) | \
+        (np.abs(x1[:, None] - x0[None, :]) <= SEGMENT_TOUCH_PX) & (over_y >= min_px)
+    bad = touch & (keys[:, None] != keys[None, :]) & ~(sep[:, None] | sep[None, :])
+    return int(bad.sum())
+
+
+def touching_wedges(c, ax, bg, disp, min_px):
+    """Pairs of neighboring pie or donut wedges of different fills with no separating edge."""
+    ws = [p for p in ax.patches if isinstance(p, Wedge) and p.get_visible() and p.get_fill()
+          and p.get_facecolor()[3] >= FILL_MIN_ALPHA]
+    bad = 0
+    for a in ws:
+        for b in ws:
+            if a is b or not np.allclose(a.center, b.center) or abs((a.theta2 - b.theta1 + 180) % 360 - 180) > 1e-3:
+                continue
+            ina, inb = a.r - (a.width or a.r), b.r - (b.width or b.r)
+            shared = min(a.r, b.r) - max(ina, inb)
+            if shared <= 0:
+                continue  # different rings of a nested donut
+            px = abs(ax.transData.transform((a.center[0] + shared, a.center[1]))[0] -
+                     ax.transData.transform(a.center)[0])
+            if px < min_px or over(a.get_facecolor(), bg) == over(b.get_facecolor(), bg):
+                continue
+            if not (edge_separates(a.get_edgecolor(), a.get_linewidth(), bg, c, disp) or
+                    edge_separates(b.get_edgecolor(), b.get_linewidth(), bg, c, disp)):
+                bad += 1
+    return bad
+
+
+def stacked_layers(c, ax, bg, disp, min_px):
+    """Pairs of filled areas where one sits on the other (stackplot, stacked fill_between) with different fills and
+    no separating edge. Bands that overlap a line or each other do not sit on one another."""
+    layers = []
+    for coll in ax.collections:
+        if not isinstance(coll, PolyCollection) or not coll.get_visible() or \
+                type(coll).__name__ == "Poly3DCollection" or len(coll.get_offsets()) > 1:
+            continue
+        fcs = coll.get_facecolors()
+        e = layer_edges(coll)
+        if not len(fcs) or fcs[0][3] < FILL_MIN_ALPHA or e is None or len(e[0]) < 3:
+            continue
+        top = ax.transData.transform(np.c_[e[0], e[2]])[:, 1]
+        bot = ax.transData.transform(np.c_[e[0], e[1]])[:, 1]
+        thick = np.nanmax(np.abs(top - bot)) if np.isfinite(top - bot).any() else 0.0
+        if thick < min_px:
+            continue
+        ecs, lws = coll.get_edgecolors(), coll.get_linewidths()
+        sep = len(ecs) > 0 and len(lws) > 0 and edge_separates(ecs[0], lws[0], bg, c, disp)
+        layers.append((e, over(fcs[0], bg), sep))
+    lo, hi = ax.get_ylim()
+    tol = 1e-6 * max(abs(hi - lo), 1e-12)
+    return sum(1 for a in layers for b in layers if a is not b and a[1] != b[1] and not (a[2] or b[2])
+               and sits_on(b[0], a[0], tol))
+
+
+def check_segment_edges(c: Ctx):
+    disp = DEST_WIDTH_PX[c.dest] / (c.fig.get_figwidth() * c.fig.dpi)  # display px per figure px
+    min_px = SEGMENT_MIN_PX / disp
+    for i, ax in data_axes(c.fig):
+        if getattr(ax, "name", "") != "rectilinear" or not has_data(ax):
+            continue
+        bg = axes_bg(c, ax)
+        edge = '"white"' if bg == "#ffffff" else f'"{bg}"'
+        for kind, fn in (("bar", touching_rects), ("wedge", touching_wedges), ("area", stacked_layers)):
+            n = fn(c, ax, bg, disp, min_px)
+            if n:
+                c.add("segment-edges", c.where(ax), f"{n} {'boundary' if n == 1 else 'boundaries'} between "
+                      f"differently colored {SEGMENT_NAME[kind]} {'has' if n == 1 else 'have'} no background-colored "
+                      "edge",
+                      f"Separate them at the call site: {SEGMENT_FIX[kind].format(bg=edge)}; never a global patch "
+                      "edge, which erases narrow bars.")
+
+
+def check_invisible_arrow(c: Ctx):
+    for t in c.fig.findobj(matplotlib.text.Annotation):
+        ap = t.arrow_patch
+        if ap is None or not (t.get_visible() and ap.get_visible()):
+            continue
+        bg = axes_bg(c, t.axes)
+        stroke = (ap.get_linewidth() * c.px_per_pt >= ARROW_MIN_PX
+                  and contrast(over(ap.get_edgecolor(), bg), bg) >= INVISIBLE)
+        body = (isinstance(ap.get_arrowstyle(), ARROW_FILLED) and ap.get_fill()
+                and contrast(over(ap.get_facecolor(), bg), bg) >= INVISIBLE)
+        if not (stroke or body):
+            c.add("invisible-arrow", c.where(t.axes, f"annotation {snip(t.get_text())}"),
+                  "arrow has no visible stroke or fill",
+                  'Style it: arrowprops=dict(arrowstyle="->", color="#595959", lw=ev.size("grid")).')
 
 
 def check_stacked_area(c: Ctx):
@@ -2397,8 +2763,9 @@ CHECK_FUNCS = [
     check_text_overlap, check_text_on_line, check_text_on_area, check_text_clipped, check_bar_baseline, check_dual_axis,
     check_pie, check_rainbow, check_3d, check_legend, check_missing_axis_label, check_default_title,
     check_small_text, check_tick_crowding, check_too_many_series, check_spines_gridlines, check_label_ambiguous,
-    check_process_note, check_missing_source, check_value_labels_and_axis, check_title_too_long, check_inverted_axis,
-    check_log_unlabeled, check_cumulative_as_rate, check_stacked_area, check_plot_area_tiny,
+    check_process_note, check_missing_source, check_value_labels_and_axis, check_number_format, check_category_order,
+    check_title_too_long, check_inverted_axis,
+    check_log_unlabeled, check_cumulative_as_rate, check_stacked_area, check_segment_edges, check_invisible_arrow, check_plot_area_tiny,
     check_plot_area_underused, check_plot_aspect, check_cvd, check_contrast,
 ]
 

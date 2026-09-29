@@ -11,6 +11,7 @@ fig.text(0.02, 0.02, "Source: Acme Corp., 2024 annual report", fontsize=11)
 # Ranks may run 1 at the top when the axis says so.
 fig2, ax2 = new("Norway climbed to first place in 2022")
 ax2.plot([2019, 2020, 2021, 2022], [4, 3, 2, 1], color="C0", lw=2, marker="o")
+ax2.set_xticks([2019, 2020, 2021, 2022])
 ax2.set_ylabel("Rank (1 = best)")
 ax2.set_yticks([1, 2, 3, 4])
 ax2.invert_yaxis()

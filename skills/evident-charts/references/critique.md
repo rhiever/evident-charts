@@ -11,7 +11,7 @@ Review any chart (image, code, or both) and return prioritized, evidence-backed 
 ## Procedure
 
 1. Recover the message before anything else: from the image alone, write the one sentence a reader would take away and compare it with the intended point (the title, the user's words, the surrounding text). A mismatch or no clear message is the top finding. If the data disproves the intended headline, the fix follows TI-1.
-2. Run the deterministic checks: `python scripts/check_chart.py <chart.py> --json` for matplotlib (`--list-checks` names them; it tests the drawn colors itself); other stacks: extract the series hexes and run `python scripts/check_palette.py "<hex,...>" --role <role> --mark <area|bar|line|point|text>`. Report results as measured facts; do not re-argue them.
+2. Run the deterministic checks: matplotlib `python scripts/check_chart.py <chart.py> --json`; other stacks `python scripts/check_svg.py <chart.svg> --json [--spec <fig.json | chart.vg.json>]` on an SVG export with live text (`--list-checks` names them; both test the drawn colors). Image only: extract the series hexes and run `python scripts/check_palette.py "<hex,...>" --role <role> --mark <area|bar|line|point|text>`. Report results as measured facts; do not re-argue them.
 3. Walk the checklist. Every "no" quotes the element it is about (label, axis, bar, region); a finding without evidence does not count.
 4. Inspect dense regions (label clusters, legends, small text) at 2x.
 5. A fresh-context reviewer (Review loop) may run steps 1, 3, and 4; otherwise mark the review as a self-review.
@@ -20,12 +20,12 @@ Review any chart (image, code, or both) and return prioritized, evidence-backed 
 
 Each item names the rule to cite.
 
-- Analysis: H22 standard comparison, any transform named; H15 window justified, partial periods like-for-like; H23 n shown, tiny samples unranked; H24 no dropped or miscoded records, standard thresholds; H13 size shown; H11 nothing counted twice, split events linked, every number matches the data.
+- Analysis: H22 standard comparison, any transform named; H15 window justified, partial periods like-for-like; H23 n shown, tiny samples unranked; H24 no dropped or miscoded records, standard thresholds; H13 size shown; H11 nothing counted twice, split events linked, every number matches the data; H25 relative changes give both absolute levels.
 - Message: TI-1 title answers the question as asked; HI-1 every part of the request answered; TI-2 the claim is the most visible element; TI-6 subtitle gives what, units, and when.
 - Form: SEL-2 form fits takeaway and data shape; ENC-1 marks encode the title's measure on a common position scale; TIME-1 lines only over ordered x; PART-2 no pies compared across groups; ENC-6 at most 3-4 encoded variables.
-- Integrity: H1 bars and areas from zero; H2 line range fits the claim; H3 no dual y-axis; H5 no inverted value axis; H8 no 3D; H7 areas scaled by area; H14 money across years adjusted or labeled unadjusted; H9 log scale labeled; U1 uncertainty shown when comparing estimates.
+- Integrity: H1 bars and areas from zero; H2 line range fits the claim; H3 no dual y-axis; H5 no inverted value axis; H8 no 3D; H7 areas scaled by area; H14 money across years adjusted or labeled unadjusted; H9 log scale labeled; U1 uncertainty shown when comparing estimates; H26 fitted lines stay inside the data; TIME-6 gaps left as gaps.
 - Text: LB-1 direct labels where they fit; VL-1 value labels on about 12 or fewer marks, never with the value axis; VL-2 the numbers the comparison needs are shown; AN-1 and AN-3 annotations the story needs, pointing at exact data; TI-7 units stated once; text-overlap and text-clipped clean; TY-2 text at least 12 px at display size; SRC-1 source names publisher and dataset, notes state only supported facts; SRC-2 no process notes or TODOs on the chart.
-- Color: C1 palette type matches the data; C2 accent on gray only when one element is the story, otherwise meaningful groups; C3 at most 4 hues by default; A4 not color alone; C12 and C14 pass CVD and contrast; C11 no rainbow.
+- Color: C1 palette type matches the data; C2 accent on gray only when one element is the story, otherwise meaningful groups; C3 at most 4 hues by default; A4 not color alone; C12 and C14 pass CVD and contrast; C11 no rainbow; C17 filled segments separated.
 - Accessibility: A1 alt text or caption available; A3 data table or CSV linkable.
 
 ## Severity

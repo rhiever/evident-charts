@@ -1,0 +1,351 @@
+{
+ "$schema": "https://vega.github.io/schema/vega/v6.json",
+ "background": "white",
+ "padding": 5,
+ "width": 600,
+ "height": 350,
+ "title": {
+  "text": "West leads every quarter",
+  "subtitle": "Sales, $ millions, 2025",
+  "fontSize": 22,
+  "subtitleFontSize": 15,
+  "anchor": "start"
+ },
+ "style": "cell",
+ "data": [
+  {
+   "name": "source_0",
+   "values": [
+    {
+     "q": "Q1",
+     "region": "West",
+     "v": 12
+    },
+    {
+     "q": "Q2",
+     "region": "West",
+     "v": 14
+    },
+    {
+     "q": "Q3",
+     "region": "West",
+     "v": 15
+    },
+    {
+     "q": "Q4",
+     "region": "West",
+     "v": 17
+    },
+    {
+     "q": "Q1",
+     "region": "East",
+     "v": 9
+    },
+    {
+     "q": "Q2",
+     "region": "East",
+     "v": 10
+    },
+    {
+     "q": "Q3",
+     "region": "East",
+     "v": 10
+    },
+    {
+     "q": "Q4",
+     "region": "East",
+     "v": 11
+    }
+   ]
+  },
+  {
+   "name": "data_0",
+   "source": "source_0",
+   "transform": [
+    {
+     "type": "filter",
+     "expr": "datum.q === 'Q4'"
+    },
+    {
+     "type": "filter",
+     "expr": "isValid(datum[\"v\"]) && isFinite(+datum[\"v\"])"
+    }
+   ]
+  }
+ ],
+ "marks": [
+  {
+   "name": "layer_0_pathgroup",
+   "type": "group",
+   "from": {
+    "facet": {
+     "name": "faceted_path_layer_0_main",
+     "data": "source_0",
+     "groupby": [
+      "region"
+     ]
+    }
+   },
+   "encode": {
+    "update": {
+     "width": {
+      "field": {
+       "group": "width"
+      }
+     },
+     "height": {
+      "field": {
+       "group": "height"
+      }
+     }
+    }
+   },
+   "marks": [
+    {
+     "name": "layer_0_marks",
+     "type": "line",
+     "style": [
+      "line"
+     ],
+     "sort": {
+      "field": "x"
+     },
+     "from": {
+      "data": "faceted_path_layer_0_main"
+     },
+     "encode": {
+      "update": {
+       "strokeWidth": {
+        "value": 3
+       },
+       "stroke": {
+        "scale": "layer_0_color",
+        "field": "region"
+       },
+       "description": {
+        "signal": "\"q: \" + (isValid(datum[\"q\"]) ? isArray(datum[\"q\"]) ? join(datum[\"q\"], ' ') : datum[\"q\"] : \"\"+datum[\"q\"]) + \"; $ millions: \" + (format(datum[\"v\"], \"\")) + \"; region: \" + (isValid(datum[\"region\"]) ? isArray(datum[\"region\"]) ? join(datum[\"region\"], ' ') : datum[\"region\"] : \"\"+datum[\"region\"])"
+       },
+       "x": {
+        "scale": "x",
+        "field": "q"
+       },
+       "y": {
+        "scale": "y",
+        "field": "v"
+       },
+       "defined": {
+        "signal": "isValid(datum[\"v\"]) && isFinite(+datum[\"v\"])"
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "name": "layer_1_marks",
+   "type": "text",
+   "style": [
+    "text"
+   ],
+   "from": {
+    "data": "data_0"
+   },
+   "encode": {
+    "update": {
+     "align": {
+      "value": "left"
+     },
+     "dx": {
+      "value": 6
+     },
+     "fontSize": {
+      "value": 14
+     },
+     "fill": {
+      "scale": "layer_1_color",
+      "field": "region"
+     },
+     "description": {
+      "signal": "\"q: \" + (isValid(datum[\"q\"]) ? isArray(datum[\"q\"]) ? join(datum[\"q\"], ' ') : datum[\"q\"] : \"\"+datum[\"q\"]) + \"; v: \" + (format(datum[\"v\"], \"\")) + \"; region: \" + (isValid(datum[\"region\"]) ? isArray(datum[\"region\"]) ? join(datum[\"region\"], ' ') : datum[\"region\"] : \"\"+datum[\"region\"])"
+     },
+     "x": {
+      "scale": "x",
+      "field": "q"
+     },
+     "y": {
+      "scale": "y",
+      "field": "v"
+     },
+     "text": {
+      "signal": "isValid(datum[\"region\"]) ? datum[\"region\"] : \"\"+datum[\"region\"]"
+     },
+     "baseline": {
+      "value": "middle"
+     }
+    }
+   }
+  },
+  {
+   "name": "layer_2_marks",
+   "type": "text",
+   "style": [
+    "text"
+   ],
+   "from": {
+    "data": "source_0"
+   },
+   "encode": {
+    "update": {
+     "align": {
+      "value": "left"
+     },
+     "dy": {
+      "value": 50
+     },
+     "fontSize": {
+      "value": 13
+     },
+     "fill": {
+      "value": "#767676"
+     },
+     "x": {
+      "value": 0
+     },
+     "y": {
+      "value": 350
+     },
+     "text": {
+      "value": "Source: Company filings"
+     },
+     "baseline": {
+      "value": "middle"
+     }
+    }
+   }
+  }
+ ],
+ "scales": [
+  {
+   "name": "x",
+   "type": "point",
+   "domain": {
+    "fields": [
+     {
+      "data": "source_0",
+      "field": "q"
+     },
+     {
+      "data": "data_0",
+      "field": "q"
+     }
+    ],
+    "sort": true
+   },
+   "range": [
+    0,
+    {
+     "signal": "width"
+    }
+   ],
+   "padding": 0.5
+  },
+  {
+   "name": "y",
+   "type": "linear",
+   "domain": {
+    "fields": [
+     {
+      "data": "source_0",
+      "field": "v"
+     },
+     {
+      "data": "data_0",
+      "field": "v"
+     }
+    ]
+   },
+   "range": [
+    {
+     "signal": "height"
+    },
+    0
+   ],
+   "nice": true,
+   "zero": true
+  },
+  {
+   "name": "layer_0_color",
+   "type": "ordinal",
+   "domain": {
+    "data": "source_0",
+    "field": "region",
+    "sort": true
+   },
+   "range": [
+    "#0072B2",
+    "#D55E00"
+   ]
+  },
+  {
+   "name": "layer_1_color",
+   "type": "ordinal",
+   "domain": {
+    "data": "data_0",
+    "field": "region",
+    "sort": true
+   },
+   "range": [
+    "#0072B2",
+    "#C15500"
+   ]
+  }
+ ],
+ "axes": [
+  {
+   "scale": "y",
+   "orient": "left",
+   "gridScale": "x",
+   "grid": true,
+   "tickCount": {
+    "signal": "ceil(height/40)"
+   },
+   "domain": false,
+   "labels": false,
+   "aria": false,
+   "maxExtent": 0,
+   "minExtent": 0,
+   "ticks": false,
+   "zindex": 0
+  },
+  {
+   "scale": "x",
+   "orient": "bottom",
+   "grid": false,
+   "labelAngle": 0,
+   "labelBaseline": "top",
+   "zindex": 0
+  },
+  {
+   "scale": "y",
+   "orient": "left",
+   "grid": false,
+   "title": "$ millions",
+   "labelOverlap": true,
+   "tickCount": {
+    "signal": "ceil(height/40)"
+   },
+   "zindex": 0
+  }
+ ],
+ "config": {
+  "axis": {
+   "labelFontSize": 14,
+   "titleFontSize": 14
+  },
+  "style": {
+   "cell": {
+    "stroke": null
+   }
+  }
+ }
+}

@@ -38,6 +38,7 @@
     "circle": {"size": 120, "strokeWidth": 0},
     "scale": {"bandPaddingInner": 0.32},
     "bar": {"binSpacing": 1},
+    "arc": {"stroke": "white", "strokeWidth": 1},
     "text": {"fontSize": 16, "color": "#595959"}
   }
 }

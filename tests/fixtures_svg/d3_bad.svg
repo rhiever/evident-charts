@@ -1,0 +1,33 @@
+<!-- Hand-written in d3-axis output structure with the house CSS (assets/themes/evident_d3.css) inlined. -->
+<svg xmlns="http://www.w3.org/2000/svg" class="ev-chart" width="800" height="600" viewBox="0 0 800 600">
+<style>.ev-chart { font-family: Helvetica, Arial, "Liberation Sans", "DejaVu Sans", sans-serif; }
+.ev-chart text { fill: #595959; font-size: 15.2px; }
+.ev-chart .ev-title { fill: #333333; font-weight: 700; font-size: 25.6px; }
+.ev-chart .ev-subtitle { fill: #767676; font-size: 17.6px; }
+.ev-chart .ev-source { fill: #767676; font-size: 12.8px; }
+.ev-chart .ev-annotation { fill: #595959; font-size: 16px; }
+.ev-axis .domain, .ev-axis .tick line { stroke: #8C8C8C; stroke-width: 1.1px; }
+.ev-grid .tick line { stroke: #E6E6E6; stroke-width: 1.1px; }
+.ev-chart .ev-context { stroke: #BDBDBD; fill: #BDBDBD; }
+.ev-chart .ev-accent { stroke: #D55E00; fill: #D55E00; }
+.ev-chart .ev-alt { stroke: #0072B2; fill: #0072B2; }
+.ev-chart path.ev-series { fill: none; stroke-linejoin: round; stroke-width: 2.2px; }
+.ev-chart path.ev-series.ev-accent { stroke-width: 4.4px; }
+.ev-chart text.ev-label { fill: #767676; stroke: none; }
+.ev-chart text.ev-label.ev-accent { fill: #C15500; font-weight: 700; }</style>
+<rect width="800" height="600" fill="#FFFFFF"/>
+<text class="ev-title" x="40" y="52">Exports doubled while imports stalled</text>
+<text class="ev-subtitle" x="40" y="82">Goods trade, $ billions, 2015-2024</text>
+<g class="ev-grid"><g class="tick" transform="translate(0,520)"><line x1="80" x2="680"/></g><g class="tick" transform="translate(0,420)"><line x1="80" x2="680"/></g><g class="tick" transform="translate(0,320)"><line x1="80" x2="680"/></g><g class="tick" transform="translate(0,220)"><line x1="80" x2="680"/></g><g class="tick" transform="translate(0,120)"><line x1="80" x2="680"/></g></g>
+<g class="ev-axis ev-axis--bare" font-size="10"><g class="tick" transform="translate(80,520)"><text x="-10" dy="0.32em" text-anchor="end">0</text></g><g class="tick" transform="translate(80,420)"><text x="-10" dy="0.32em" text-anchor="end">50</text></g><g class="tick" transform="translate(80,320)"><text x="-10" dy="0.32em" text-anchor="end">100</text></g><g class="tick" transform="translate(80,220)"><text x="-10" dy="0.32em" text-anchor="end">150</text></g><g class="tick" transform="translate(80,120)"><text x="-10" dy="0.32em" text-anchor="end">200</text></g></g>
+<g class="ev-axis" font-size="10"><path class="domain" d="M80,520H680"/><g class="tick" transform="translate(80.0,520)"><line y2="6"/><text y="9" dy="0.71em" text-anchor="middle">2015</text></g><g class="tick" transform="translate(280.0,520)"><line y2="6"/><text y="9" dy="0.71em" text-anchor="middle">2018</text></g><g class="tick" transform="translate(480.0,520)"><line y2="6"/><text y="9" dy="0.71em" text-anchor="middle">2021</text></g><g class="tick" transform="translate(680.0,520)"><line y2="6"/><text y="9" dy="0.71em" text-anchor="middle">2024</text></g></g>
+<path class="ev-alt" fill-opacity="0.5" d="M346.7,520L346.7,440L480.0,440L480.0,520Z"/>
+<text class="ev-annotation" x="413.3" y="440" dy="0.32em" text-anchor="middle">Recession</text>
+<path class="ev-series ev-context" d="M80.0,340L146.7,336L213.3,330L280.0,334L346.7,328L413.3,332L480.0,326L546.7,330L613.3,324L680.0,328"/>
+<path class="ev-series ev-accent" d="M80.0,400L146.7,380L213.3,360L280.0,330L346.7,320L413.3,340L480.0,280L546.7,240L613.3,220L680.0,180"/>
+<circle class="ev-accent" cx="280.0" cy="330" r="5"/>
+<text class="ev-label ev-accent" x="280.0" y="330" dy="0.32em" text-anchor="middle">Exports</text>
+<text class="ev-label" x="270.0" y="336" dy="0.32em">Imports</text>
+<text class="ev-annotation" x="620" y="150" dy="0.32em">Exports hit a record in 2024</text>
+<text class="ev-source" x="40" y="580" style="fill: #BBBBBB">Source: Trade office</text>
+</svg>

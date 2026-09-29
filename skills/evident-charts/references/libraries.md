@@ -1,6 +1,6 @@
 # Libraries
 
-The house look per stack, plus traps that silently break a rule. Each theme file's header comment shows its usage. Sizes come from `assets/presets.json` (its `_doc` gives the units and the pt formula); symmetric diverging idioms per library are in palettes.json `library_names.centered_midpoint`.
+The house look per stack, plus traps that silently break a rule. Each theme file's header comment shows its usage. Sizes come from `assets/presets.json` (its `_doc` gives the units and the pt formula); symmetric diverging idioms per library are in palettes.json `library_names.centered_midpoint`. Every non-matplotlib stack: export an SVG with live text and run `scripts/check_svg.py` (export commands in its docstring).
 
 ## matplotlib (default stack)
 
@@ -16,6 +16,7 @@ Pitfalls:
 - Lollipop, dumbbell, and paired-dot stems: `solid_capstyle="butt"` (`capstyle="butt"` for `hlines`/`vlines`); the style sheet already sets butt for `plot` lines.
 - Dense point labels (20+): `adjustText` (optional), with sampled trend-line points in the avoid arrays: `adjust_text(texts, x=np.r_[x, lx], y=np.r_[y, ly])`. Layout is stochastic: loop `np.random.seed(n)` until `check_chart.py` reports 0 text overlaps, hardcode that seed, and re-search after any limit or aspect change.
 - `TwoSlopeNorm(vcenter=0, vmin=a, vmax=b)` with `|a| != |b|` stretches each side to full saturation (-1 looks as extreme as +3); use it only when that is intended and stated.
+- Touching fills (C17): `edgecolor="white", linewidth=ev.size("grid")` on `bar`/`barh`/`stackplot`, `wedgeprops=dict(...)` on `pie`; never a global patch edge, which erases narrow bars.
 - Horizontal bars without value labels: move the grid to x with `ax.grid(axis="y", visible=False); ax.grid(axis="x", visible=True)`.
 - Dates: the style sets the concise date converter; on narrow canvases also cap ticks with `ax.xaxis.set_major_locator(mdates.AutoDateLocator(maxticks=4))`.
 - seaborn and pandas `.plot`: create axes with `ev.figure`, pass `ax=ax`, and remove any auto legend (`ax.get_legend().remove()`) before direct labeling.
@@ -30,6 +31,8 @@ Pitfalls:
 Pitfalls:
 - Facets: keep the default `scales = "fixed"` (SCL-1); `"free"`/`"free_y"` gives each panel its own axis.
 - Zooming: `scale_y_continuous(limits = ...)` drops out-of-range data (bars vanish, stats are recomputed). Zoom lines with `coord_cartesian(ylim = ...)`; seat bars with `scale_y_continuous(expand = expansion(mult = c(0, 0.05)))`.
+- Stack segments, pie slices, and tiles need `colour = "white", linewidth = 0.3` on the geom (C17); a theme cannot set geom edges.
+- Check: `ggsave("chart.svg", p, device = svglite::svglite)`, then check_svg.py; bar baselines and twin axes need checking by eye.
 - `ggsave` without width and height uses the device size, not the preset; use `ggsave_evident`.
 - `scale_fill_gradient2(midpoint = 0)` centers the colors but not the legend, and `scale_fill_distiller(palette = "RdBu")` does not center on 0: give either `limits = c(-m, m)` (`scale_fill_evident_div(m)`).
 
@@ -42,13 +45,13 @@ Pitfalls:
 - Horizontal bars: `fig.update_yaxes(nticks=0, showgrid=False, ticks="", automargin=False)` (the template's `nticks` skips category labels) with `margin.l` = 40 + longest label (about 8.4 px per character) + 8, so labels start on the title's edge (automargin pushes them to the canvas edge). Value axis: `visible=False` when value labels replace it, else `showgrid=True`.
 
 Pitfalls:
-- Bar autorange includes zero, but an explicit `range=` on a bar axis (often copied from a line chart) truncates; keep `range[0] = 0` for bars.
-- `textposition="outside"` value labels get clipped at the autorange edge: set `cliponaxis=False` and widen the value range, or hide the value axis (`visible=False`; hiding only tick labels and grid leaves its line and ticks) when labels replace it.
+- `textposition="outside"` labels: `cliponaxis=False` and widen the range, or `visible=False` on the value axis when labels replace it (hiding only tick labels and grid leaves its line and ticks).
+- Stacked bars: `marker_line=dict(color="white", width=1)` on each trace (C17); the template edges pies only.
 - Diverging: set `zmid=0` (heatmap) or `cmid=0` (marker colors); explicit `zmin`/`zmax` of unequal magnitude with no mid shifts the neutral color off 0.
 
 ## Vega-Lite / Altair
 
-`assets/themes/evident_vegalite.json` (its `$comment` shows how to merge the config). Altair 5.5+: `alt.theme.register("evident", enable=True)(lambda: alt.theme.ThemeConfig(cfg))`, where `cfg` is the whole file minus `$comment`; older Altair: `alt.themes.register("evident", lambda: cfg)` then `alt.themes.enable("evident")`. Export: `chart.save("chart.png", scale_factor=2)` (needs `vl-convert-python`).
+`assets/themes/evident_vegalite.json` (its `$comment` shows how to merge the config). Altair 5.5+: `alt.theme.register("evident", enable=True)(lambda: alt.theme.ThemeConfig(cfg))`, where `cfg` is the whole file minus `$comment`; older Altair: `alt.themes.register("evident", lambda: cfg)` then `alt.themes.enable("evident")`. Export: `chart.save("chart.png", scale_factor=2)` (needs `vl-convert-python`); to check, also `chart.save("chart.svg")` and `chart.to_dict(format="vega")` as the spec.
 
 - Single and layered views fill 800x600 including titles (autosize fit); a chart-level `width`/`height` is also the total size. Concat and facet ignore fit: set each view's `width`/`height`.
 
@@ -57,13 +60,13 @@ Pitfalls:
 
 Pitfalls:
 - `scale.zero` defaults to true for quantitative position scales, pulling lines and dots to zero and flattening them: set `scale: {zero: false}` for lines and dots when justified, never for bars.
-- An explicit `scale.domain` on a bar axis that excludes zero truncates bars without warning.
+- Stacked bars: `mark_bar(stroke="white", strokeWidth=1)` (C17); the theme edges arcs only.
 - `scale.domainMid: 0` puts the neutral color at 0 but keeps asymmetric extremes; set `domain: [-m, m]` too.
 - Temporal x from integer years: use `type: "temporal"` with `timeUnit: "year"` or `axis: {format: "d"}`, or years print as 2,000.
 
 ## D3
 
-- `assets/themes/evident_d3.css`: `class="ev-chart"` on the `<svg>`, plus classes `ev-title ev-subtitle ev-source ev-annotation ev-axis ev-axis--bare ev-grid ev-context ev-accent ev-alt ev-series ev-label ev-stem`.
+- `assets/themes/evident_d3.css`: `class="ev-chart"` on the `<svg>`, plus classes `ev-title ev-subtitle ev-source ev-annotation ev-axis ev-axis--bare ev-grid ev-context ev-accent ev-alt ev-series ev-label ev-stem ev-segment` (white edge between stack segments, slices, and tiles).
 - `assets/themes/evident_d3_tokens.js`: `EV` colors and presets (type, strokes, margins), `evApply(svg, dest)` sets the viewBox and size variables, `evSize(role, dest)` (type or stroke role), `evColor(highlight)(name)`, `evDiverging(d3, values)`.
 - Standalone SVG or PNG: inline the CSS as a `<style>` child of the `<svg>` and set `width`/`height`. Renderers without `var()` support (librsvg's `rsvg-convert`, Inkscape) fall back to blog sizes: export other presets with a browser renderer or set sizes as attributes.
 

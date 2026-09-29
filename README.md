@@ -21,7 +21,7 @@ Critique this chart and fix it.        (attach the PNG, the script, or both)
 - **Checks the data first:** totals mixed in with their parts, duplicate rows, placeholder codes, preliminary months.
 - **Picks the form from the point:** a bar, a line, a table, or one big number.
 - **Writes the takeaway as the title** and cites the real publisher, not the file name.
-- **Lints the chart in code** (matplotlib): overlapping or clipped text, labels on data, bars that skip zero, dual axes, color-blind confusable colors, low contrast.
+- **Lints the chart in code** (matplotlib directly; Plotly, Vega-Lite, ggplot2, and D3 through their SVG export): overlapping or clipped text, labels on data, bars that skip zero, dual axes, color-blind confusable colors, low contrast.
 - **Reviews the rendered image** with a fresh reviewer that sees only the PNG, and fixes what it finds, up to three rounds.
 - **Critiques any chart** you hand it, with ranked fixes that cite a rule.
 
@@ -78,7 +78,7 @@ gemini extensions install https://github.com/rhiever/evident-charts --auto-updat
 
 ## Requirements
 
-Your agent runs the skill's check scripts on your machine. For matplotlib charts they use your project's Python and matplotlib, which you already have. For other libraries (Plotly, ggplot2, D3, and so on), the palette check needs only Python 3, and the image review needs nothing extra.
+Your agent runs the skill's check scripts on your machine with your project's Python. The data check needs pandas; matplotlib charts need matplotlib. Other libraries are checked through an SVG export in headless Chrome (Plotly's image export already installs one); without Chrome, only the chart-spec checks and the image review run.
 
 ## Update
 

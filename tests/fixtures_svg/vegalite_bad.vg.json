@@ -1,0 +1,358 @@
+{
+ "$schema": "https://vega.github.io/schema/vega/v6.json",
+ "background": "white",
+ "padding": 5,
+ "width": 400,
+ "height": 250,
+ "title": {
+  "text": "Sales by region",
+  "fontSize": 9,
+  "frame": "group"
+ },
+ "style": "cell",
+ "data": [
+  {
+   "name": "source_0",
+   "values": [
+    {
+     "region": "North",
+     "sales": 92,
+     "margin": 0.12
+    },
+    {
+     "region": "South",
+     "sales": 95,
+     "margin": 0.18
+    },
+    {
+     "region": "East",
+     "sales": 97,
+     "margin": 0.15
+    },
+    {
+     "region": "West",
+     "sales": 99,
+     "margin": 0.21
+    }
+   ]
+  },
+  {
+   "name": "data_1",
+   "source": "source_0",
+   "transform": [
+    {
+     "type": "stack",
+     "groupby": [
+      "region"
+     ],
+     "field": "sales",
+     "sort": {
+      "field": [],
+      "order": []
+     },
+     "as": [
+      "sales_start",
+      "sales_end"
+     ],
+     "offset": "zero"
+    },
+    {
+     "type": "filter",
+     "expr": "isValid(datum[\"sales\"]) && isFinite(+datum[\"sales\"])"
+    }
+   ]
+  },
+  {
+   "name": "data_2",
+   "source": "source_0",
+   "transform": [
+    {
+     "type": "filter",
+     "expr": "isValid(datum[\"margin\"]) && isFinite(+datum[\"margin\"])"
+    }
+   ]
+  }
+ ],
+ "marks": [
+  {
+   "name": "layer_0_marks",
+   "type": "rect",
+   "clip": true,
+   "style": [
+    "bar"
+   ],
+   "from": {
+    "data": "data_1"
+   },
+   "encode": {
+    "update": {
+     "fill": {
+      "scale": "color",
+      "field": "region"
+     },
+     "ariaRoleDescription": {
+      "value": "bar"
+     },
+     "description": {
+      "signal": "\"region: \" + (isValid(datum[\"region\"]) ? isArray(datum[\"region\"]) ? join(datum[\"region\"], ' ') : datum[\"region\"] : \"\"+datum[\"region\"]) + \"; sales: \" + (format(datum[\"sales\"], \"\"))"
+     },
+     "x": {
+      "scale": "x",
+      "field": "region"
+     },
+     "width": {
+      "signal": "max(0.25, bandwidth('x'))"
+     },
+     "y": {
+      "scale": "layer_0_y",
+      "field": "sales_end"
+     },
+     "y2": {
+      "scale": "layer_0_y",
+      "field": "sales_start"
+     }
+    }
+   }
+  },
+  {
+   "name": "layer_1_marks",
+   "type": "line",
+   "style": [
+    "line"
+   ],
+   "sort": {
+    "field": "x"
+   },
+   "from": {
+    "data": "source_0"
+   },
+   "encode": {
+    "update": {
+     "stroke": {
+      "value": "#999999"
+     },
+     "description": {
+      "signal": "\"region: \" + (isValid(datum[\"region\"]) ? isArray(datum[\"region\"]) ? join(datum[\"region\"], ' ') : datum[\"region\"] : \"\"+datum[\"region\"]) + \"; margin: \" + (format(datum[\"margin\"], \"\"))"
+     },
+     "x": {
+      "scale": "x",
+      "field": "region",
+      "band": 0.5
+     },
+     "y": {
+      "scale": "layer_1_y",
+      "field": "margin"
+     },
+     "defined": {
+      "signal": "isValid(datum[\"margin\"]) && isFinite(+datum[\"margin\"])"
+     }
+    }
+   }
+  },
+  {
+   "name": "layer_2_marks",
+   "type": "text",
+   "style": [
+    "text"
+   ],
+   "from": {
+    "data": "data_2"
+   },
+   "encode": {
+    "update": {
+     "dy": {
+      "value": -8
+     },
+     "fontSize": {
+      "value": 14
+     },
+     "fill": {
+      "value": "black"
+     },
+     "description": {
+      "signal": "\"region: \" + (isValid(datum[\"region\"]) ? isArray(datum[\"region\"]) ? join(datum[\"region\"], ' ') : datum[\"region\"] : \"\"+datum[\"region\"]) + \"; margin: \" + (format(datum[\"margin\"], \"\"))"
+     },
+     "x": {
+      "scale": "x",
+      "field": "region",
+      "band": 0.5
+     },
+     "y": {
+      "scale": "layer_2_y",
+      "field": "margin"
+     },
+     "text": {
+      "value": "Margin rising fast across all regions"
+     },
+     "align": {
+      "value": "center"
+     },
+     "baseline": {
+      "value": "middle"
+     }
+    }
+   }
+  }
+ ],
+ "scales": [
+  {
+   "name": "x",
+   "type": "band",
+   "domain": {
+    "fields": [
+     {
+      "data": "data_1",
+      "field": "region"
+     },
+     {
+      "data": "source_0",
+      "field": "region"
+     },
+     {
+      "data": "data_2",
+      "field": "region"
+     }
+    ],
+    "sort": true
+   },
+   "range": [
+    0,
+    {
+     "signal": "width"
+    }
+   ],
+   "paddingInner": 0.1,
+   "paddingOuter": 0.05
+  },
+  {
+   "name": "color",
+   "type": "ordinal",
+   "domain": {
+    "data": "data_1",
+    "field": "region",
+    "sort": true
+   },
+   "range": [
+    "#D55E00",
+    "#009E73",
+    "#E69F00",
+    "#56B4E9"
+   ]
+  },
+  {
+   "name": "layer_0_y",
+   "type": "linear",
+   "domain": [
+    90,
+    100
+   ],
+   "range": [
+    {
+     "signal": "height"
+    },
+    0
+   ],
+   "zero": false
+  },
+  {
+   "name": "layer_1_y",
+   "type": "linear",
+   "domain": {
+    "data": "source_0",
+    "field": "margin"
+   },
+   "range": [
+    {
+     "signal": "height"
+    },
+    0
+   ],
+   "nice": true,
+   "zero": true
+  },
+  {
+   "name": "layer_2_y",
+   "type": "linear",
+   "domain": {
+    "data": "data_2",
+    "field": "margin"
+   },
+   "range": [
+    {
+     "signal": "height"
+    },
+    0
+   ],
+   "nice": true,
+   "zero": true
+  }
+ ],
+ "axes": [
+  {
+   "scale": "layer_0_y",
+   "orient": "left",
+   "gridScale": "x",
+   "grid": true,
+   "tickCount": {
+    "signal": "ceil(height/40)"
+   },
+   "domain": false,
+   "labels": false,
+   "aria": false,
+   "maxExtent": 0,
+   "minExtent": 0,
+   "ticks": false,
+   "zindex": 0
+  },
+  {
+   "scale": "x",
+   "orient": "bottom",
+   "grid": false,
+   "title": "region",
+   "labelAlign": "right",
+   "labelAngle": 270,
+   "labelBaseline": "middle",
+   "zindex": 0
+  },
+  {
+   "scale": "layer_0_y",
+   "orient": "left",
+   "grid": false,
+   "title": "sales",
+   "labelOverlap": true,
+   "tickCount": {
+    "signal": "ceil(height/40)"
+   },
+   "zindex": 0
+  },
+  {
+   "scale": "layer_1_y",
+   "orient": "right",
+   "grid": false,
+   "title": "margin",
+   "labelOverlap": true,
+   "tickCount": {
+    "signal": "ceil(height/40)"
+   },
+   "zindex": 0
+  },
+  {
+   "scale": "layer_2_y",
+   "orient": "right",
+   "grid": false,
+   "title": "margin",
+   "labelOverlap": true,
+   "tickCount": {
+    "signal": "ceil(height/40)"
+   },
+   "zindex": 0
+  }
+ ],
+ "legends": [
+  {
+   "fill": "color",
+   "symbolType": "square",
+   "title": "region"
+  }
+ ]
+}

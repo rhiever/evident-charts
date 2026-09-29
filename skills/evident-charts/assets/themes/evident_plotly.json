@@ -40,6 +40,7 @@
   },
   "data": {
     "scatter": [{"line": {"width": 2.2}, "marker": {"size": 11, "line": {"width": 0}}}],
-    "bar": [{"marker": {"line": {"width": 0}}}]
+    "bar": [{"marker": {"line": {"width": 0}}}],
+    "pie": [{"marker": {"line": {"width": 1, "color": "white"}}}]
   }
 }

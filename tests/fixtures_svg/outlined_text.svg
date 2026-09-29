@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!-- Hand-written in matplotlib's default SVG form (svg.fonttype "path"): text drawn as <use> of glyph paths. -->
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" width="200pt" height="100pt" viewBox="0 0 200 100" xmlns="http://www.w3.org/2000/svg" version="1.1">
+ <metadata>Created with matplotlib (https://matplotlib.org/)</metadata>
+ <defs>
+  <path id="DejaVuSans-31" d="M 794 531 L 1825 531 L 1825 4091 L 703 3866 L 703 4441 L 1819 4666 L 2450 4666 L 2450 531 L 3481 531 L 3481 0 L 794 0 L 794 531 z" transform="scale(0.015625)"/>
+  <path id="DejaVuSans-30" d="M 2034 4250 Q 1547 4250 1301 3770 Q 1056 3291 1056 2328 Q 1056 1369 1301 889 Q 1547 409 2034 409 Q 2525 409 2770 889 Q 3016 1369 3016 2328 Q 3016 3291 2770 3770 Q 2525 4250 2034 4250 z" transform="scale(0.015625)"/>
+ </defs>
+ <path d="M 20 80 L 180 20" style="fill: none; stroke: #0072b2; stroke-width: 2"/>
+ <g transform="translate(20 95) scale(0.1 -0.1)">
+  <use xlink:href="#DejaVuSans-31"/>
+  <use xlink:href="#DejaVuSans-30" transform="translate(63.623438 0)"/>
+  <use xlink:href="#DejaVuSans-30" transform="translate(127.246875 0)"/>
+ </g>
+</svg>

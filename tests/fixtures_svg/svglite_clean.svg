@@ -1,0 +1,51 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!-- Hand-written in svglite's output format (ggplot2 + ggsave(device = svglite)): no classes, pt viewBox. -->
+<svg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' class='svglite' width='576.00pt' height='432.00pt' viewBox='0 0 576.00 432.00'>
+<defs>
+  <style type='text/css'><![CDATA[
+    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite rect, .svglite circle {
+      fill: none;
+      stroke: #000000;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-miterlimit: 10.00;
+    }
+    .svglite text {
+      white-space: pre;
+    }
+  ]]></style>
+</defs>
+<rect width='100%' height='100%' style='stroke: none; fill: #FFFFFF;'/>
+<defs>
+  <clipPath id='cpMC4wMHw1NzYuMDB8MC4wMHw0MzIuMDA='>
+    <rect x='0.00' y='0.00' width='576.00' height='432.00' />
+  </clipPath>
+</defs>
+<g clip-path='url(#cpMC4wMHw1NzYuMDB8MC4wMHw0MzIuMDA=)'>
+<rect x='0.00' y='0.00' width='576.00' height='432.00' style='stroke-width: 1.07; stroke: #FFFFFF; fill: #FFFFFF;' />
+</g>
+<defs>
+  <clipPath id='cpPANEL'>
+    <rect x='60.00' y='80.00' width='480.00' height='290.00' />
+  </clipPath>
+</defs>
+<g clip-path='url(#cpPANEL)'>
+<rect x='80.00' y='260.80' width='90.00' height='109.20' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #BDBDBD;' />
+<text x='125.00' y='254.80' text-anchor='middle' style='font-size: 10.50px; fill: #333333; font-family: "Arial";' textLength='10.92px' lengthAdjust='spacingAndGlyphs'>42</text>
+<rect x='198.00' y='227.00' width='90.00' height='143.00' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #BDBDBD;' />
+<text x='243.00' y='221.00' text-anchor='middle' style='font-size: 10.50px; fill: #333333; font-family: "Arial";' textLength='10.92px' lengthAdjust='spacingAndGlyphs'>55</text>
+<rect x='316.00' y='211.40' width='90.00' height='158.60' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #BDBDBD;' />
+<text x='361.00' y='205.40' text-anchor='middle' style='font-size: 10.50px; fill: #333333; font-family: "Arial";' textLength='10.92px' lengthAdjust='spacingAndGlyphs'>61</text>
+<rect x='434.00' y='141.20' width='90.00' height='228.80' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #0072B2;' />
+<text x='479.00' y='135.20' text-anchor='middle' style='font-size: 10.50px; fill: #333333; font-family: "Arial";' textLength='10.92px' lengthAdjust='spacingAndGlyphs'>88</text>
+</g>
+<g clip-path='url(#cpMC4wMHw1NzYuMDB8MC4wMHw0MzIuMDA=)'>
+<text x='125.00' y='386.00' text-anchor='middle' style='font-size: 10.50px; fill: #4D4D4D; font-family: "Arial";' textLength='27.30px' lengthAdjust='spacingAndGlyphs'>North</text>
+<text x='243.00' y='386.00' text-anchor='middle' style='font-size: 10.50px; fill: #4D4D4D; font-family: "Arial";' textLength='27.30px' lengthAdjust='spacingAndGlyphs'>South</text>
+<text x='361.00' y='386.00' text-anchor='middle' style='font-size: 10.50px; fill: #4D4D4D; font-family: "Arial";' textLength='21.84px' lengthAdjust='spacingAndGlyphs'>East</text>
+<text x='479.00' y='386.00' text-anchor='middle' style='font-size: 10.50px; fill: #4D4D4D; font-family: "Arial";' textLength='21.84px' lengthAdjust='spacingAndGlyphs'>West</text>
+<text x='20.00' y='34.00' style='font-size: 15.00px; font-weight: bold; fill: #333333; font-family: "Arial";' textLength='249.60px' lengthAdjust='spacingAndGlyphs'>West sells twice what North does</text>
+<text x='20.00' y='56.00' style='font-size: 11.50px; fill: #595959; font-family: "Arial";' textLength='155.48px' lengthAdjust='spacingAndGlyphs'>Units sold per store, 2025</text>
+<text x='20.00' y='418.00' style='font-size: 9.60px; fill: #595959; font-family: "Arial";' textLength='104.83px' lengthAdjust='spacingAndGlyphs'>Source: Retail survey</text>
+</g>
+</svg>

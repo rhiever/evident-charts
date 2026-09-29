@@ -158,6 +158,39 @@ def test_value_label_number_matching():
     assert not check_chart.number_matches("1.2", 1.3)
 
 
+def test_number_format_fails_offsets_scientific_and_year_ticks_and_warns_mixed_decimals():
+    hits = [(f["severity"], f["where"], f["detail"].split(" (")[0].split(" print")[0])
+            for f in lint("number_format.py")["findings"] if f["check"] == "number-format"]
+    assert hits == [
+        ("fail", "fig0/ax0 y-axis", "offset text '1e6' changes every tick's value"),
+        ("fail", "fig1/ax0 x-axis", "offset text '+2.019e3' changes every tick's value"),
+        ("fail", "fig2/ax0 y-axis", "scientific-notation ticks"),
+        ("fail", "fig3/ax0 x-axis", "year ticks"),
+        ("fail", "fig4/ax0 x-axis", "year ticks"),
+        ("warn", "fig5/ax0 y-axis", "ticks mix [0, 1, 2] decimals"),
+        ("warn", "fig6/ax0 value labels", "value labels mix [0, 1, 2, 4] decimals")]
+
+
+def test_number_format_passes_abbreviations_counts_bare_zero_separate_label_sets_log_ticks_and_value_axes():
+    assert "number-format" not in checks(lint("number_format_ok.py"))
+    assert check_chart.decimals("$1,234.50M") == 2 and check_chart.decimals("−0.5") == 1
+    assert check_chart.decimals("n/a") is None
+
+
+def test_category_order_warns_unsorted_bars_nominal_lines_and_evenly_spaced_uneven_years():
+    res = lint("category_order.py")
+    hits = [(f["severity"], f["where"], f["detail"]) for f in res["findings"] if f["check"] == "category-order"]
+    assert hits == [
+        ("warn", "fig0/ax0 y-axis", "6 nominal bars unsorted (3 of 15 pairs out of order)"),
+        ("warn", "fig1/ax0 x-axis", "5 nominal bars unsorted (4 of 10 pairs out of order)"),
+        ("warn", "fig2/ax0 x-axis", "line drawn across nominal categories (North, South, East, ...)"),
+        ("warn", "fig3/ax0 x-axis", "years 2010-2020 evenly spaced as categories, hiding gaps of [1, 2, 3, 4] years")]
+
+
+def test_category_order_skips_tails_sections_ties_ordinal_labels_numeric_years_waterfalls_and_shared_rows():
+    assert "category-order" not in checks(lint("category_order_ok.py"))
+
+
 def test_title_too_long_by_lines_and_the_same_measured_fit_as_fits_title():
     import evident as ev
     ns = {}
@@ -401,6 +434,26 @@ def test_stacked_area_with_three_or_more_layers_warns():
     assert "stacked-area" not in checks(lint("cumulative_rate.py"))  # 2 layers
 
 
+def test_segment_edges_warns_touching_fills_without_background_edges():
+    hits = [(f["severity"], f["where"], f["detail"], f["fix"]) for f in lint("segment_edges.py")["findings"]
+            if f["check"] == "segment-edges"]
+    assert [h[:3] for h in hits] == [
+        ("warn", "fig0/ax0", "4 boundaries between differently colored bar segments have no background-colored edge"),
+        ("warn", "fig1/ax0", "3 boundaries between differently colored pie wedges have no background-colored edge"),
+        ("warn", "fig2/ax0", "1 boundary between differently colored stacked area layers has no background-colored "
+                             "edge"),
+        ("warn", "fig3/ax0", "4 boundaries between differently colored bar segments have no background-colored edge")]
+    assert 'ax.bar(..., edgecolor="white", linewidth=ev.size("grid"))' in hits[0][3]
+    assert 'wedgeprops=dict(edgecolor="white", linewidth=ev.size("grid"))' in hits[1][3]
+    assert 'ax.stackplot(..., edgecolor="white", linewidth=ev.size("grid"))' in hits[2][3]
+
+
+def test_segment_edges_passes_white_edges_same_color_gaps_narrow_bars_bands_heatmaps_and_violins():
+    assert "segment-edges" not in checks(lint("segment_edges_ok.py"))
+    assert [f["where"] for f in lint("stacked_area.py")["findings"] if f["check"] == "segment-edges"] == \
+        ["fig0/ax0", "fig1/ax0"]  # the nested uncertainty bands in fig2 do not sit on one another
+
+
 def test_text_covering_a_data_marker_fails():
     hits = [f["where"] for f in lint("text_on_marker.py")["findings"] if f["check"] == "text-overlap"]
     assert hits == ["fig0/ax0 annotation 'Chile' x marker", "fig0/ax0 text 'Dip here' x marker"]
@@ -466,3 +519,14 @@ def test_text_on_area_fails_straddles_and_faint_inside_but_allows_own_layer_cell
                     ("fig0/ax0 text 'Faint'", "text inside a #e69f00 fill"),
                     ("fig1/ax0 text 'Across many cells'", "text straddles an edge between fills")]
     assert "contrast" not in checks(res)  # texts on fills are judged once, by text-on-area
+
+
+def test_invisible_arrow_fails_unstyled_zero_width_and_background_colored_arrows():
+    hits = [(f["severity"], f["where"]) for f in lint("arrow_invisible.py")["findings"] if f["check"] == "invisible-arrow"]
+    assert hits == [("fail", "fig0/ax0 annotation 'Default'"), ("fail", "fig0/ax0 annotation 'Colored, no width'"),
+                    ("fail", "fig0/ax0 annotation 'Width, white'")]
+
+
+def test_invisible_arrow_passes_stroked_filled_and_arrowless_annotations():
+    for name in ("arrow_visible.py", "arrow_through_text.py"):
+        assert "invisible-arrow" not in checks(lint(name))

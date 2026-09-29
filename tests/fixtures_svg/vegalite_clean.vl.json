@@ -1,0 +1,159 @@
+{
+ "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+ "width": 600,
+ "height": 350,
+ "title": {
+  "text": "West leads every quarter",
+  "subtitle": "Sales, $ millions, 2025",
+  "fontSize": 22,
+  "subtitleFontSize": 15,
+  "anchor": "start"
+ },
+ "config": {
+  "axis": {
+   "labelFontSize": 14,
+   "titleFontSize": 14
+  },
+  "view": {
+   "stroke": null
+  }
+ },
+ "data": {
+  "values": [
+   {
+    "q": "Q1",
+    "region": "West",
+    "v": 12
+   },
+   {
+    "q": "Q2",
+    "region": "West",
+    "v": 14
+   },
+   {
+    "q": "Q3",
+    "region": "West",
+    "v": 15
+   },
+   {
+    "q": "Q4",
+    "region": "West",
+    "v": 17
+   },
+   {
+    "q": "Q1",
+    "region": "East",
+    "v": 9
+   },
+   {
+    "q": "Q2",
+    "region": "East",
+    "v": 10
+   },
+   {
+    "q": "Q3",
+    "region": "East",
+    "v": 10
+   },
+   {
+    "q": "Q4",
+    "region": "East",
+    "v": 11
+   }
+  ]
+ },
+ "layer": [
+  {
+   "mark": {
+    "type": "line",
+    "strokeWidth": 3
+   },
+   "encoding": {
+    "x": {
+     "field": "q",
+     "type": "ordinal",
+     "title": null,
+     "axis": {
+      "labelAngle": 0
+     }
+    },
+    "y": {
+     "field": "v",
+     "type": "quantitative",
+     "title": "$ millions"
+    },
+    "color": {
+     "field": "region",
+     "scale": {
+      "range": [
+       "#0072B2",
+       "#D55E00"
+      ]
+     },
+     "legend": null
+    }
+   }
+  },
+  {
+   "transform": [
+    {
+     "filter": "datum.q === 'Q4'"
+    }
+   ],
+   "mark": {
+    "type": "text",
+    "align": "left",
+    "dx": 6,
+    "fontSize": 14
+   },
+   "encoding": {
+    "x": {
+     "field": "q",
+     "type": "ordinal"
+    },
+    "y": {
+     "field": "v",
+     "type": "quantitative"
+    },
+    "text": {
+     "field": "region"
+    },
+    "color": {
+     "field": "region",
+     "legend": null,
+     "scale": {
+      "range": [
+       "#0072B2",
+       "#C15500"
+      ]
+     }
+    }
+   }
+  },
+  {
+   "mark": {
+    "type": "text",
+    "align": "left",
+    "fontSize": 13,
+    "color": "#767676",
+    "dy": 50
+   },
+   "encoding": {
+    "x": {
+     "value": 0
+    },
+    "y": {
+     "value": 350
+    },
+    "text": {
+     "value": "Source: Company filings"
+    }
+   }
+  }
+ ],
+ "resolve": {
+  "scale": {
+   "color": "independent"
+  }
+ }
+}

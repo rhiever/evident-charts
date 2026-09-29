@@ -62,11 +62,12 @@ CMP-4 [T] A benchmark or aggregate shown among its components (All items, euro a
 
 ## Time
 
-TIME-1 [E] Draw a line only when x is ordered and continuous or evenly sampled; never connect nominal categories. Break: ordinal levels with a real sequence (age bands, Likert) when the trend across them is the point.
+TIME-1 [E] Draw a line only when x is ordered and continuous or evenly sampled; never connect nominal categories. Break: ordinal levels with a real sequence (age bands, Likert) when the trend across them is the point. check: category-order
 TIME-2 [E] About 8 or fewer discrete period totals compared one to one: columns. Break: trend emphasis across few points: line with markers.
-TIME-3 [P] Time runs left to right on x with true spacing; show gaps in irregular sampling instead of equalizing them. Break: vertical timelines in mobile scroll stories.
+TIME-3 [P] Time runs left to right on x with true spacing; show gaps in irregular sampling instead of equalizing them. Break: vertical timelines in mobile scroll stories. check: category-order
 TIME-4 [E] No stacked area when readers must compare any layer except the bottom one or the total. Break: total plus rough composition, 4 or fewer layers, key layer on the baseline. check: stacked-area
 TIME-5 [E] Connected scatter only for two co-evolving series when the loop or path is the story, with the direction of time annotated.
+TIME-6 [P] A missing period in a regular series stays missing: break the line (keep NaN; never zero-fill, drop the row, or interpolate silently), mark an isolated point between gaps, and name the gap in the note. Break: a bridge the claim needs, dashed and noted. check: gaps
 
 ## Part-to-whole
 

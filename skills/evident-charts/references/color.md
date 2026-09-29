@@ -29,7 +29,8 @@ C13 [E] Small marks (thin lines, small points, small text) need bigger color dif
 C14 [P] Contrast against the background: text at least 4.5:1 (3:1 for large text, 18 pt or 14 pt bold); marks needed to read the point at least 3:1. Break: context gray may fall below 3:1 only when the focal data is accented and direct-labeled; sequential steps cannot all pass, so label them or ship the table. check: contrast, text-on-area, palette
 C15 [P] The takeaway survives a grayscale render: accent and context differ in lightness, not only hue; slots that share lightness (vermillion and bluish green) pair only with direct labels. check: palette
 C16 [T] Light background only. A required dark background gets its own palette (never an inversion) and a rerun of every check against it.
+C17 [P] Adjacent filled segments (stack segments, pie or donut slices, treemap tiles, waffle cells) are separated by a thin background-colored edge set on those marks (idioms in libraries.md), since neighboring fills rarely reach 3:1 against each other; never globally, which erases narrow bars. Break: heatmaps, whose cells form one surface. check: segment-edges
 
 ## Acting on color checks
 
-For matplotlib, check_chart.py runs cvd, contrast, and text-on-area on the colors actually drawn. Other stacks: run check_palette.py on any color outside the house tokens. Fix every FAIL; resolve each WARN with direct labels or a data table, or say in one line why it is acceptable.
+check_chart.py (matplotlib) and check_svg.py (other stacks) run cvd, contrast, and text-on-area on the colors actually drawn; without an SVG, run check_palette.py on any color outside the house tokens. Fix every FAIL; resolve each WARN with direct labels or a data table, or say in one line why it is acceptable.

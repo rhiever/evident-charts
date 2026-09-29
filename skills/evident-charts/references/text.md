@@ -14,7 +14,7 @@ TI-7 [P] State units where readers will find them: on every tick label, or in th
 
 AN-1 [E] Annotate the story, not the chart: each callout a phrase or short sentence on a feature the argument needs (peak, crossover, outlier, event); a rise or overtake story marks the crossings or rank changes it rests on. Default 1-3; more only when each carries a needed number, fewer on small screens (LY-2). Callout numbers follow H11.
 AN-2 [E] Place text by what it says: the pattern in the title, numbers at the mark they describe (an average gets its own mark), context at its date, encoding notes ("dashed = forecast") at the relevant mark or axis. Break: on mobile, numbered notes may move below the chart.
-AN-3 [P] Put each callout in empty space near its target; arrow tips land on the exact computed coordinate, no leader crosses an unrelated series, and stat notes go in an empty corner, not where a fit line ends. Place all callouts, render once, and fix every collision in one pass. check: text-overlap, text-on-line, text-on-area
+AN-3 [P] Put each callout in empty space near its target; arrow tips land on the exact computed coordinate, no leader crosses an unrelated series, and stat notes go in an empty corner, not where a fit line ends. Place all callouts, render once, and fix every collision in one pass. check: text-overlap, text-on-line, text-on-area, invisible-arrow
 AN-4 [T] Skip the arrowhead when the segment is too short to read as direction. Lollipop and dumbbell stems stop at the marker center.
 
 ## Labels and legends
@@ -49,14 +49,14 @@ HI-3 [E] Default to a general audience: takeaway title, direct labels, plain uni
 
 ## Sorting
 
-SO-1 [P] Sort unordered categories by value or by the takeaway comparison; keep natural order for time and ordinal levels. Break: long lookup lists (alphabetical); a fixed order shared across charts in one piece.
+SO-1 [P] Sort unordered categories by value or by the takeaway comparison; keep natural order for time and ordinal levels. Break: long lookup lists (alphabetical); a fixed order shared across charts in one piece. check: category-order
 SO-2 [E] Legend entries, keys, stack segments, end-of-line labels, and panels follow the visual order of the data.
 
 ## Number formatting
 
-NF-1 [P] Round to the precision the story needs, with the same decimals across an axis or label set (12.8k, not 12,831).
-NF-2 [P] Abbreviate large numbers (k, M, bn; words in titles for lay readers); never an offset or scientific-notation label ("1e6").
-NF-3 [T] Dates look like dates: integer years without separators or decimals, abbreviated months, the year on the first label only.
+NF-1 [P] Round to the precision the story needs, with the same decimals across an axis or label set (12.8k, not 12,831). check: number-format
+NF-2 [P] Abbreviate large numbers (k, M, bn; words in titles for lay readers); never an offset or scientific-notation label ("1e6"). check: number-format
+NF-3 [T] Dates look like dates: integer years without separators or decimals, abbreviated months, the year on the first label only. check: number-format
 Percent vs percentage points: H21.
 
 ## Source and notes
