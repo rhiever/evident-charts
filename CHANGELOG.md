@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.2
+
+- Added a portable plugin manifest, listing text, and EC icons.
+- Clarified user overrides, tool requirements, and skipped checks. Review can use an allowed separate reviewer or self-review.
+- Added a reproducible release ZIP builder and package tests.
+- Updated installation guidance and added an acceptance checklist.
+
 ## 0.2.1
 
 - Removed `check_data.py`. In test runs it raised false alarms and added nothing agents didn't already catch; the data checks are back to short written rules.

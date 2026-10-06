@@ -8,7 +8,10 @@ evident-charts is an agent skill for explanatory charts. The installable skill i
 - Lint a matplotlib chart: `python skills/evident-charts/scripts/check_chart.py <chart.py> --dest <preset>` (`--list-checks` for names)
 - Lint an SVG from any other stack: `python skills/evident-charts/scripts/check_svg.py <chart.svg> --dest <preset> [--spec <json>]` (needs Chrome)
 - Validate palettes: `python skills/evident-charts/scripts/check_palette.py --preset all`
-- Release: bump the version (kept in sync by `tests/test_versions.py`), update `CHANGELOG.md`, run tests plus `gh skill publish --dry-run`, `claude plugin validate --strict .` and `uvx --from "git+https://github.com/agentskills/agentskills#subdirectory=skills-ref" skills-ref validate skills/evident-charts`, push, then `gh skill publish --tag vX.Y.Z`.
+- Prepare a release: sync versions in root, Claude, Codex, Gemini, and skill metadata; update `CHANGELOG.md`; run tests, palette checks, `gh skill publish --dry-run`, `claude plugin validate --strict .`, and `uvx --from "git+https://github.com/agentskills/agentskills#subdirectory=skills-ref" skills-ref validate skills/evident-charts`.
+- Package: `python3 scripts/build_release.py` writes `dist/evident-charts-VERSION.zip` and prints its SHA256. Update its explicit file list when adding resources. Keep root and Codex OpenAI interface metadata identical; paths start with `./` and resolve from the plugin root.
+- Acceptance: use `docs/acceptance.md` from the unpacked ZIP; record results and skipped checks in `.local/`. Check user-facing prose with writing-humanizer; instructions and code are excluded by that skill.
+- Publish only when explicitly requested: push and run `gh skill publish --tag vX.Y.Z`, or upload the ZIP to the OpenAI dashboard. Developer verification, hosted scans, review, and approval happen outside this repo.
 
 ## Writing the skill
 

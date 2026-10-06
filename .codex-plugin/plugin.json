@@ -1,17 +1,29 @@
 {
   "name": "evident-charts",
-  "version": "0.2.1",
-  "description": "Teaches AI coding agents to make clear, honest charts, and checks each one before you see it.",
-  "author": { "name": "Randy Olson", "url": "https://randalolson.com" },
+  "version": "0.2.2",
+  "description": "Helps coding agents make clear, honest charts and review them with the checks their tools support.",
+  "author": {
+    "name": "Randy Olson",
+    "url": "https://randalolson.com"
+  },
   "repository": "https://github.com/rhiever/evident-charts",
   "license": "MIT",
   "skills": "./skills/",
   "interface": {
     "displayName": "Evident Charts",
-    "shortDescription": "Clear, honest charts from your coding agent",
+    "shortDescription": "Clear charts, honest checks",
     "developerName": "Randy Olson",
     "category": "Developer Tools",
-    "capabilities": ["Read", "Write"],
-    "defaultPrompt": ["Critique this chart and list fixes.", "Chart this CSV to show the main trend."]
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "Critique this chart and list fixes.",
+      "Chart this CSV to show the main trend."
+    ],
+    "longDescription": "Create and improve explanatory charts for reports, slides, articles, and social posts. Evident Charts helps coding agents choose a chart, check the data, and review the result. It includes checks for matplotlib and SVG exports from other chart libraries. Python is needed to run the checks; SVG layout checks also need Chrome. When a tool is unavailable, the agent reports which checks it skipped.",
+    "logo": "./assets/logo.png",
+    "composerIcon": "./assets/composer-icon.png"
   }
 }

@@ -1,30 +1,34 @@
 ---
 name: evident-charts
 description: >-
-  Makes explanatory charts whose point is evident, using evidence-tagged dataviz
-  rules. Use whenever you create, revise, restyle, or review a chart, plot,
-  graph, or figure meant to show a reader something: matplotlib, seaborn,
-  pandas .plot, ggplot2, Plotly, Altair/Vega-Lite, D3, or any PNG/SVG chart for
-  a blog, report, paper, slide, newsletter, or social post. Starts from sound
-  analysis of the data, picks the chart type from the takeaway and data shape,
-  and runs deterministic checks (overlaps, baselines, dual axes, palettes).
-  Also use for "critique this chart", "why does this plot look bad", "make this
-  figure better", or a pasted chart image.
+  Use when creating, revising, or reviewing explanatory data charts for a
+  blog, report, paper, slide, newsletter, or social post. Includes matplotlib,
+  seaborn, pandas .plot, ggplot2, Plotly, Altair/Vega-Lite, D3, and PNG/SVG
+  charts. Also use for "critique this chart", "why does this plot look bad",
+  or "make this figure better" with a chart image. Not for unrelated coding,
+  software architecture diagrams, or non-data illustrations.
 license: MIT
 metadata:
   author: Randy Olson
-  version: "0.2.1"
+  version: "0.2.2"
 ---
 
 # evident-charts
 
-Charts that make one point a reader gets at a glance. Paths are relative to this skill's directory (Claude Code: `${CLAUDE_SKILL_DIR}`); run `scripts/` with the project's Python.
+Charts that make one point a reader gets at a glance. Resolve resources from this installed skill's directory, not the working directory (Claude Code: `${CLAUDE_SKILL_DIR}` when available). Run scripts by absolute path with the project's Python.
 
 Critique, review, or a chart image with a question: follow `references/critique.md`; otherwise the workflow below.
 
+## Host and user instructions
+
+- User instructions and host requirements take precedence over this skill, including its evidence rules. Preserve an explicit override, explain the consequence briefly, and report the rule deviation and any failed check; do not silently replace the requested chart.
+- Use only available, permitted tools. Python 3.10+ runs the checks; matplotlib checks also need matplotlib and numpy. Palette and SVG scripts use the standard library; SVG layout checks need Chrome/Chromium. Optional helpers or exports may need their own libraries.
+- Without Chrome, run SVG spec checks when a supported spec is available; otherwise skip SVG checks. Without Python, skip script checks. Review a rendered image when the host can view it. Report checks run, failed, skipped, and not checkable, with reasons. A partial check is not a full pass.
+- Use a fresh reviewer only when delegation and vision are available and allowed by the user and host. Otherwise self-review; if no image can be viewed, mark visual review skipped. Do not install tools or delegate outside the host's permissions.
+
 ## Rules
 
-Rule lines read `ID [tag] rule. Break: escape. check: name`. `[E]` experimental evidence: break only with a stated reason. `[P]` practitioner consensus: break for a clear reason. `[T]` taste: bend freely. A project's style guide overrides the house look (`assets/`) and `[T]` rules, never `[E]` integrity rules. `check:` names a check in `scripts/check_chart.py` (`scripts/check_svg.py` runs a subset of them on other stacks; `--list-checks` names them); `palette` means `scripts/check_palette.py`. Citations: `references/sources.md`, only when asked why.
+Rule lines read `ID [tag] rule. Break: escape. check: name`. `[E]` experimental evidence: break only with a stated reason. `[P]` practitioner consensus: break for a clear reason. `[T]` taste: bend freely. A project's style guide overrides the house look (`assets/`) and `[T]` rules; retain integrity guidance unless explicitly overridden. `check:` names a check in `scripts/check_chart.py` (`scripts/check_svg.py` runs a subset of them on other stacks; `--list-checks` names them); `palette` means `scripts/check_palette.py`. Citations: `references/sources.md`, only when asked why.
 
 ## Workflow
 
@@ -32,9 +36,9 @@ Rule lines read `ID [tag] rule. Break: escape. check: name`. `[E]` experimental 
 2. **Brief** in one line: `Takeaway: <claim the data supports> | Audience: <lay/expert> | Destination: <preset>`. The takeaway answers every part of the request (HI-1). Ask at most two questions, only if the takeaway is ambiguous. Presets (`assets/presets.json`): `blog` (default), `mobile` (phone, phone-read newsletters), `social` (X), `social_portrait` (LinkedIn, Instagram), `slide` (deck), `report` (print, memos, docs).
 3. **Choose the form** from the takeaway and data shape; open `references/choosing.md` only when the form is not obvious. It may be a table or one hero number over a sparkline or part bar (`stats_size="hero"`, LY-6). Render alternatives (`references/candidates.md`) only when unsure between two honest forms.
 4. **Build** in the project's stack; otherwise Python + matplotlib with `scripts/evident.py` (other stacks: `references/libraries.md`). Fit title and subtitle with `ev.fits_title` and `ev.fits_subtitle`.
-5. **Check.** matplotlib: `python scripts/check_chart.py <chart.py> --dest <preset>`; other stacks: export an SVG with live text and run `python scripts/check_svg.py <chart.svg> --dest <preset> --spec <figure or Vega JSON>` (its docstring gives each stack's export). Both include color-blindness and contrast. Fix all failures together.
-6. **Review** the rendered PNG, never the code (`references/critique.md`, Review loop): a fresh-context subagent given only the PNG, request, and destination, else a self-review of the reopened image. Fix every P0 and P1, re-render, recheck, re-review; stop at a round without P0/P1, at most 3 rounds.
-7. **Deliver** the format asked for (`report` may add a PDF): absolute paths to the image and script; the brief; analysis choices a reader should know (any transform, exclusions, thresholds, minimum n); how you identified the source, your confidence, and anything unconfirmed (SRC-1); alt text (A1); any rule broken, with the reason; the one-line review log.
+5. **Check** with available tools. matplotlib: `python <skill-dir>/scripts/check_chart.py <chart.py> --dest <preset>`; other stacks: export an SVG with live text and run `python <skill-dir>/scripts/check_svg.py <chart.svg> --dest <preset> --spec <figure or Vega JSON>` (its docstring gives each stack's export). Color-blindness and contrast checks need the render measurement. Fix failures together, except explicit user overrides; retain those findings in the report.
+6. **Review** the rendered PNG, never the code (`references/critique.md`, Review loop), using an allowed fresh reviewer or self-review. Fix P0/P1 issues within the user's instructions, re-render, recheck, re-review; stop when none remain to fix, at most 3 rounds. Report unresolved findings and skipped work.
+7. **Deliver** the format asked for (`report` may add a PDF): absolute paths to available outputs; the brief; analysis choices a reader should know (any transform, exclusions, thresholds, minimum n); source confidence and anything unconfirmed (SRC-1); alt text when the image is viewable (A1); deviations; checks run, failed, skipped, or not checkable; the one-line review log. Never claim an output was rendered or inspected when it was not.
 
 ## Analysis checks
 

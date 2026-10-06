@@ -1,10 +1,22 @@
 {
   "name": "evident-charts",
-  "version": "0.2.1",
-  "description": "Teaches AI coding agents to make clear, honest charts, and checks each one before you see it.",
-  "author": { "name": "Randy Olson", "url": "https://randalolson.com" },
+  "version": "0.2.2",
+  "description": "Helps coding agents make clear, honest charts and review them with the checks their tools support.",
+  "author": {
+    "name": "Randy Olson",
+    "url": "https://randalolson.com"
+  },
   "homepage": "https://github.com/rhiever/evident-charts",
   "repository": "https://github.com/rhiever/evident-charts",
   "license": "MIT",
-  "keywords": ["data-visualization", "charts", "matplotlib", "ggplot2", "plotly", "vega-lite", "d3", "critique"]
+  "keywords": [
+    "data-visualization",
+    "charts",
+    "matplotlib",
+    "ggplot2",
+    "plotly",
+    "vega-lite",
+    "d3",
+    "critique"
+  ]
 }

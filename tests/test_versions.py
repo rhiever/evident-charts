@@ -12,6 +12,7 @@ def test_versions_match():
 
     skill = (ROOT / "skills/evident-charts/SKILL.md").read_text()
     versions = {
+        "plugin.json": manifest("plugin.json"),
         ".claude-plugin/plugin.json": manifest(".claude-plugin/plugin.json"),
         ".codex-plugin/plugin.json": manifest(".codex-plugin/plugin.json"),
         "gemini-extension.json": manifest("gemini-extension.json"),

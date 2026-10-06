@@ -2,19 +2,22 @@
 
 Review any chart (image, code, or both) and return prioritized, evidence-backed fixes. Vision judgments are noisy: message first, then measurements, then binary checks with quoted evidence.
 
+Follow the user's instructions and host permissions. Run only available checks; distinguish measured results, visual judgments, and things not verified. Preserve explicit rule overrides and report their consequences.
+
 ## Inputs
 
 - Image only: judge the pixels and say which checks cannot be verified (computed numbers, scope, units).
 - Code (preferred with the image): render and lint a scratch copy (the script may overwrite its own files) and critique the render. Cross-check annotation numbers against the data, and period words in the title ("since 2020") against the date filter. Code that will not run gets static checks only; say so.
 - A URL or interactive chart: ask for a screenshot or use a browser tool.
+- No image-viewing tool: use code/spec checks if available, mark visual review skipped, and request an accessible image only when needed. Do not invent a recovered message, findings, alt text, or scores. Image-only inputs cannot verify numbers against source data.
 
 ## Procedure
 
 1. Recover the message before anything else: from the image alone, write the one sentence a reader would take away and compare it with the intended point (the title, the user's words, the surrounding text). A mismatch or no clear message is the top finding. If the data disproves the intended headline, the fix follows TI-1.
-2. Run the deterministic checks: matplotlib `python scripts/check_chart.py <chart.py> --json`; other stacks `python scripts/check_svg.py <chart.svg> --json [--spec <fig.json | chart.vg.json>]` on an SVG export with live text (`--list-checks` names them; both test the drawn colors). Image only: extract the series hexes and run `python scripts/check_palette.py "<hex,...>" --role <role> --mark <area|bar|line|point|text>`. Report results as measured facts; do not re-argue them.
+2. Run available deterministic checks by absolute path from the installed skill: matplotlib `python <skill-dir>/scripts/check_chart.py <chart.py> --json`; other stacks `python <skill-dir>/scripts/check_svg.py <chart.svg> --json [--spec <fig.json | chart.vg.json>]` on an SVG export with live text. Without Chrome, only supported spec checks run; without a spec, skip SVG checks. Image only: run `check_palette.py` when exact series hexes can be obtained; do not claim measured colors from guessed hexes. Without Python, skip script checks. Report which ran and which did not.
 3. Walk the checklist. Every "no" quotes the element it is about (label, axis, bar, region); a finding without evidence does not count.
 4. Inspect dense regions (label clusters, legends, small text) at 2x.
-5. A fresh-context reviewer (Review loop) may run steps 1, 3, and 4; otherwise mark the review as a self-review.
+5. An allowed fresh-context reviewer (Review loop) may run steps 1, 3, and 4; otherwise self-review when the image is viewable, or mark visual review skipped.
 
 ## Checklist
 
@@ -42,8 +45,8 @@ Five issues by default, most severe first, plus every further P0; plain text:
 
 ```
 Chart critique: <file(s)>
-Method: <rendered from script | image only>; checks: <which ran>; review: <self | fresh context>
-Recovered message: "<sentence>" | Intended: "<sentence>" | <MATCH | MISMATCH>
+Method: <rendered from script | image only | static code/spec only>; checks: <which ran | none>; review: <self | fresh context | skipped: reason>
+Recovered message: "<sentence | unavailable>" | Intended: "<sentence | unknown>" | <MATCH | MISMATCH | NOT CHECKABLE>
 
 [P0] <rule ID> [tag] <what is wrong>
   Where: <element>
@@ -52,7 +55,9 @@ Recovered message: "<sentence>" | Intended: "<sentence>" | <MATCH | MISMATCH>
 
 Also fixed: <lesser issues the rebuild also addresses, one line>
 Works: <1-2 things the chart does well>
-Passed: <rule IDs>
+Passed: <checks actually run and passed>
+Failed: <checks actually run and failed, including user-required deviations>
+Skipped: <checks or review omitted and why>
 Not checkable: <rule IDs and why>
 ```
 
@@ -62,12 +67,12 @@ No aggregate score; if a number is wanted, report `checks passed: N/M applicable
 
 Build workflow step 6, after the deterministic checks pass. Vision judges are noisy and go easy on their own work, so the reviewer sees only what a reader sees.
 
-- Reviewer: a new fresh-context subagent with vision each round, given only the prompt below: PNG paths, the user's request verbatim, the destination. Never the code, data, brief, your reasoning, or earlier findings.
-- Fallback (no subagent tool, or you are a subagent): self-review with the same prompt. Reopen the PNG with your image viewer; judge the pixels, not your memory of the code; write the recovered message before rereading the request.
-- Round: fix every P0 and P1 in one batch, re-render, rerun the deterministic checks, review again. Stop at the first round without P0/P1; after round 3, deliver and list what remains.
+- Reviewer: a new fresh-context subagent with vision only when the user and host allow delegation and you are not a subagent. Give only the prompt below: PNG paths, the user's request verbatim, the destination. Never the code, data, brief, your reasoning, or earlier findings.
+- Fallback (delegation unavailable or prohibited, or you are a subagent): self-review with the same prompt. Reopen the PNG with your image viewer; judge the pixels, not your memory of the code. Without image access, skip visual review and explain why; do not score unseen pixels.
+- Round: fix P0/P1 issues in one batch within the user's instructions, re-render, rerun available checks, review again. Retain user-required deviations as findings. Stop when no fixable P0/P1 remains; after round 3, deliver and list what remains.
 - P2/P3: fix only when cheap and uncontroversial. Never undo an earlier round's fix on taste. A finding contradicted by the data or a passing check loses; log it as rejected.
 - Scores track progress across rounds; findings, not scores, drive fixes.
-- Log, one line in the delivery reply: `Review: <N> rounds (<fresh context | self>); fixed: <...>; remaining: <none | ...>; last scores story/honesty/polish/fit <a/b/c/d>`.
+- Log, one line in the delivery reply: `Review: <N> rounds (<fresh context | self | skipped: reason>); fixed: <...>; remaining: <none | ...>`. Rubric scores are optional visual judgments, never verification results.
 
 ```
 Review this chart as a skeptical outside reader seeing it for the first time. You have not seen its code or data. Do not edit files or ask questions.

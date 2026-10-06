@@ -1,6 +1,6 @@
 {
   "name": "evident-charts",
-  "description": "Teaches AI coding agents to make clear, honest charts, and checks each one before you see it.",
+  "description": "Helps coding agents make clear, honest charts and review them with the checks their tools support.",
   "owner": {
     "name": "Randy Olson",
     "url": "https://randalolson.com"
