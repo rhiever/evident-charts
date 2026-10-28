@@ -93,4 +93,4 @@ Not checkable: <rule IDs>
 
 ## Fixing
 
-If the user asked for fixes, apply them; otherwise ask. With code or data: apply all fixes in one batch, re-render, rerun the checks, show both versions with `python scripts/side_by_side.py <before.png> <after.png> -o <compare.png> --labels Before After`, and print absolute paths. With only an image, offer to rebuild the chart if the user can supply the data.
+If the user asked for fixes, apply them; otherwise ask. With code or data: apply all fixes in one batch, re-render, rerun the checks, show both versions with `python <skill-dir>/scripts/side_by_side.py <before.png> <after.png> -o <compare.png> --labels Before After`, and print absolute paths. With only an image, offer to rebuild the chart if the user can supply the data.

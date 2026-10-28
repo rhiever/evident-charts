@@ -2,7 +2,7 @@
 
 Optional sugar; charts must follow the skill's rules with or without it. Typical use:
 
-    import sys; sys.path.insert(0, "<skill>/scripts"); import evident as ev
+    import sys; sys.path.insert(0, "<skill-dir>/scripts"); import evident as ev
     fig, ax = ev.figure("blog")                      # or social, social_portrait, slide, report, mobile; height=, rows=n
     c = ev.colors(names, highlight="US")             # dict name -> color: accent for the story, gray for context
     ...plot...

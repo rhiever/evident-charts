@@ -6,7 +6,7 @@ Use only when 2+ honest forms from choosing.md fit the takeaway and you cannot t
 
 - 2-3 forms that differ in chart family or comparison layout; palette, font, or orientation variants do not count.
 - Build each quickly with the real data and the same brief and title; signal, not polish.
-- Save in the chart script's folder as `candidates/<slug>_A.png`, `_B.png`, print absolute paths, and view them together with `scripts/side_by_side.py`. Choose from the renders, never from code.
+- Save in the chart script's folder as `candidates/<slug>_A.png`, `_B.png`, print absolute paths, and view them together with `<skill-dir>/scripts/side_by_side.py`. Choose from the renders, never from code.
 
 ## Compare
 
