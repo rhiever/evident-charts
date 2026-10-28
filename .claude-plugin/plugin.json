@@ -1,7 +1,8 @@
 {
   "name": "evident-charts",
-  "version": "0.2.2",
-  "description": "Helps coding agents make clear, honest charts and review them with the checks their tools support.",
+  "displayName": "Evident Charts",
+  "version": "0.2.3",
+  "description": "Makes clear, honest charts that state their point, and critiques charts you share. Checks labels, axes, and colors on the rendered chart before you see it.",
   "author": {
     "name": "Randy Olson",
     "url": "https://randalolson.com"

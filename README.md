@@ -1,6 +1,6 @@
 # evident-charts
 
-Helps coding agents make clear, honest charts and review them with the checks their tools support. Works in Claude Code, Codex, Cursor, and other agents that support skills.
+Helps Claude and other agents make clear, honest charts and critique the ones you share. Works in Claude Code, claude.ai chat, Cowork, Codex, Cursor, and other agents that support skills.
 
 ![A typical draft ranking raw electric-car counts on a log scale it never mentions, next to the version evident-charts produced after critiquing it: battery-electric share of new cars by country](examples/hero.png)
 
@@ -83,6 +83,14 @@ gemini extensions install https://github.com/rhiever/evident-charts --auto-updat
 - Image review needs an agent that can view images. A separate reviewer is optional.
 
 Without Chrome, supported chart-spec checks can still run. Without Python, the agent can review a viewable image but cannot run the scripts. It reports skipped checks and whether it used self-review. An installation of Plotly or Kaleido does not guarantee Chrome is installed.
+
+## What it runs
+
+- Instructions and reference files that the agent reads.
+- Python scripts that size and style matplotlib charts, check palettes, and check the rendered chart. They open only the skill's own files and the files the agent passes them. `check_chart.py` runs the matplotlib script it checks, so any file that script writes still gets written.
+- For SVG layout checks, `check_svg.py` starts a local headless Chrome or Chromium on a temporary page holding the SVG.
+- No MCP servers, hooks, or background processes. The scripts make no network requests, install nothing, and keep nothing after they exit except the chart files the agent asks for. If Chrome is missing, `check_svg.py` prints how to install it.
+- In claude.ai chat, Chrome usually isn't available, so SVG layout checks are skipped and reported. matplotlib and palette checks still run.
 
 ## Update
 
