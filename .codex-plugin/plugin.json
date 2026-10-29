@@ -1,7 +1,7 @@
 {
   "name": "evident-charts",
-  "version": "0.2.2",
-  "description": "Helps coding agents make clear, honest charts and review them with the checks their tools support.",
+  "version": "0.2.3",
+  "description": "Makes clear, honest charts that state their point, and critiques charts you share. Checks labels, axes, and colors on the rendered chart before you see it.",
   "author": {
     "name": "Randy Olson",
     "url": "https://randalolson.com"
@@ -22,7 +22,7 @@
       "Critique this chart and list fixes.",
       "Chart this CSV to show the main trend."
     ],
-    "longDescription": "Create and improve explanatory charts for reports, slides, articles, and social posts. Evident Charts helps coding agents choose a chart, check the data, and review the result. It includes checks for matplotlib and SVG exports from other chart libraries. Python is needed to run the checks; SVG layout checks also need Chrome. When a tool is unavailable, the agent reports which checks it skipped.",
+    "longDescription": "Create and improve explanatory charts for reports, slides, articles, and social posts. Evident Charts helps agents choose a chart, check the data, and review the result. It includes checks for matplotlib and SVG exports from other chart libraries. Python is needed to run the checks; SVG layout checks also need Chrome. When a tool is unavailable, the agent reports which checks it skipped.",
     "logo": "./assets/logo.png",
     "composerIcon": "./assets/composer-icon.png"
   }

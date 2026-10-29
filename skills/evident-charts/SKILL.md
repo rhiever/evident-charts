@@ -10,12 +10,12 @@ description: >-
 license: MIT
 metadata:
   author: Randy Olson
-  version: "0.2.2"
+  version: "0.2.3"
 ---
 
 # evident-charts
 
-Charts that make one point a reader gets at a glance. Resolve resources from this installed skill's directory, not the working directory (Claude Code: `${CLAUDE_SKILL_DIR}` when available). Run scripts by absolute path with the project's Python.
+Charts that make one point a reader gets at a glance. `<skill-dir>` is this skill's folder: `${CLAUDE_SKILL_DIR}` where the host fills it in, else the folder holding this SKILL.md (in claude.ai chat, its copy in the sandbox), never the working directory. Run scripts by absolute path with the project's Python.
 
 Critique, review, or a chart image with a question: follow `references/critique.md`; otherwise the workflow below.
 

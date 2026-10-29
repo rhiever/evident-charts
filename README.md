@@ -1,6 +1,6 @@
 # evident-charts
 
-Helps coding agents make clear, honest charts and review them with the checks their tools support. Works in Claude Code, Codex, Cursor, and other agents that support skills.
+Helps Claude and other agents make clear, honest charts and critique the ones you share. Works in Claude Code, claude.ai chat, Cowork, Codex, Cursor, and other agents that support skills.
 
 ![A typical draft ranking raw electric-car counts on a log scale it never mentions, next to the version evident-charts produced after critiquing it: battery-electric share of new cars by country](examples/hero.png)
 
@@ -83,6 +83,12 @@ gemini extensions install https://github.com/rhiever/evident-charts --auto-updat
 - Image review needs an agent that can view images. A separate reviewer is optional.
 
 Without Chrome, supported chart-spec checks can still run. Without Python, the agent can review a viewable image but cannot run the scripts. It reports skipped checks and whether it used self-review. An installation of Plotly or Kaleido does not guarantee Chrome is installed.
+
+## What it runs
+
+- Python scripts that size, style, and check charts. `check_chart.py` runs the matplotlib script it checks, so whatever that script does still happens.
+- A local headless Chrome for SVG layout checks (`check_svg.py`). Chrome fetches any remote fonts or images the SVG links to.
+- No MCP servers, hooks, or network requests of its own.
 
 ## Update
 

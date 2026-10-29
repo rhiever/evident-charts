@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.3
+
+- Ready for Anthropic's plugin directory: a display name, a plain-language description for chat and Cowork users, and a README section on what the plugin runs.
+- SKILL.md finds its scripts in claude.ai chat, where the skill folder is copied into the sandbox and `${CLAUDE_SKILL_DIR}` isn't filled in.
+
 ## 0.2.2
 
 - Added a portable plugin manifest, listing text, and EC icons.
