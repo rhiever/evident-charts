@@ -86,11 +86,9 @@ Without Chrome, supported chart-spec checks can still run. Without Python, the a
 
 ## What it runs
 
-- Instructions and reference files that the agent reads.
-- Python scripts that size and style matplotlib charts, check palettes, and check the rendered chart. They open only the skill's own files and the files the agent passes them, and `check_svg.py` looks in standard install locations for Chrome. `check_chart.py` runs the matplotlib script it checks, so whatever that script does, such as reading a URL or writing a file, still happens.
-- For SVG layout checks, `check_svg.py` starts a local headless Chrome or Chromium on a temporary page holding the SVG. Chrome renders the SVG as given, so it fetches any remote image or font the SVG links to.
-- No MCP servers, hooks, or background processes. The scripts make no network requests of their own and install nothing. Apart from Python and matplotlib caches, they keep nothing after they exit except the chart files the agent asks for. If Chrome is missing, `check_svg.py` prints how to install it.
-- In claude.ai chat, Chrome usually isn't available, so SVG layout checks are skipped and reported. matplotlib and palette checks still run.
+- Python scripts that size, style, and check charts. `check_chart.py` runs the matplotlib script it checks, so whatever that script does still happens.
+- A local headless Chrome for SVG layout checks (`check_svg.py`). Chrome fetches any remote fonts or images the SVG links to.
+- No MCP servers, hooks, or network requests of its own.
 
 ## Update
 
