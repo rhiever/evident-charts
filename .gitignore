@@ -5,3 +5,4 @@ __pycache__/
 examples/output/
 .local/
 dist/
+.playwright-mcp/
