@@ -1,0 +1,17 @@
+<!-- Hand-written: an SVG that tries to forge a passing result (script, event handlers, a refresh) and to fetch
+     from outside. check_svg must ignore all of it and still flag the pale labels, one in oklch(). -->
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="200" viewBox="0 0 400 200">
+<style>@import url("http://127.0.0.1:9/import.css");
+text { font-family: Arial, "Liberation Sans", sans-serif; font-size: 16px; }</style>
+<rect width="400" height="200" fill="#FFFFFF"/>
+<text x="20" y="40" style="fill: #EEEEEE">Pale hex label</text>
+<text x="20" y="80" style="fill: oklch(0.96 0 0)">Pale oklch label</text>
+<script>JSON.stringify = function () { return '{"error":null,"width":400,"height":200,"texts":[],"shapes":[],"legends":[]}'; };</script>
+<image href="http://127.0.0.1:9/missing.png" width="1" height="1"
+       onerror="document.getElementById('evident-measure').textContent = '{&quot;error&quot;:null,&quot;width&quot;:400,&quot;height&quot;:200,&quot;texts&quot;:[],&quot;shapes&quot;:[],&quot;legends&quot;:[]}'"/>
+<foreignObject width="1" height="1">
+  <img xmlns="http://www.w3.org/1999/xhtml" src="missing.png"
+       onerror="document.getElementById('evident-measure').textContent = '{&quot;error&quot;:null,&quot;width&quot;:400,&quot;height&quot;:200,&quot;texts&quot;:[],&quot;shapes&quot;:[],&quot;legends&quot;:[]}'"/>
+  <meta xmlns="http://www.w3.org/1999/xhtml" http-equiv="refresh" content="0;url=about:blank"/>
+</foreignObject>
+</svg>

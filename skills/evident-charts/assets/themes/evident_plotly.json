@@ -1,5 +1,5 @@
 {
-  "_doc": "evident-charts Plotly template, blog preset (800x600 CSS px; export scale=2). Other destinations: set width/height and font sizes = pct/100 * width from ../presets.json. Load: pio.templates['evident'] = go.layout.Template(json.load(f)); drop the _doc key first. Bold the title with <b>...</b>; subtitle via title.subtitle (Plotly >= 5.23) or a second line in <span style='font-size:17.6px;color:#767676'>. Two-line title: add 18 to title.pad.t and 34 to margin.t (Plotly lifts multi-line titles).",
+  "_doc": "evident-charts Plotly template, blog preset (800x600 CSS px; export scale=2). Other destinations: set width/height and font sizes = pct/100 * width from ../presets.json. Load: pio.templates['evident'] = go.layout.Template(json.load(f)); drop the _doc key first. Bold the title with <b>...</b>; subtitle via title.subtitle (Plotly >= 5.23; older: delete layout.title.subtitle before loading, then use a second line in <span style='font-size:17.6px;color:#767676'>). Two-line title: add 18 to title.pad.t and 34 to margin.t (Plotly lifts multi-line titles).",
   "layout": {
     "width": 800,
     "height": 600,

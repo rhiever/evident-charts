@@ -156,18 +156,23 @@ def test_type_scales_are_the_approved_ones():
     assert all("subtitle_chars_2_lines" in p and "title_chars_2_lines" in p for p in ev.PRESETS.values())
 
 
-def test_font_stack_prefers_helvetica_neue_and_resolves_quietly(caplog):
+def test_font_stack_prefers_helvetica_neue_and_resolves_quietly(caplog, monkeypatch):
     with matplotlib.rc_context(), caplog.at_level(logging.WARNING, logger="matplotlib.font_manager"):
         fig, ax = ev.figure("blog")
         stack = ["Helvetica Neue", "Helvetica", "Arial", "Liberation Sans", "DejaVu Sans"]
         assert plt.rcParams["font.sans-serif"][:5] == stack
-        installed = {f.name for f in font_manager.fontManager.ttflist}
-        assert plt.rcParams["font.family"] == [f for f in stack if f in installed or f == "DejaVu Sans"]
+        bold = {f.name for f in font_manager.fontManager.ttflist if f.weight >= 600}
+        assert plt.rcParams["font.family"] == [f for f in stack if f in bold or f == "DejaVu Sans"]
         font_manager.findfont(font_manager.FontProperties(family="sans-serif", weight="bold"))
         ev.titles(fig, "Sales doubled after the launch", source="Source: X")
         fig.canvas.draw()
         plt.close(fig)
     assert not [r for r in caplog.records if "findfont" in r.getMessage()]
+    # matplotlib < 3.11 registers only the regular face of macOS Helvetica Neue: skip it so bold renders bold
+    entries = [font_manager.FontEntry(name="Helvetica Neue", weight=400), font_manager.FontEntry(name="Arial", weight=700)]
+    monkeypatch.setattr(font_manager.fontManager, "ttflist", entries)
+    with plt.style.context(ev.STYLE):
+        assert ev._font_family() == ["Arial", "DejaVu Sans"]
 
 
 def test_fits_title_matches_titles_warning():
@@ -321,6 +326,13 @@ def test_side_by_side_top_aligns_images_of_different_aspect(tmp_path):
     assert abs(tops[0] - tops[1]) < 1e-9
     assert len({t.get_position()[1] for t in fig.texts}) == 1
     assert [round(ax.get_position().x0 - t.get_position()[0], 9) for ax, t in zip(fig.axes, fig.texts)] == [0, 0]
+    plt.close(fig)
+    from PIL import Image
+    gray = tmp_path / "gray.png"
+    Image.fromarray(np.full((10, 20), 255, np.uint8), "L").save(gray)
+    fig = side_by_side.compose([gray], ["Gray"], width=3)
+    im = fig.axes[0].images[0]
+    assert im.get_cmap().name == "gray" and im.get_clim() == (0, 1)  # white stays white, not viridis
     plt.close(fig)
 
 

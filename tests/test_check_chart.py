@@ -376,9 +376,9 @@ def test_label_points_places_labels_beside_their_dots():
 
 # --- rainbow-cmap ------------------------------------------------------------------
 
-def test_jet_fails_once_not_on_colorbar():
-    hits = [f for f in lint("rainbow_jet.py")["findings"] if f["check"] == "rainbow-cmap"]
-    assert len(hits) == 1 and hits[0]["severity"] == "fail"
+def test_jet_and_inset_turbo_fail_once_not_on_colorbar():
+    hits = [(f["severity"], f["where"]) for f in lint("rainbow_jet.py")["findings"] if f["check"] == "rainbow-cmap"]
+    assert hits == [("fail", "fig0/ax0 cmap=jet"), ("fail", "fig0/ax2 cmap=turbo")]
 
 
 def test_spectral_diverging_warns_sequential_fails_viridis_ok():
@@ -408,12 +408,17 @@ def test_cli_json_is_pure_json_even_if_script_prints(tmp_path):
     assert not (FIX / "SHOULD_NOT_EXIST.png").exists()
 
 
-def test_cli_script_error_exits_2_with_traceback_tail():
+def test_cli_script_error_exits_2_with_traceback_tail(tmp_path):
     res = cli(FIX / "script_error.py")
     assert res.returncode == 2
     assert "boom in chart script" in res.stderr
     res = cli(FIX / "script_error.py", "--json")
     assert res.returncode == 2 and json.loads(res.stdout)["result"] == "error"
+    # Text that fails only at draw time (bad mathtext; usetex without LaTeX) is a script error too.
+    chart = tmp_path / "bad_math.py"
+    chart.write_text('import matplotlib.pyplot as plt\nfig, ax = plt.subplots()\nax.set_title(r"$\\badcmd{x}$")\n')
+    res = cli(chart, "--json")
+    assert res.returncode == 2 and "fig0 failed to render" in json.loads(res.stdout)["error"]
 
 
 def test_cli_missing_file_exits_2():
@@ -447,10 +452,10 @@ def test_source_anywhere_in_a_footer_line_counts():
     assert not check_chart.SOURCE_RE.search("Open-source software grew")
 
 
-def test_cumulative_series_under_rate_label_fails():
+def test_cumulative_series_under_rate_label_fails_under_share_label_warns():
     hits = [(f["severity"], f["where"].split()[0]) for f in lint("cumulative_rate.py")["findings"]
             if f["check"] == "cumulative-as-rate"]
-    assert hits == [("fail", "fig0/ax0"), ("fail", "fig3/ax0")]
+    assert hits == [("fail", "fig0/ax0"), ("warn", "fig3/ax0")]
 
 
 def test_stacked_area_with_three_or_more_layers_warns():

@@ -13,7 +13,8 @@ Usage:
   python check_chart.py --list-checks
 
 Exit codes: 0 no fails (warns allowed), 1 at least one fail,
-2 missing file, script error, or no figures produced.
+2 missing file or matplotlib, script error (including a figure that fails to
+render), or no figures produced.
 
 Not implemented: bubble-area. Matplotlib's scatter `s` is already an area
 (points^2), so the classic "radius scaled by value" mistake leaves no
@@ -37,29 +38,40 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 os.environ["MPLBACKEND"] = "Agg"
-import matplotlib  # noqa: E402
+try:  # --list-checks and the missing-dependency error (exit 2) need only the standard library
+    import matplotlib  # noqa: E402
+    matplotlib.use("Agg")
+    import matplotlib.figure  # noqa: E402
+    import matplotlib.patches  # noqa: E402
+    import matplotlib.text  # noqa: E402
+    import matplotlib.pyplot as plt  # noqa: E402
+    import numpy as np  # noqa: E402
+    from matplotlib import patheffects  # noqa: E402
+    from matplotlib.backends.backend_agg import FigureCanvasAgg  # noqa: E402
+    from matplotlib.cbook import STEP_LOOKUP_MAP  # noqa: E402
+    from matplotlib.collections import LineCollection, PathCollection, PolyCollection, QuadMesh  # noqa: E402
+    from matplotlib.colors import CenteredNorm, TwoSlopeNorm, to_hex, to_rgba  # noqa: E402
+    from matplotlib.container import BarContainer  # noqa: E402
+    from matplotlib.contour import ContourSet  # noqa: E402
+    from matplotlib.image import AxesImage  # noqa: E402
+    from matplotlib.legend import Legend  # noqa: E402
+    from matplotlib.lines import Line2D  # noqa: E402
+    from matplotlib.markers import MarkerStyle  # noqa: E402
+    from matplotlib.patches import FancyArrowPatch, PathPatch, Polygon, Rectangle, Wedge  # noqa: E402
+    from matplotlib.path import Path as MplPath  # noqa: E402
+    from matplotlib.text import Annotation, Text  # noqa: E402
+    from matplotlib.ticker import ScalarFormatter  # noqa: E402
 
-matplotlib.use("Agg")
-import matplotlib.figure  # noqa: E402
-import matplotlib.patches  # noqa: E402
-import matplotlib.text  # noqa: E402
-import matplotlib.pyplot as plt  # noqa: E402
-import numpy as np  # noqa: E402
-from matplotlib import patheffects  # noqa: E402
-from matplotlib.backends.backend_agg import FigureCanvasAgg  # noqa: E402
-from matplotlib.cbook import STEP_LOOKUP_MAP  # noqa: E402
-from matplotlib.collections import LineCollection, PathCollection, PolyCollection, QuadMesh  # noqa: E402
-from matplotlib.colors import CenteredNorm, TwoSlopeNorm, to_hex, to_rgba  # noqa: E402
-from matplotlib.container import BarContainer  # noqa: E402
-from matplotlib.contour import ContourSet  # noqa: E402
-from matplotlib.image import AxesImage  # noqa: E402
-from matplotlib.legend import Legend  # noqa: E402
-from matplotlib.lines import Line2D  # noqa: E402
-from matplotlib.markers import MarkerStyle  # noqa: E402
-from matplotlib.patches import FancyArrowPatch, PathPatch, Polygon, Rectangle, Wedge  # noqa: E402
-from matplotlib.path import Path as MplPath  # noqa: E402
-from matplotlib.text import Annotation, Text  # noqa: E402
-from matplotlib.ticker import ScalarFormatter  # noqa: E402
+    # title-too-long measures with evident.fits_title, the same 2-line fit ev.titles() wraps with; plot-aspect uses
+    # evident.plot_aspect and the presets.json plot_aspect band, as ev.titles() warns with.
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from evident import ASPECT, fits_title, plot_aspect  # noqa: E402
+    MISSING = None
+except ModuleNotFoundError as e:
+    if __name__ != "__main__":
+        raise
+    MISSING = f"{e}; check_chart.py needs matplotlib and numpy"
+    ASPECT = json.loads((Path(__file__).resolve().parent.parent / "assets" / "presets.json").read_text())["_plot_aspect"]
 
 # ---------------------------------------------------------------------------
 # Tunable constants. Lengths in points are converted to pixels with fig.dpi.
@@ -87,10 +99,6 @@ try:
                 DEST_FIXED_HEIGHT.add(_name)
 except (OSError, ValueError):
     pass
-# title-too-long measures with evident.fits_title, the same 2-line fit ev.titles() wraps with; plot-aspect uses
-# evident.plot_aspect and the presets.json plot_aspect band, as ev.titles() warns with.
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-from evident import ASPECT, fits_title, plot_aspect  # noqa: E402
 # cvd, contrast, and text-on-area reuse check_palette's color math and floors: CVD pairs must differ by
 # CVD_FACTOR x the mark's DE_FLOOR (V6), text meets TEXT_MIN (V2), marks MARK_MIN / INVISIBLE (V3).
 from check_palette import (CVD_FACTOR, DE_FLOOR, INVISIBLE, MARK_MIN, TEXT_MIN, TEXT_MIN_LARGE,  # noqa: E402
@@ -134,8 +142,10 @@ PROCESS_RE = re.compile(
 DATA_FILE_RE = re.compile(r"\b[\w.-]+\.(csv|tsv|xlsx?|json|parquet)\b", re.I)
 # missing-source: "Source:" anywhere in a text, or a line (or a " | "-separated part) starting "Source" or "Data:".
 SOURCE_RE = re.compile(r"\bsources?\s*:|(^\s*|[|\u00b7\u2022]\s*)(sources?\b|data\s*:)", re.I | re.M)
-# cumulative-as-rate: a series that only rises (a running total) under a label that promises a rate or share.
+# cumulative-as-rate: a series that only rises (a running total) under a label that promises a rate or share; only a
+# warn on a share or % axis, since a share can truly only grow.
 RATE_RE = re.compile(r"%|\b(rates?|share|per|percent(age)?)\b", re.I)
+SHARE_RE = re.compile(r"%|\b(share|percent(age)?)\b", re.I)
 CUMULATIVE_RE = re.compile(r"\b(cumulative|to date|year-to-date|ytd|ever|all-time|so far|running total|accumulated)\b",
                            re.I)
 CUMULATIVE_MIN_POINTS = 6      # shorter series rise monotonically by chance
@@ -187,7 +197,13 @@ CATEGORY_MIN_BARS = 4
 CATEGORY_GAP_STEPS = 1.3
 CATEGORY_TIE_FRAC = 0.02
 
-RAINBOW_CMAPS = {"jet", "rainbow", "hsv", "gist_rainbow", "nipy_spectral", "gist_ncar"}
+# rainbow-cmap: the house ban list (palettes.json sequential.banned, C11) plus gist_ncar.
+RAINBOW_CMAPS = {"jet", "rainbow", "hsv", "gist_rainbow", "nipy_spectral", "turbo", "gist_ncar"}
+try:
+    RAINBOW_CMAPS |= set(json.loads((Path(__file__).resolve().parent.parent / "assets" / "palettes.json")
+                                    .read_text())["sequential"]["banned"])
+except (OSError, ValueError, KeyError):
+    pass
 SPECTRAL_CMAPS = {"Spectral"}
 
 CHECKS = {
@@ -231,7 +247,8 @@ CHECKS = {
     "inverted-axis": ("fail", "Value axis inverted, and its label and ticks do not say 'rank'."),
     "log-unlabeled": ("fail", "Log-scaled axis; no axis label, title, subtitle, or in-axes note says 'log'."),
     "cumulative-as-rate": ("fail", "A series (line or area layer) only ever rises, like a running total, but its "
-                                   "axis label or title promises a rate, share, %, or per-unit value."),
+                                   "axis label or title promises a rate, share, %, or per-unit value (a warn on a "
+                                   "share or % y axis)."),
     "stacked-area": ("warn", "Stacked area (stackplot or stacked fill_between) with 3+ layers: only the bottom layer "
                              "has a flat baseline."),
     "invisible-arrow": ("fail", "Annotation arrow drawn with no visible stroke or fill (zero width, or a color matching "
@@ -416,6 +433,20 @@ class ScriptError(Exception):
         self.tail = tail
 
 
+def traceback_tail() -> str:
+    return "".join(traceback.format_exc().splitlines(keepends=True)[-12:])
+
+
+SAVEFIG_RC = {"bbox_inches": "savefig.bbox", "pad_inches": "savefig.pad_inches", "facecolor": "savefig.facecolor",
+              "transparent": "savefig.transparent"}
+
+
+def canvas_save(saves):
+    """The save the canvas checks judge: the first one not cropped to bbox_inches='tight' (text off its canvas is
+    lost), else the last."""
+    return next((kw for kw in saves if kw.get("bbox_inches") != "tight"), saves[-1]) if saves else None
+
+
 @contextlib.contextmanager
 def patched_matplotlib():
     """Capture figures, block file output and GUI calls."""
@@ -432,7 +463,9 @@ def patched_matplotlib():
     def savefig(self, fname=None, *a, **kw):
         if self not in saved:
             saved.append(self)
-        save_kwargs[id(self)] = kw
+        # Every save, with the savefig.* rcParams matplotlib falls back to for options left unset.
+        save_kwargs.setdefault(id(self), []).append(
+            {**kw, **{k: matplotlib.rcParams[rc] for k, rc in SAVEFIG_RC.items() if kw.get(k) is None}})
 
     matplotlib.figure.Figure.__init__ = init
     matplotlib.figure.Figure.savefig = savefig
@@ -466,8 +499,7 @@ def run_script(chart: Path, cwd: Path | None, verbose: bool = False):
                 if e.code not in (0, None):
                     raise ScriptError(f"script exited with code {e.code}")
             except Exception:
-                tail = "".join(traceback.format_exc().splitlines(keepends=True)[-12:])
-                raise ScriptError(tail)
+                raise ScriptError(traceback_tail())
     finally:
         os.chdir(old_cwd)
         sys.argv = old_argv
@@ -529,10 +561,18 @@ def line_boxes(t: Text, bb, angle: float, renderer) -> list:
         return whole
 
 
+def all_axes(fig) -> list:
+    """fig.axes, then the child axes they hold (inset_axes, secondary_xaxis/secondary_yaxis), which fig.axes omits."""
+    out = list(fig.axes)
+    for ax in out:  # grows as it goes: children of children
+        out += [a for a in getattr(ax, "child_axes", ()) if a not in out]
+    return out
+
+
 def collect_texts(fig, renderer) -> list[TextRec]:
     role = {}
     hidden = set()
-    for ax in fig.axes:
+    for ax in all_axes(fig):  # child axes too, so their ticks and titles are not taken for free text
         if getattr(ax, "name", "") == "3d":
             # 3D axes are flagged by 3d-axes; their projected tick labels
             # would only add noise to the text checks (small-text reads them via texts_3d).
@@ -554,7 +594,7 @@ def collect_texts(fig, renderer) -> list[TextRec]:
         for t in (ax.title, getattr(ax, "_left_title", None), getattr(ax, "_right_title", None)):
             if t is not None:
                 role[id(t)] = ("title", ax, None)
-    legends = [(ax.get_legend(), ax) for ax in fig.axes if ax.get_legend()] + [(lg, None) for lg in fig.legends]
+    legends = [(ax.get_legend(), ax) for ax in all_axes(fig) if ax.get_legend()] + [(lg, None) for lg in fig.legends]
     legend_knock = {}
     for leg, ax in legends:
         for t in list(leg.get_texts()) + [leg.get_title()]:
@@ -706,16 +746,22 @@ def continued_ends(polys, tol):
     return out
 
 
+def finite_runs(pts) -> list:
+    """Pieces of polyline pts [N, 2] between non-finite vertices, as matplotlib draws it: a NaN breaks the line."""
+    pts = np.asarray(pts, dtype=float)
+    runs = np.split(pts, np.flatnonzero(~np.all(np.isfinite(pts), axis=1)))
+    runs = [r[np.all(np.isfinite(r), axis=1)] for r in runs]  # each later piece starts with its NaN row
+    return [r for r in runs if len(r) >= 2]
+
+
 def collect_segments(fig, renderer):
     """Return (segments array [N, 15], owners). Columns: x0 y0 x1 y1, clip box
     (4, NaN if unclipped), line start (2), line end (2), owner index, start and
-    end continued (1 if another data line carries on from that end, 0 if not)."""
+    end continued (1 if another data line carries on from that end, 0 if not).
+    A line broken by NaN gaps gives one start and end per drawn piece."""
     rows, owners, data_polys = [], [], []
 
     def add_polyline(pts, owner_idx, clip, endpoints=None, cont=(False, False)):
-        pts = pts[np.all(np.isfinite(pts), axis=1)]
-        if len(pts) < 2:
-            return
         s, e = endpoints if endpoints is not None else (pts[0], pts[-1])
         for i in range(len(pts) - 1):
             rows.append([*pts[i], *pts[i + 1], *clip, *s, *e, owner_idx, *cont])
@@ -739,10 +785,11 @@ def collect_segments(fig, renderer):
             clip = line.get_clip_box().extents if line.get_clip_on() and line.get_clip_box() else [np.nan] * 4
             if rule:
                 owners.append(SegOwner("rule", line_name(line, line.get_color(), "rule"), line.get_zorder()))
-                add_polyline(pts, len(owners) - 1, clip)
+                for run in finite_runs(pts):
+                    add_polyline(run, len(owners) - 1, clip)
                 continue
             owners.append(SegOwner("line", line_name(line, line.get_color()), line.get_zorder()))
-            data_polys.append((len(owners) - 1, pts, clip))
+            data_polys += [(len(owners) - 1, run, clip) for run in finite_runs(pts)]
         for coll in ax.collections:
             if not isinstance(coll, LineCollection) or not coll.get_visible():
                 continue
@@ -760,10 +807,9 @@ def collect_segments(fig, renderer):
             tr = coll.get_transform()
             for seg in coll.get_segments():
                 if len(seg) >= 2:
-                    data_polys.append((len(owners) - 1, tr.transform(np.asarray(seg, dtype=float)), clip))
+                    data_polys += [(len(owners) - 1, run, clip)
+                                   for run in finite_runs(tr.transform(np.asarray(seg, dtype=float)))]
 
-    data_polys = [(o, p[np.all(np.isfinite(p), axis=1)], clip) for o, p, clip in data_polys]
-    data_polys = [d for d in data_polys if len(d[1]) >= 2]
     conts = continued_ends([p for _, p, _ in data_polys], 0.5 * fig.dpi / 72)
     for (o, pts, clip), cont in zip(data_polys, conts):
         add_polyline(pts, o, clip, cont=cont)
@@ -792,7 +838,8 @@ def collect_segments(fig, renderer):
         ends = (polys[0][0], polys[0][-1])
         owners.append(SegOwner("arrow", "annotation arrow", ap.get_zorder(), ann_id))
         for poly in polys:
-            add_polyline(np.asarray(poly, dtype=float), len(owners) - 1, [np.nan] * 4, ends)
+            for run in finite_runs(poly):
+                add_polyline(run, len(owners) - 1, [np.nan] * 4, ends)
     arr = np.array(rows, dtype=float) if rows else np.zeros((0, 15))
     return arr, owners
 
@@ -809,14 +856,20 @@ def clip_to_box(p0, p1, box):
     return (p0[0] + t0 * d[0], p0[1] + t0 * d[1]), (p0[0] + t1 * d[0], p0[1] + t1 * d[1])
 
 
-def data_axes(fig):
-    """Axes worth style checks: visible, not colorbars."""
+def data_axes(fig, children=False):
+    """(index, axes) worth style checks: visible, not colorbars. children adds insets and secondary axes."""
     out = []
-    for i, ax in enumerate(fig.axes):
+    for i, ax in enumerate(all_axes(fig) if children else fig.axes):
         if not ax.get_visible() or getattr(ax, "_colorbar", None) is not None or ax.get_label() == "<colorbar>":
             continue
         out.append((i, ax))
     return out
+
+
+def drawn_bar(p) -> bool:
+    """A visible bar of finite, nonzero size: a NaN value draws no bar (and has no extent)."""
+    w, h = p.get_width(), p.get_height()
+    return p.get_visible() and bool(w) and bool(h) and bool(np.all(np.isfinite([p.get_x(), p.get_y(), w, h])))
 
 
 def has_data(ax) -> bool:
@@ -833,7 +886,7 @@ class Ctx:
         self.save_kwargs = save_kwargs or {}
         self.renderer = fig.canvas.get_renderer()
         self.px_per_pt = fig.dpi / 72.0
-        self.ax_index = {id(a): i for i, a in enumerate(fig.axes)}
+        self.ax_index = {id(a): i for i, a in enumerate(all_axes(fig))}
         self.texts = collect_texts(fig, self.renderer)
         self.segs, self.owners = collect_segments(fig, self.renderer)
         self.findings: list[Finding] = []
@@ -994,8 +1047,8 @@ def check_text_on_bars(c: Ctx):
     inside one bar (an inside value label) passes; so do ticks, legends, and opaque-boxed text drawn above the bars."""
     pad = TEXT_LINE_PAD_PT * c.px_per_pt
     bars = {id(ax): [(p.get_window_extent(c.renderer), p.get_zorder()) for cont in ax.containers
-                     if isinstance(cont, BarContainer) for p in cont.patches
-                     if p.get_visible() and p.get_width() and p.get_height()] for _, ax in data_axes(c.fig)}
+                     if isinstance(cont, BarContainer) for p in cont.patches if drawn_bar(p)]
+            for _, ax in data_axes(c.fig)}
     for r in c.texts:
         if r.kind in ("tick", "legend") or r.rotated:
             continue
@@ -1126,7 +1179,7 @@ def check_text_clipped(c: Ctx):
 
 
 def check_bar_baseline(c: Ctx):
-    for i, ax in data_axes(c.fig):
+    for i, ax in data_axes(c.fig, children=True):
         for cont in ax.containers:
             if not isinstance(cont, BarContainer) or not cont.patches:
                 continue
@@ -1184,7 +1237,7 @@ def check_pie(c: Ctx):
 def check_rainbow(c: Ctx):
     seen = set()
     mappables = [(None, im) for im in c.fig.images]
-    for _, ax in data_axes(c.fig):
+    for _, ax in data_axes(c.fig, children=True):
         mappables += [(ax, m) for m in list(ax.images) + list(ax.collections)]
     for ax, m in mappables:
         if id(m) in seen or not hasattr(m, "get_cmap") or m.get_array() is None:
@@ -2072,8 +2125,7 @@ def stack_depth(layers, tol):
 
 
 ARROW_MIN_PX = 0.5  # thinner arrow strokes vanish at display size
-ARROW_FILLED = (matplotlib.patches.ArrowStyle.Fancy, matplotlib.patches.ArrowStyle.Simple,
-                matplotlib.patches.ArrowStyle.Wedge)
+ARROW_FILLED = ("Fancy", "Simple", "Wedge")  # matplotlib.patches.ArrowStyle classes with a filled body
 SEGMENT_FIX = {
     "bar": 'ax.bar(..., edgecolor={bg}, linewidth=ev.size("grid")) (barh alike)',
     "wedge": 'ax.pie(..., wedgeprops=dict(edgecolor={bg}, linewidth=ev.size("grid")))',
@@ -2188,7 +2240,7 @@ def check_invisible_arrow(c: Ctx):
         bg = axes_bg(c, t.axes)
         stroke = (ap.get_linewidth() * c.px_per_pt >= ARROW_MIN_PX
                   and contrast(over(ap.get_edgecolor(), bg), bg) >= INVISIBLE)
-        body = (isinstance(ap.get_arrowstyle(), ARROW_FILLED) and ap.get_fill()
+        body = (type(ap.get_arrowstyle()).__name__ in ARROW_FILLED and ap.get_fill()
                 and contrast(over(ap.get_facecolor(), bg), bg) >= INVISIBLE)
         if not (stroke or body):
             c.add("invisible-arrow", c.where(t.axes, f"annotation {snip(t.get_text())}"),
@@ -2240,9 +2292,13 @@ def check_cumulative_as_rate(c: Ctx):
                 series.append((f"area layer {k + 1}", hi - lo))
         hits = [name for name, y in series if only_rises(y)]
         if hits:
+            ylab = " ".join([ax.yaxis.label.get_text()] + [r.label for r in c.texts
+                                                           if r.kind == "tick" and r.ax is ax and r.axis == "y"])
             c.add("cumulative-as-rate", c.where(ax, ", ".join(hits)[:80]),
                   f"{len(hits)} series only ever rise, like a running total, under a rate/share/% label",
-                  "Plot per-period values (np.diff of the running total) for a rate, or say 'Cumulative' in the label.")
+                  "If the data is a running total, plot per-period values (np.diff) for a rate or say 'Cumulative' "
+                  "in the label; leave a rate or share that truly only rose as it is.",
+                  severity="warn" if SHARE_RE.search(ylab) else None)
 
 
 def check_plot_area_tiny(c: Ctx):
@@ -2479,7 +2535,7 @@ def color_series(c, ax) -> list:
         if not isinstance(cont, BarContainer):
             continue
         for p in cont.patches:
-            if not p.get_visible() or not p.get_width() or not p.get_height():
+            if not drawn_bar(p):
                 continue
             b = p.get_window_extent(c.renderer)
             ring = [(b.x0, b.y0), (b.x1, b.y0), (b.x1, b.y1), (b.x0, b.y1), (b.x0, b.y0)]
@@ -2829,10 +2885,16 @@ CHECK_FUNCS = [
 def lint_figure(fig, fi, dest="blog", save_kwargs=None):
     if not hasattr(fig.canvas, "get_renderer"):
         FigureCanvasAgg(fig)
-    fig.canvas.draw()
-    c = Ctx(fig, fi, dest, save_kwargs)
-    for fn in CHECK_FUNCS:
-        fn(c)
+    try:
+        fig.canvas.draw()
+    except Exception:  # bad mathtext, usetex without LaTeX, ...: the script's own savefig would fail the same way
+        raise ScriptError(f"fig{fi} failed to render:\n{traceback_tail()}")
+    try:
+        c = Ctx(fig, fi, dest, save_kwargs)
+        for fn in CHECK_FUNCS:
+            fn(c)
+    except Exception:
+        raise ScriptError(f"check_chart crashed on fig{fi}:\n{traceback_tail()}")
     inventory = {"figure": fi, "axes": len(fig.axes), "texts": len(c.texts),
                  "segments": int(len(c.segs)), "size_in": [round(v, 2) for v in fig.get_size_inches()]}
     return c.findings, inventory
@@ -2847,7 +2909,7 @@ def run_checks(chart, cwd=None, dest="blog", verbose=False) -> dict:
             raise ScriptError("script produced no matplotlib figures")
         try:
             for fi, fig in enumerate(figs):
-                f, inv = lint_figure(fig, fi, dest, save_kwargs.get(id(fig)))
+                f, inv = lint_figure(fig, fi, dest, canvas_save(save_kwargs.get(id(fig))))
                 findings += f
                 inventory.append(inv)
         finally:
@@ -2877,6 +2939,9 @@ def main(argv=None):
     ap.add_argument("--verbose", action="store_true", help="Show script stdout and per-figure inventory.")
     ap.add_argument("--list-checks", action="store_true", help="List checks and exit.")
     args = ap.parse_args(argv)
+    for stream in (sys.stdout, sys.stderr):  # chart text (U+2212 minus, ...) must not crash a cp1252 console
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(errors="replace")
 
     if args.list_checks:
         for name, (sev, desc) in CHECKS.items():
@@ -2892,6 +2957,8 @@ def main(argv=None):
             print(f"ERROR: {msg}", file=sys.stderr)
         return 2
 
+    if MISSING:
+        return error(MISSING)
     if not args.chart.is_file():
         return error(f"chart file not found: {args.chart}")
     if args.cwd is not None and not args.cwd.is_dir():

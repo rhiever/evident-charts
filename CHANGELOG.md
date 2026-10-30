@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.4
+
+- `check_svg.py` sandboxes the SVG it measures: its scripts don't run, nothing it links to loads, and a crafted file can't fake a pass. It now checks contrast on `oklch()` and `lab()` colors and measures embedded fonts correctly.
+- `check_chart.py` stops flagging charts with missing values, catches `turbo` and colormaps in insets, and counts every `savefig` call. `cumulative-as-rate` only warns on share and % axes.
+- Crashes and malformed input exit 2 with an error message instead of a traceback. `--list-checks` works without matplotlib.
+- Bold text stays bold on macOS with matplotlib older than 3.11. Smaller fixes to `side_by_side.py` and the ggplot2 and Plotly themes.
+
 ## 0.2.3
 
 - Ready for Anthropic's plugin directory: a display name, a plain-language description for chat and Cowork users, and a README section on what the plugin runs.

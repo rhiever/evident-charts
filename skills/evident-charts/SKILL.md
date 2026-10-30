@@ -10,7 +10,7 @@ description: >-
 license: MIT
 metadata:
   author: Randy Olson
-  version: "0.2.3"
+  version: "0.2.4"
 ---
 
 # evident-charts

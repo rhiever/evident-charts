@@ -1,7 +1,7 @@
 {
   "name": "evident-charts",
   "displayName": "Evident Charts",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "Makes clear, honest charts that state their point, and critiques charts you share. Checks labels, axes, and colors on the rendered chart before you see it.",
   "author": {
     "name": "Randy Olson",

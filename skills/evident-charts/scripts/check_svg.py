@@ -21,7 +21,8 @@ Export:
   matplotlib  use check_chart.py; for an SVG, set rcParams["svg.fonttype"] = "none" first
 
 Chrome: $CHROME_PATH or $BROWSER_PATH, else chrome-headless-shell (Puppeteer or Playwright cache), kaleido's
-Chrome, then Google Chrome, Chromium, or Edge.
+Chrome, then Google Chrome, Chromium, or Edge. The SVG's scripts and event handlers do not run and nothing
+outside it loads: embed web fonts as data: URIs (an external font is measured in the fallback font).
 
 Without Chrome, --spec still runs its checks (the SVG checks are reported as skipped); with no --spec and no
 Chrome there is nothing to run.
@@ -41,6 +42,7 @@ import math
 import os
 import platform
 import re
+import secrets
 import shutil
 import signal
 import subprocess
@@ -174,14 +176,22 @@ def measure(svg_text: str, chrome: str, timeout: float = 90.0) -> dict:
     """Lay out the SVG in headless Chrome and return measure_svg.js's JSON."""
     js = (HERE / "measure_svg.js").read_text(encoding="utf-8")
     src = json.dumps(svg_text).replace("<", "\\u003c")
-    page = ("<!doctype html><html><head><meta charset=\"utf-8\"></head><body style=\"margin:0\">"
-            f"<script>const EVIDENT_SVG = {src};</script><script>{js}</script></body></html>")
+    # The SVG is untrusted: only our two nonce'd scripts run (no SVG <script> or on* handlers that could forge
+    # the result), nothing is fetched (inline styles and data: images and fonts still render), and the result
+    # must carry the nonce (a page the SVG navigates to cannot).
+    nonce = secrets.token_urlsafe(16)
+    csp = (f"default-src 'none'; script-src 'nonce-{nonce}'; style-src 'unsafe-inline'; img-src data:; "
+           "font-src data:")
+    page = (f"<!doctype html><html><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" "
+            f"content=\"{csp}\"></head><body style=\"margin:0\"><script nonce=\"{nonce}\">const EVIDENT_SVG = "
+            f"{src};</script><script nonce=\"{nonce}\">{js}</script></body></html>")
     with tempfile.TemporaryDirectory(prefix="check_svg_") as tmp:
         path = Path(tmp) / "page.html"
         path.write_text(page, encoding="utf-8")
-        # No --user-data-dir: Google Chrome on macOS can hang on exit with a fresh profile.
+        # No --user-data-dir: Google Chrome on macOS can hang on exit with a fresh profile. The virtual time
+        # budget holds the dump until embedded web fonts load and measure_svg.js writes its result.
         cmd = [chrome, "--headless", "--disable-gpu", "--hide-scrollbars", "--mute-audio", "--no-first-run",
-               "--disable-extensions", "--dump-dom", path.as_uri()]
+               "--disable-extensions", "--virtual-time-budget=5000", "--dump-dom", path.as_uri()]
         if platform.system() == "Linux":
             cmd.insert(1, "--disable-dev-shm-usage")
             if hasattr(os, "geteuid") and os.geteuid() == 0:
@@ -191,10 +201,10 @@ def measure(svg_text: str, chrome: str, timeout: float = 90.0) -> dict:
         try:
             out, _ = proc.communicate(timeout=timeout)
         except subprocess.TimeoutExpired:
-            _kill(proc)
             raise CheckError(f"Chrome did not finish within {timeout:.0f} s ({chrome})")
-        _kill(proc)  # helpers can outlive the main process
-    m = re.search(r'<pre id="evident-measure">(.*?)</pre>', out.decode("utf-8", "replace"), re.S)
+        finally:
+            _kill(proc)  # also on timeout or interrupt; helpers can outlive the main process
+    m = re.search(f'<pre id="evident-measure" data-nonce="{nonce}">(.*?)</pre>', out.decode("utf-8", "replace"), re.S)
     if not m:
         raise CheckError(f"Chrome returned no measurement ({chrome}); try another binary via CHROME_PATH")
     res = json.loads(html.unescape(m.group(1)))
@@ -983,6 +993,15 @@ def vega_checks(spec: dict, texts: list, add):
 # Driver
 # ---------------------------------------------------------------------------
 
+def _read_spec(fn, spec_path, *args):
+    """Run a spec reader. A spec of the right kind with the wrong shapes inside (a trace or axis that is not an
+    object) is unreadable: CheckError, exit 2."""
+    try:
+        return fn(*args)
+    except (AttributeError, TypeError, KeyError, IndexError, ValueError) as e:
+        raise CheckError(f"spec {spec_path} is malformed ({type(e).__name__}: {e})")
+
+
 def run_checks(svg_path, dest: str = "blog", spec_path=None, chrome: str | None = None) -> dict:
     """Measure and check one SVG (plus an optional spec). Raises CheckError."""
     svg_path = Path(svg_path)
@@ -1000,7 +1019,7 @@ def run_checks(svg_path, dest: str = "blog", spec_path=None, chrome: str | None 
     if chrome:
         c = Chart(measure(svg_text, chrome), dest)
         if spec and spec[0] == "vega":
-            c.scale_marks = vega_scale_marks(spec[1])
+            c.scale_marks = _read_spec(vega_scale_marks, spec_path, spec[1])
         for fn in SVG_CHECKS:
             fn(c)
         findings, texts = c.findings, c.texts
@@ -1013,7 +1032,8 @@ def run_checks(svg_path, dest: str = "blog", spec_path=None, chrome: str | None 
             findings.append({"check": check, "severity": severity or CHECKS[check][0], "where": where,
                              "detail": detail, "fix": fix})
     if spec:
-        (plotly_checks if spec[0] == "plotly" else vega_checks)(spec[1], texts, c.add if chrome else add)
+        _read_spec(plotly_checks if spec[0] == "plotly" else vega_checks, spec_path, spec[1], texts,
+                   c.add if chrome else add)
     fails = sum(f["severity"] == "fail" for f in findings)
     res = {"result": "fail" if fails else "pass", "dest": dest, "stack": stack, "spec": spec[0] if spec else None,
            "fails": fails, "warns": len(findings) - fails, "findings": findings}
@@ -1036,6 +1056,9 @@ def main(argv=None):
     ap.add_argument("--json", action="store_true", help="Print JSON only.")
     ap.add_argument("--list-checks", action="store_true", help="List checks and exit.")
     args = ap.parse_args(argv)
+    for stream in (sys.stdout, sys.stderr):  # a cp1252 console cannot print every label (U+2212 minus)
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(errors="replace")
 
     if args.list_checks:
         for name, (sev, desc) in CHECKS.items():
@@ -1072,4 +1095,5 @@ def main(argv=None):
 
 
 if __name__ == "__main__":
+    signal.signal(signal.SIGTERM, lambda *_: sys.exit(143))  # unwind, so Chrome and the temp page are cleaned up
     sys.exit(main())

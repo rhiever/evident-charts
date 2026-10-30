@@ -7,7 +7,7 @@ The house look per stack, plus traps that silently break a rule. Each theme file
 - Helper `scripts/evident.py` (optional; the rules hold without it): its module docstring is the usage example. Also `ev.size(role)` (points for any preset role), `ev.text_color(c)` (text-safe variant of a mark color); each docstring gives the arguments.
 - `ev.titles()` wraps the title and subtitle to 2 lines at a phrase boundary and warns when any text block needs more; force a break with `\n`; `ev.save()` refits the layout.
 - Layout fit covers grid subplots only. Colorbars: prefer `ax.inset_axes` or a direct-labeled legend strip.
-- Without the helper: `plt.style.use(f"{SKILL_DIR}/assets/evident.mplstyle")` (blog sizes), set `figsize` and font sizes from the preset, place the title block with `fig.text(..., va="top")`, and reserve room with `fig.subplots_adjust(...)`.
+- Without the helper: `plt.style.use(f"{SKILL_DIR}/assets/evident.mplstyle")` (blog sizes), set `figsize` and font sizes from the preset, place the title block with `fig.text(..., va="top")`, and reserve room with `fig.subplots_adjust(...)`. On macOS with matplotlib < 3.11, put Arial first in `font.sans-serif` (Helvetica has no bold there).
 
 Pitfalls:
 - Never `savefig(bbox_inches="tight")`: it crops the reserved margins. `tight_layout` and `constrained_layout` ignore `fig.text` title blocks and overlap them. Reserve margins with `subplots_adjust` (or `ev.save`).

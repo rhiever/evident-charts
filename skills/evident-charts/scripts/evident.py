@@ -74,8 +74,10 @@ def size(role, fig=None):
 
 def _font_family():
     """Installed members of the style's sans-serif stack, DejaVu Sans last: glyphs missing from the first font
-    (arrows, check marks) fall back per glyph instead of rendering as boxes."""
-    have = {f.name for f in font_manager.fontManager.ttflist}
+    (arrows, check marks) fall back per glyph instead of rendering as boxes. Families with no bold face are skipped
+    (matplotlib < 3.11 registers only the regular face of macOS .ttc fonts, so bold titles would render regular)."""
+    have = {f.name for f in font_manager.fontManager.ttflist
+            if font_manager.weight_dict.get(f.weight, f.weight) >= 600}
     fams = [f for f in plt.rcParams["font.sans-serif"] if f in have and f != "DejaVu Sans"]
     return fams + ["DejaVu Sans"]
 
@@ -203,6 +205,7 @@ def _fits(text, role, dest, fig, lines=2):
     if fig is None:
         p = PRESETS[dest]
         with plt.style.context(STYLE):  # the house font stack figure() uses
+            plt.rcParams["font.family"] = _font_family()
             f = Figure(figsize=(p["width_in"], p["height_in"]), dpi=100)
             return _fits(text, role, dest, f, lines)
     dest = _state(fig)["dest"] if dest is None else dest

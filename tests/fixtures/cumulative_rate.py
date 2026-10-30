@@ -18,7 +18,8 @@ fig2, ax2 = new("Measles spread fastest in March")
 ax2.plot(weeks, weekly, color="C0", lw=2)
 ax2.set_ylabel("Cases per 100,000")
 ax2.set_xlabel("Week")
-# fig3: stacked running totals under a share label -> fail (areas), and stacked-area stays quiet at 2 layers.
+# fig3: stacked running totals under a share label -> warn (areas; a share can really only grow), and stacked-area
+# stays quiet at 2 layers.
 fig3, ax3 = new("Solar and wind took the lead")
 ax3.stackplot(weeks, np.cumsum(weekly), np.cumsum(weekly[::-1]), colors=["C0", "C1"])
 ax3.set_ylabel("Share of generation (%)")

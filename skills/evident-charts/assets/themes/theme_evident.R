@@ -104,8 +104,9 @@ scale_fill_evident <- function(...) scale_fill_manual(values = evident_okabe_ito
 # Sequential: viridis trimmed at the light end so marks stay visible on white.
 scale_fill_evident_seq <- function(...) scale_fill_viridis_c(end = 0.85, ...)
 
-# Diverging with a symmetric domain [-m, 0, m] so equal distances get equal color steps.
-scale_fill_evident_div <- function(m, low = "#2166AC", high = "#B2182B", ...) {
+# Diverging with a symmetric domain [-m, 0, m] so equal distances get equal color steps; negatives red as in
+# palettes.json.
+scale_fill_evident_div <- function(m, low = "#B2182B", high = "#2166AC", ...) {
   scale_fill_gradient2(low = low, mid = "#F7F7F7", high = high, midpoint = 0, limits = c(-m, m), ...)
 }
 

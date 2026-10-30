@@ -2,8 +2,9 @@
 
 Fixtures in tests/fixtures_svg are pre-exported SVGs (plus Plotly figure JSON and compiled Vega) with a clean
 and a bad variant per stack; export_plotly.py and export_vegalite.py regenerate theirs, and the d3_* and
-svglite_* files are hand-written in those stacks' output formats. Measuring needs Chrome: those tests skip when
-none is found. Spec checks run on inline dicts and need no browser.
+svglite_* files are hand-written in those stacks' output formats (active_content.svg is a hand-written hostile
+SVG). Measuring needs Chrome: those tests skip when none is found. Spec checks run on inline dicts and need no
+browser.
 """
 import json
 import subprocess
@@ -110,6 +111,13 @@ def test_svglite_bad_unclassed_marks():
 
 
 @needs_chrome
+def test_active_content_cannot_forge_a_pass():
+    # the SVG's script, event handlers, and refresh neither run nor replace the result; oklch() text is checked
+    res = lint("active_content")
+    assert [f["where"] for f in res["findings"]] == ["text 'Pale hex label'", "text 'Pale oklch label'"]
+
+
+@needs_chrome
 def test_small_text_scales_with_destination():
     res = lint("plotly_clean", "mobile")
     assert checks(res) == {"small-text"}
@@ -171,11 +179,17 @@ def test_no_chrome_exit_follows_spec(monkeypatch, capsys):
     assert "no Chrome found" in capsys.readouterr().err
 
 
-def test_unknown_spec_exits_2(tmp_path):
+def test_unknown_or_malformed_spec_exits_2(tmp_path, monkeypatch, capsys):
     spec = tmp_path / "spec.json"
     spec.write_text('{"hello": 1}')
     r = cli(FIX / "d3_clean.svg", "--spec", spec)
     assert r.returncode == 2 and "neither Plotly" in r.stderr
+    monkeypatch.setattr(check_svg, "find_chrome", lambda: None)
+    for bad in ('{"data": [1], "layout": {}}', '{"data": [{"type": "bar"}], "layout": {"yaxis": null}}',
+                '{"marks": [1]}'):
+        spec.write_text(bad)
+        assert check_svg.main([str(FIX / "d3_clean.svg"), "--spec", str(spec), "--json"]) == 2
+        assert "is malformed" in json.loads(capsys.readouterr().out)["error"]
 
 
 @needs_chrome

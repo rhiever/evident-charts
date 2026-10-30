@@ -11,6 +11,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.image as mpimg
 import matplotlib.pyplot as plt
+import numpy as np
 
 
 def compose(images, labels, width=7.0):
@@ -25,7 +26,9 @@ def compose(images, labels, width=7.0):
     for i, (im, h, label) in enumerate(zip(imgs, heights, labels)):
         x = (pad + i * (width + gap)) / fig_w
         ax = fig.add_axes((x, top - h / fig_h, width / fig_w, h / fig_h))
-        ax.imshow(im)
+        gray = {} if im.ndim == 3 else {"cmap": "gray", "vmin": 0,  # 2-D PNGs are grayscale, not data for viridis
+                                        "vmax": 1 if im.dtype.kind == "f" else np.iinfo(im.dtype).max}
+        ax.imshow(im, **gray)
         ax.set_axis_off()
         fig.text(x, 1 - pad / fig_h, label, fontsize=16, fontweight="bold", color="#333333", ha="left", va="top")
     return fig
@@ -45,6 +48,7 @@ def main():
     labels = args.labels or [p.stem for p in args.images]
     if len(labels) != len(args.images):
         raise SystemExit("--labels count must match image count")
+    args.out.parent.mkdir(parents=True, exist_ok=True)
     compose(args.images, labels, args.width).savefig(args.out, facecolor="white")
     print(args.out.resolve())
 

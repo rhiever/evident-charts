@@ -87,7 +87,7 @@ Without Chrome, supported chart-spec checks can still run. Without Python, the a
 ## What it runs
 
 - Python scripts that size, style, and check charts. `check_chart.py` runs the matplotlib script it checks, so whatever that script does still happens.
-- A local headless Chrome for SVG layout checks (`check_svg.py`). Chrome fetches any remote fonts or images the SVG links to.
+- A local headless Chrome for SVG layout checks (`check_svg.py`). The SVG's scripts don't run, and nothing it links to is fetched.
 - No MCP servers, hooks, or network requests of its own.
 
 ## Update

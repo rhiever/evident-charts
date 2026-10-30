@@ -1,3 +1,4 @@
+import numpy as np
 from _clean import new
 
 # fig0: a note centered on a bar end (straddles its edge) and a label spanning two grouped bars -> text-overlap.
@@ -7,9 +8,10 @@ ax.text(1, 6, "Peak", ha="center", va="center", fontsize=12)
 ax.bar([3.6, 4.4], [5, 5], width=0.8, color="C1")
 ax.text(4, 2.5, "Both years", ha="center", va="center", fontsize=12)
 ax.set_ylabel("Units (k)")
-# fig1: value labels past the bar ends, a label wholly inside a wide bar, a boxed label above the bars -> clean.
+# fig1: value labels past the bar ends, a label wholly inside a wide bar, a boxed label above the bars, and a missing
+# (NaN) bar that draws nothing -> clean.
 fig1, ax1 = new()
-bars = ax1.barh([0, 1, 2], [40, 60, 30], height=0.7, color="C0")
+bars = ax1.barh([0, 1, 2, 3], [40, 60, 30, np.nan], height=0.7, color="C0")
 ax1.bar_label(bars, padding=4, fontsize=12)
 ax1.text(30, 1, "Inside", ha="center", va="center", fontsize=12, color="white")
 ax1.text(20, 0, "Boxed note", ha="center", va="center", fontsize=12, zorder=5,

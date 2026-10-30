@@ -1,7 +1,7 @@
 // Measurer for check_svg.py. Runs in headless Chrome on a page check_svg.py builds, which first defines
 // EVIDENT_SVG (the chart's SVG source). Parses the SVG as XML, lays it out, and measures every visible text
 // and shape in canvas px (origin at the SVG's top-left corner). Then it replaces the page body with one
-// <pre> holding JSON, which check_svg.py reads from Chrome's --dump-dom output.
+// <pre> holding JSON, tagged with this script's nonce, which check_svg.py reads from Chrome's --dump-dom output.
 (function () {
   "use strict";
   const PAD = 4 / 3;          // 1 pt in px: text boxes shrink by this before sampling (check_chart TEXT_LINE_PAD_PT)
@@ -25,28 +25,44 @@
   // Text kind, used to skip ticks and legends where check_chart does.
   const TEXT_KINDS = [["tick", /tick|role-axis-label/], ["legend", /legend/], ["title", /title/]];
 
+  const NONCE = document.currentScript.nonce;  // a page the SVG navigates to cannot know it
   const out = { error: null };
+  let svg = null;
   try {
     const doc = new DOMParser().parseFromString(EVIDENT_SVG, "image/svg+xml");
     const bad = doc.getElementsByTagName("parsererror")[0];
     if (bad) throw new Error("the file does not parse as SVG/XML: " + bad.textContent.trim().slice(0, 160));
     if (doc.documentElement.localName !== "svg") throw new Error("the root element is not <svg>");
-    const svg = document.importNode(doc.documentElement, true);
+    for (const e of [...doc.querySelectorAll("meta, link, base")]) e.remove();  // foreignObject HTML: refresh, preconnect
+    svg = document.importNode(doc.documentElement, true);
     const vb = svg.viewBox && svg.viewBox.baseVal;
     for (const [attr, v] of [["width", vb && vb.width], ["height", vb && vb.height]]) {
       const a = svg.getAttribute(attr);
       if ((!a || a.trim().endsWith("%")) && v) svg.setAttribute(attr, v);  // responsive D3: size from the viewBox
     }
     document.body.appendChild(svg);
-    measure(svg);
+    svg.getBoundingClientRect();  // layout starts loading the embedded (data:) web fonts the text uses
   } catch (e) {
     out.error = String((e && e.message) || e);
+    svg = null;
   }
-  document.body.textContent = "";  // drop the chart and scripts: only the result is dumped
-  const pre = document.createElement("pre");
-  pre.id = "evident-measure";
-  pre.textContent = JSON.stringify(out);
-  document.body.appendChild(pre);
+  // Measure in the chart's own fonts: wait for them (check_svg.py's --virtual-time-budget holds the DOM dump).
+  if (svg && document.fonts.status === "loading") document.fonts.ready.then(() => finish(svg));
+  else finish(svg);
+
+  function finish(svg) {
+    try {
+      if (svg) measure(svg);
+    } catch (e) {
+      out.error = String((e && e.message) || e);
+    }
+    document.body.textContent = "";  // drop the chart and scripts: only the result is dumped
+    const pre = document.createElement("pre");
+    pre.id = "evident-measure";
+    pre.dataset.nonce = NONCE;
+    pre.textContent = JSON.stringify(out);
+    document.body.appendChild(pre);
+  }
 
   function measure(svg) {
     const R = svg.getBoundingClientRect();
@@ -75,6 +91,16 @@
     const boxOf = (r) => [r.left - R.left, r.top - R.top, r.right - R.left, r.bottom - R.top];
     const meet = (a, b) => (!a ? b : !b ? a : [Math.max(a[0], b[0]), Math.max(a[1], b[1]), Math.min(a[2], b[2]), Math.min(a[3], b[3])]);
     const has = (b, x, y) => x >= b[0] && x <= b[2] && y >= b[1] && y <= b[3];
+    const px = document.createElement("canvas").getContext("2d", { willReadFrequently: true });
+    function rgb(v) {  // computed oklch(), lab(), color() and other non-rgb colors as sRGB rgba(); paints pass through
+      if (!v || !/^(ok)?(lab|lch)\(|^color\(|^hwb\(/.test(v)) return v;
+      px.clearRect(0, 0, 1, 1);
+      px.fillStyle = "#000";
+      px.fillStyle = v;
+      px.fillRect(0, 0, 1, 1);
+      const [r, g, b, a] = px.getImageData(0, 0, 1, 1).data;
+      return `rgba(${r}, ${g}, ${b}, ${Math.round(a / 0.255) / 1000})`;
+    }
     const paint = (v) => v && v !== "none" && !/^rgba\(.*,\s*0\)$/.test(v);
     const scaleOf = (m) => Math.hypot(m.a, m.b);
 
@@ -114,10 +140,11 @@
       const vbox = meet(boxOf(e.getBoundingClientRect()), clip);
       if (vbox[2] < vbox[0] || vbox[3] < vbox[1]) continue;  // clipped away
       const role = CHROME_RE.test(cls) ? "chrome" : DATA_RE.test(cls) ? "data" : "unknown";
-      const fill = paint(s.fill) && +s.fillOpacity > 0 ? s.fill : null;
+      const sFill = rgb(s.fill), sStroke = rgb(s.stroke);
+      const fill = paint(sFill) && +s.fillOpacity > 0 ? sFill : null;
       const ctm = e.getScreenCTM();
       const sw = parseFloat(s.strokeWidth) * scaleOf(ctm);
-      const stroke = paint(s.stroke) && +s.strokeOpacity > 0 && sw > 0 ? s.stroke : null;
+      const stroke = paint(sStroke) && +s.strokeOpacity > 0 && sw > 0 ? sStroke : null;
       const tag = e.localName;
       const kind = BAR_RE.test(cls) || tag === "rect" ? "bar"
         : tag === "circle" || tag === "ellipse" || POINT_RE.test(cls) ? "point" : fill ? "area" : "line";
@@ -202,10 +229,11 @@
         [...r.childNodes].some((c) => c.nodeType === 3 && c.textContent.trim()));
       const sizes = (runs.length ? runs : [e]).map((r) => parseFloat(cs(r).fontSize) * scale);
       const cls = classes(e);
-      const halo = paint(s.stroke) && parseFloat(s.strokeWidth) * scale >= 1 && +s.strokeOpacity > 0;
+      const sStroke = rgb(s.stroke);
+      const halo = paint(sStroke) && parseFloat(s.strokeWidth) * scale >= 1 && +s.strokeOpacity > 0;
       return { order, text, cls: cls.slice(0, 120), kind: (TEXT_KINDS.find(([, re]) => re.test(cls)) || ["text"])[0],
         font_px: Math.min(...sizes), weight: parseInt(s.fontWeight, 10) || 400,
-        fill: s.fill, fill_opacity: +s.fillOpacity, opacity: opacity(e), halo: halo ? s.stroke : null,
+        fill: rgb(s.fill), fill_opacity: +s.fillOpacity, opacity: opacity(e), halo: halo ? sStroke : null,
         angle: Math.atan2(ctm.b, ctm.a) * 180 / Math.PI, quads, clip: clipBox(e), under };
     }
 
