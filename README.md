@@ -78,7 +78,7 @@ gemini extensions install https://github.com/rhiever/evident-charts --auto-updat
 
 ## Requirements
 
-- Python 3.10+ runs the check scripts. matplotlib checks also need matplotlib and numpy.
+- Python 3.12+ runs the check scripts. matplotlib checks also need matplotlib and numpy.
 - SVG layout checks need Chrome or Chromium. Set `CHROME_PATH` if the checker cannot find it. Your chart library may need an extra package to export SVG.
 - Image review needs an agent that can view images. A separate reviewer is optional.
 

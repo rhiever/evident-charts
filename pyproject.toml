@@ -1,0 +1,16 @@
+[project]
+name = "evident-charts-dev"
+version = "0.0.0"
+requires-python = ">=3.12"
+
+[dependency-groups]
+dev = [
+    "matplotlib==3.11.2",
+    "numpy==2.5.4",
+    "pandas==3.0.6",
+    "pytest==9.1.1",
+]
+
+[tool.uv]
+package = false
+required-version = ">=0.13.7"

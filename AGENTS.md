@@ -4,7 +4,8 @@ evident-charts is an agent skill for explanatory charts. The installable skill i
 
 ## Commands
 
-- Tests: `uv run --with matplotlib --with numpy --with pandas --with pytest pytest -q tests`
+- Setup: `uv sync --locked` (uv 0.13.7 or newer, Python 3.14.10 by default).
+- Tests: `uv run --locked python -m pytest -q tests`. Set `CHROME_PATH` to a Chrome or Chromium binary for SVG layout tests. The suite also tests spec checks without Chrome.
 - Lint a matplotlib chart: `python skills/evident-charts/scripts/check_chart.py <chart.py> --dest <preset>` (`--list-checks` for names)
 - Lint an SVG from any other stack: `python skills/evident-charts/scripts/check_svg.py <chart.svg> --dest <preset> [--spec <json>]` (needs Chrome)
 - Validate palettes: `python skills/evident-charts/scripts/check_palette.py --preset all`
@@ -36,3 +37,15 @@ evident-charts is an agent skill for explanatory charts. The installable skill i
 - Iterate on dev cases; measure on held-out cases you never tune on.
 - Never copy eval data or answers into rule examples.
 - Compare against the same agent without the skill, judging rendered images, not code.
+
+<!-- shared-dev-standards:start -->
+## Shared development rules (v1)
+
+- Start edits in an isolated worktree from a verified base. A managed cloud checkout counts as isolation.
+- Before cleanup, preserve commits, changes, and artifacts. Verify the merge or handoff, stop associated processes, and remove only the finished worktree.
+- Require a PR and passing CI for default-branch changes. Route checks from the complete PR diff. Include affected contracts and dependencies. Run full checks for unknown scope.
+- Use pinned tools and locked installs. Use the same repo checks in CI and dev. Add focused regressions and report checks that skipped.
+- Keep private inputs, credentials, and artifacts out of Git and cloud setup. Use synthetic fixtures and disposable services in CI. Scan for secrets and minimize CI permissions.
+- Keep dependency changes focused. Test public compatibility floors separately from the dev runtime.
+- Follow the repo's release rules. Treat a merge that deploys as a release. Verify the live revision and record the rollback target.
+<!-- shared-dev-standards:end -->

@@ -1,0 +1,101 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  secrets:
+    name: Secret scan
+    outputs:
+      test: ${{ steps.scope.outputs.test }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Select tests
+        id: scope
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          test=true
+          changed_paths="$RUNNER_TEMP/changed-paths"
+          if [ "$GITHUB_EVENT_NAME" = pull_request ] &&
+             git diff --name-only --no-renames -z "$BASE_SHA" HEAD > "$changed_paths" &&
+             [ -s "$changed_paths" ]; then
+            test=false
+            while IFS= read -r -d '' path; do
+              case "$path" in
+                AGENTS.md|CLAUDE.md|README.md) ;;
+                *) test=true; break ;;
+              esac
+            done < "$changed_paths"
+          fi
+          echo "test=$test" >> "$GITHUB_OUTPUT"
+      - env:
+          GITLEAKS_VERSION: "8.30.1"
+          GITLEAKS_SHA256: "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb"
+        run: |
+          curl -sSfL -o "$RUNNER_TEMP/gitleaks.tar.gz" "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          echo "${GITLEAKS_SHA256}  $RUNNER_TEMP/gitleaks.tar.gz" | sha256sum --check -
+          tar -xzf "$RUNNER_TEMP/gitleaks.tar.gz" -C "$RUNNER_TEMP" gitleaks
+          "$RUNNER_TEMP/gitleaks" git --redact --no-banner --log-opts='--all --diff-merges=first-parent' .
+
+  test:
+    name: Tests (Python ${{ matrix.python-version }})
+    needs: secrets
+    if: needs.secrets.outputs.test == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.12.16", "3.14.10", "3.15.2"]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          version: "0.13.7"
+          python-version: ${{ matrix.python-version }}
+          enable-cache: false
+      - run: uv sync --locked
+      - name: Test with Chrome
+        run: |
+          CHROME_PATH="$(command -v google-chrome)"
+          export CHROME_PATH
+          "$CHROME_PATH" --version
+          uv run --locked python -m pytest -q tests
+      - name: Check palettes
+        run: uv run --locked python skills/evident-charts/scripts/check_palette.py --preset all
+
+  check:
+    name: check
+    needs: [secrets, test]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - env:
+          SECRETS_RESULT: ${{ needs.secrets.result }}
+          TEST_NEEDED: ${{ needs.secrets.outputs.test }}
+          TEST_RESULT: ${{ needs.test.result }}
+        run: |
+          test "$SECRETS_RESULT" = success
+          case "$TEST_NEEDED:$TEST_RESULT" in
+            true:success|false:skipped) ;;
+            *) exit 1 ;;
+          esac
