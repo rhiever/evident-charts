@@ -1,6 +1,6 @@
 # evident-charts
 
-Helps Claude and other agents make clear, honest charts and critique the ones you share. Works in Claude Code, claude.ai chat, Cowork, Codex, Cursor, and other agents that support skills.
+Helps Claude and other agents make clear, honest charts and critique the ones you share. Works in Claude Code, claude.ai chat, Cowork, Codex, GitHub Copilot, Cursor, and other agents that support skills.
 
 ![A typical draft ranking raw electric-car counts on a log scale it never mentions, next to the version evident-charts produced after critiquing it: battery-electric share of new cars by country](examples/hero.png)
 
@@ -46,6 +46,15 @@ evident-charts checks these problems with scripts and a review of the rendered i
 /plugin marketplace add rhiever/evident-charts
 /plugin install evident-charts@evident-charts
 ```
+
+### GitHub Copilot CLI and VS Code
+
+```text
+copilot plugin marketplace add rhiever/evident-charts
+copilot plugin install evident-charts@evident-charts
+```
+
+VS Code also picks up plugins installed by Copilot CLI and lists them under Plugins in the Agent Customizations editor.
 
 ### Cursor and other [Agent Skills](https://agentskills.io) agents
 
@@ -97,6 +106,7 @@ Without Chrome, supported chart-spec checks can still run. Without Python, the a
 | Claude Code | `claude plugin marketplace update evident-charts && claude plugin update evident-charts@evident-charts` |
 | npx skills | `npx skills update evident-charts` |
 | GitHub CLI | `gh skill update evident-charts` |
+| Copilot CLI | `copilot plugin update evident-charts@evident-charts` |
 | Codex | `codex plugin marketplace upgrade evident-charts && codex plugin add evident-charts@evident-charts` |
 | Gemini CLI | `gemini extensions update evident-charts` (automatic with `--auto-update`) |
 

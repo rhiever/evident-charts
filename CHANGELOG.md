@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- README: install and update commands for GitHub Copilot CLI, which VS Code also reads.
+
 ## 0.2.4
 
 - `check_svg.py` sandboxes the SVG it measures: its scripts don't run, nothing it links to loads, and a crafted file can't fake a pass. It now checks contrast on `oklch()` and `lab()` colors and measures embedded fonts correctly.
