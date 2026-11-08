@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build a reproducible plugin ZIP from an explicit file list. Python 3.10+."""
+"""Build a reproducible plugin ZIP from an explicit file list. Python 3.12+."""
 import argparse
 import hashlib
 import json

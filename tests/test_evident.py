@@ -235,7 +235,7 @@ def test_value_labels_leave_category_ticks_plain_unless_emphasized(blog):
     plt.close(fig2)
 
 
-def test_shared_y_panels_keep_room_own_styles_and_user_limits():
+def test_shared_y_panels_keep_room_own_styles_and_user_limits(tmp_path):
     names = ["A very long category name number one", "Another rather long category", "Short", "United States"]
     with matplotlib.rc_context():
         fig, (a1, a2) = ev.figure("blog", 1, 2, sharey=True)
@@ -244,8 +244,9 @@ def test_shared_y_panels_keep_room_own_styles_and_user_limits():
         ev.value_labels(a2, a2.barh(names, [30, 50, 20, 40], color=[c2[n] for n in names]), emphasize=True)
         a2.set_xlim(0, 100)
         ev.titles(fig, "Short trails on one measure and leads on another", source="Source: X")
-        ev.save(fig, fig_path := Path(__file__).parent / "_tmp_shared.png")
-        fig_path.unlink()
+        fig_path = tmp_path / "shared.png"
+        ev.save(fig, fig_path)
+        assert fig_path.is_file()
         w1, w2 = a1.get_position().width, a2.get_position().width
         assert min(w1, w2) > .2 and abs(w1 - w2) < 1e-6
         assert a2.get_xlim() == (0, 100)
@@ -579,15 +580,16 @@ def test_hero_caption_wraps_to_the_canvas_width():
 
 
 def test_titles_warn_when_the_title_block_squeezes_a_fixed_height_plot():
-    long_title = "Texas and Arizona added a third of new US utility-scale solar capacity so far in 2026"
-    long_sub = ("Solar capacity online January to August 2026, MW (share of the US total). The other 28 states "
-                "added the remaining third")
+    # Fix the line count so this measures plot height independently of automatic wrapping.
+    long_title = "Texas and Arizona added a third\nof new US utility-scale solar capacity"
+    long_sub = "Solar capacity online January to August 2026, MW\nOther states supplied the rest"
+    note = "Capacity excludes rooftop solar.\nValues reflect reporting revisions."
     with matplotlib.rc_context():
         fig, ax = ev.figure("slide")
         ax.barh([f"State {i}" for i in range(8)], np.arange(8, 0, -1.0))
         ev.value_labels(ax, ax.containers[0])
         with pytest.warns(UserWarning, match=r"plot area is [\d.]+:1, wider than 3.5:1 on the fixed-height slide"):
-            ev.titles(fig, long_title, subtitle=long_sub, source="Source: X")
+            ev.titles(fig, long_title, subtitle=long_sub, source="Source: X", note=note)
         assert ev.plot_aspect(fig)[2] == "wide"
         with warnings.catch_warnings():
             warnings.simplefilter("error")
@@ -595,7 +597,7 @@ def test_titles_warn_when_the_title_block_squeezes_a_fixed_height_plot():
             assert ev.plot_aspect(fig)[2] is None
             ev.titles(fig, None, source="Source: X")  # title set in the slide's placeholder instead
             ev.titles(fig, "Texas and Arizona led US solar in 2026", subtitle="Capacity online, MW",
-                      stats=[("33%", "Texas and Arizona")], source="Source: X")  # a number card's visual stays small
+                      stats=[("33%", "Texas and Arizona\nled additions")], source="Source: X")  # a number card's visual stays small
         assert ev.plot_aspect(fig)[2] == "wide"
         plt.close(fig)
 

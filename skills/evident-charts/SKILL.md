@@ -22,7 +22,7 @@ Critique, review, or a chart image with a question: follow `references/critique.
 ## Host and user instructions
 
 - User instructions and host requirements take precedence over this skill, including its evidence rules. Preserve an explicit override, explain the consequence briefly, and report the rule deviation and any failed check; do not silently replace the requested chart.
-- Use only available, permitted tools. Python 3.10+ runs the checks; matplotlib checks also need matplotlib and numpy. Palette and SVG scripts use the standard library; SVG layout checks need Chrome/Chromium. Optional helpers or exports may need their own libraries.
+- Use only available, permitted tools. Python 3.12+ runs the checks; matplotlib checks also need matplotlib and numpy. Palette and SVG scripts use the standard library; SVG layout checks need Chrome/Chromium. Optional helpers or exports may need their own libraries.
 - Without Chrome, run SVG spec checks when a supported spec is available; otherwise skip SVG checks. Without Python, skip script checks. Review a rendered image when the host can view it. Report checks run, failed, skipped, and not checkable, with reasons. A partial check is not a full pass.
 - Use a fresh reviewer only when delegation and vision are available and allowed by the user and host. Otherwise self-review; if no image can be viewed, mark visual review skipped. Do not install tools or delegate outside the host's permissions.
 
