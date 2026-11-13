@@ -42,6 +42,8 @@ def test_clean_charts_have_no_findings(name):
     assert res["result"] == "pass"
     # Minimal fixtures omit source lines; missing-source has its own test.
     assert [f for f in res["findings"] if f["check"] != "missing-source"] == [], res["findings"]
+    if name in {"source_ok.py", "value_labels_ok.py", "inverted_ok.py", "log_labeled.py"}:
+        assert "missing-source" not in checks(res)
 
 
 # --- text-overlap -------------------------------------------------------------
@@ -85,10 +87,6 @@ def test_label_on_two_point_slope_line_fails():
     assert len(hits) == 1 and "'Rural'" in hits[0]["where"]
 
 
-def test_endpoint_direct_labels_pass():
-    assert "text-on-line" not in checks(lint("slope_good.py"))
-
-
 def test_annotation_arrow_through_other_text_fails():
     res = lint("arrow_through_text.py")
     hits = [f for f in res["findings"] if f["check"] == "text-on-line"]
@@ -106,10 +104,6 @@ def test_callout_on_split_series_junction_fails():
     assert len(hits) == 1 and "'Low'" in hits[0]["where"]
 
 
-def test_split_series_end_label_and_callout_beside_junction_pass():
-    assert "text-on-line" not in checks(lint("split_series_ok.py"))
-
-
 def test_continued_ends_marks_only_junctions():
     import numpy as np
     ctx = np.array([[0, 5], [1, 4], [2, 2]], float)        # gray context, ends where the highlight starts
@@ -121,10 +115,6 @@ def test_continued_ends_marks_only_junctions():
 def test_text_across_value_labels_zero_line_fails():
     hits = [f for f in lint("baseline_header.py")["findings"] if f["check"] == "text-on-line"]
     assert len(hits) == 2 and all("rule" in f["where"] for f in hits)
-
-
-def test_text_beside_zero_and_reference_lines_passes():
-    assert "text-on-line" not in checks(lint("baseline_header_ok.py"))
 
 
 # --- text-clipped ---------------------------------------------------------------
@@ -155,7 +145,9 @@ def test_log_bar_axis_fails():
 # --- sources, process notes, readouts, titles, scales ---------------------------------
 
 def test_process_notes_and_file_sources_fail():
-    hits = [f for f in lint("process_note.py")["findings"] if f["check"] == "process-note"]
+    res = lint("process_note.py")
+    assert "missing-source" not in checks(res)
+    hits = [f for f in res["findings"] if f["check"] == "process-note"]
     assert [h["severity"] for h in hits] == ["fail", "fail"]
     assert "inferred, confirm" in hits[0]["detail"]
     assert "file name sales_2022.csv" in hits[1]["detail"]
@@ -164,8 +156,6 @@ def test_process_notes_and_file_sources_fail():
 def test_missing_source_warns_once_per_figure():
     hits = [f for f in lint("good_line.py")["findings"] if f["check"] == "missing-source"]
     assert [(h["severity"], h["where"]) for h in hits] == [("warn", "fig0/figure")]
-    for name in ("source_ok.py", "process_note.py", "value_labels_ok.py", "inverted_ok.py", "log_labeled.py"):
-        assert "missing-source" not in checks(lint(name)), name
 
 
 def test_value_labels_with_value_axis_warn():
@@ -230,10 +220,10 @@ def test_title_too_long_by_lines_and_the_same_measured_fit_as_fits_title():
             assert (f"fig{i}" in hits) == (not ev.fits_title(text, dest)[0]), (dest, i)
             if f"fig{i}" in hits:
                 assert hits[f"fig{i}"].startswith(f"title runs past 2 lines at {dest} ({len(text)} chars, cut about")
-    assert "fig2" not in [f["where"].split("/")[0] for f in lint("title_long.py")["findings"]
-                          if f["check"] == "title-too-long"]
-    assert {"fig2", "fig3"} <= {f["where"].split("/")[0] for f in lint("title_long.py", "mobile")["findings"]
-                                if f["check"] == "title-too-long"}
+        if dest == "blog":
+            assert "fig2" not in hits
+        else:
+            assert {"fig2", "fig3"} <= hits.keys()
 
 
 def test_inverted_value_axis_fails():
@@ -250,11 +240,8 @@ def test_log_axis_without_log_label_fails():
 
 @pytest.mark.parametrize("name,check", [
     ("dual_axis.py", "dual-axis"),
-    ("pie_many.py", "pie-slices"),
     ("legend_lines.py", "legend-direct-label"),
-    ("missing_label.py", "missing-axis-label"),
     ("tick_rotation.py", "tick-crowding"),
-    ("many_lines.py", "too-many-series"),
     ("default_style.py", "spines-gridlines"),
     ("small_text.py", "small-text"),
 ])
@@ -262,6 +249,23 @@ def test_warn_checks_fire(name, check):
     res = lint(name)
     assert check in checks(res, "warn")
     assert res["result"] == "pass"  # warns alone do not fail
+
+
+def test_pie_warns_with_the_slice_count():
+    res = lint("pie_many.py")
+    hits = [f for f in res["findings"] if f["check"] == "pie-slices"]
+    assert len(hits) == 1 and hits[0]["severity"] == "warn" and "7 slices" in hits[0]["detail"]
+    assert res["result"] == "pass"
+
+
+@pytest.mark.parametrize("name,check,where", [
+    ("missing_label.py", "missing-axis-label", "fig0/ax0 y-axis"),
+    ("many_lines.py", "too-many-series", "fig0/ax0"),
+])
+def test_warn_checks_skip_year_axes_and_gray_context_lines(name, check, where):
+    res = lint(name)
+    assert [(f["severity"], f["where"]) for f in res["findings"] if f["check"] == check] == [("warn", where)]
+    assert res["result"] == "pass"
 
 
 def test_3d_axes_fail():
@@ -288,21 +292,6 @@ def test_crowded_categories_on_fixed_height_presets_suggest_fewer_rows(dest):
     assert f"about {rows} bar rows fit" in hits[0]["fix"] and "taller" not in hits[0]["fix"]
 
 
-def test_pie_detail_counts_slices():
-    f = [f for f in lint("pie_many.py")["findings"] if f["check"] == "pie-slices"][0]
-    assert "7 slices" in f["detail"]
-
-
-def test_missing_axis_label_skips_year_axis():
-    hits = [f for f in lint("missing_label.py")["findings"] if f["check"] == "missing-axis-label"]
-    assert [h["where"] for h in hits] == ["fig0/ax0 y-axis"]
-
-
-def test_gray_context_lines_do_not_count_as_series():
-    hits = [f for f in lint("many_lines.py")["findings"] if f["check"] == "too-many-series"]
-    assert [h["where"] for h in hits] == ["fig0/ax0"]
-
-
 def test_default_title_variants():
     hits = [f for f in lint("titles.py")["findings"] if f["check"] == "default-title"]
     assert len(hits) == 3
@@ -327,12 +316,7 @@ def test_square_scatter_on_narrow_canvas_underuses_width(dest, expected):
     assert [f["where"] for f in res["findings"] if f["check"] == "plot-area-underused"] == expected
 
 
-def test_takeaway_title_passes():
-    assert "default-title" not in checks(lint("good_line.py"))
-
-
 def test_small_text_depends_on_destination():
-    assert "small-text" not in checks(lint("good_line.py", dest="blog"))
     res = lint("good_line.py", dest="mobile")
     f = [f for f in res["findings"] if f["check"] == "small-text"][0]
     assert "mobile" in f["detail"] and "pt" in f["fix"]
@@ -390,8 +374,9 @@ def test_spectral_diverging_warns_sequential_fails_viridis_ok():
 # --- CLI ------------------------------------------------------------------------------
 
 def test_cli_exit_codes_and_text_output():
-    ok = cli(FIX / "source_ok.py")
-    assert ok.returncode == 0 and ok.stdout.strip().startswith("RESULT PASS")
+    ok = cli(FIX / "good_line.py", "--verbose")
+    assert ok.returncode == 0 and ok.stdout.strip().splitlines()[-1].startswith("RESULT PASS")
+    assert ok.stdout.startswith("INFO fig0: 1 axes")
     bad = cli(FIX / "slope_bad.py")
     assert bad.returncode == 1
     lines = bad.stdout.strip().splitlines()
@@ -437,16 +422,9 @@ def test_cli_list_checks():
     assert res.returncode == 0 and names == list(check_chart.CHECKS)
 
 
-def test_cli_verbose_prints_inventory():
-    res = cli(FIX / "good_line.py", "--verbose")
-    assert res.stdout.startswith("INFO fig0: 1 axes")
-
-
 # --- v0.3 checks -----------------------------------------------------------------------
 
-def test_source_anywhere_in_a_footer_line_counts():
-    hits = [f for f in lint("source_ok.py")["findings"] if f["check"] == "missing-source"]
-    assert hits == []
+def test_source_pattern_handles_inline_delimiters_and_ignores_open_source():
     assert check_chart.SOURCE_RE.search("Note: 2024 is provisional | Source: CDC")
     assert check_chart.SOURCE_RE.search("Note: 2024 is provisional. Source: CDC")
     assert not check_chart.SOURCE_RE.search("Open-source software grew")
