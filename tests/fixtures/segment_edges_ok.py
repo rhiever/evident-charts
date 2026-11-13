@@ -28,11 +28,12 @@ ax4.bar(pos - 0.2, [3, 4, 2, 5], width=0.35, color="#1f77b4")
 ax4.bar(pos + 0.2, [2, 3, 4, 1], width=0.35, color="#aec7e8")
 ax4.set_xticks(pos, regions)
 ax4.set_ylabel("Sales ($M)")
-# 365 touching daily bars in two colors: too narrow for an edge, which would erase them.
+# Four touching daily bars on a year-wide axis stay too narrow for a visible edge.
 fig5, ax5 = new()
-days = [dt.date(2023, 1, 1) + dt.timedelta(days=k) for k in range(365)]
-vals = np.sin(np.arange(365) / 20)
-ax5.bar(days, np.abs(vals), width=1, color=np.where(vals > 0, "#1f77b4", "#d62728"))
+start = dt.date(2023, 1, 1)
+days = [start + dt.timedelta(days=k) for k in range(4)]
+ax5.bar(days, [2, 3, 2, 3], width=1, color=["#1f77b4", "#d62728"] * 2)
+ax5.set_xlim(start, dt.date(2024, 1, 1))
 ax5.set_ylabel("Anomaly (C)")
 # A confidence band around a line, and a lighter band over a darker one: context, not stacked segments.
 fig6, ax6 = new()

@@ -26,14 +26,11 @@ needs_chrome = pytest.mark.skipif(CHROME is None, reason="no Chrome or chrome-he
 SPECS = {"plotly_clean": "plotly_clean.json", "plotly_bad": "plotly_bad.json",
          "plotly_lines_bad": "plotly_lines_bad.json", "vegalite_clean": "vegalite_clean.vg.json",
          "vegalite_bad": "vegalite_bad.vg.json"}
-_cache = {}
 
 
 def lint(name, dest="blog"):
-    if (name, dest) not in _cache:
-        spec = FIX / SPECS[name] if name in SPECS else None
-        _cache[name, dest] = check_svg.run_checks(FIX / f"{name}.svg", dest, spec, chrome=CHROME)
-    return _cache[name, dest]
+    spec = FIX / SPECS[name] if name in SPECS else None
+    return check_svg.run_checks(FIX / f"{name}.svg", dest, spec, chrome=CHROME)
 
 
 def checks(res, severity=None):
@@ -47,18 +44,13 @@ def cli(*args):
 # --- measured SVGs ------------------------------------------------------------
 
 @needs_chrome
-@pytest.mark.parametrize("name", ["plotly_clean", "vegalite_clean", "d3_clean", "svglite_clean"])
-def test_clean_charts_have_no_findings(name):
-    res = lint(name)
-    assert res["result"] == "pass"
-    assert res["findings"] == [], res["findings"]
-
-
-@needs_chrome
 @pytest.mark.parametrize("name,stack", [("plotly_clean", "plotly"), ("vegalite_clean", "vega"),
                                         ("d3_clean", "d3-evident"), ("svglite_clean", "svglite")])
-def test_stack_detected(name, stack):
-    assert lint(name)["stack"] == stack
+def test_clean_charts_have_no_findings(name, stack):
+    res = lint(name)
+    assert res["stack"] == stack
+    assert res["result"] == "pass"
+    assert res["findings"] == [], res["findings"]
 
 
 @needs_chrome
@@ -101,8 +93,12 @@ def test_d3_bad():
 
 
 @needs_chrome
-def test_svglite_bad_unclassed_marks():
-    res = lint("svglite_bad")
+def test_svglite_cli_reports_bad_unclassed_marks():
+    run = cli(FIX / "svglite_bad.svg", "--json")
+    assert run.returncode == 1, run.stderr
+    res = json.loads(run.stdout)
+    assert res["result"] == "fail" and res["fails"] >= 1
+    assert {"check", "severity", "where", "detail", "fix"} <= set(res["findings"][0])
     assert checks(res, "fail") == {"text-overlap", "text-on-line", "contrast", "cvd"}
     assert checks(res, "warn") == {"small-text", "contrast"}
     # the gray panel and white gridlines are background, the yellow trend line is data
@@ -127,11 +123,14 @@ def test_small_text_scales_with_destination():
 # --- CLI ------------------------------------------------------------------------
 
 def test_list_checks_names_match_check_chart():
-    out = cli("--list-checks").stdout
-    names = [line.split("\t")[0] for line in out.strip().splitlines()]
+    svg = cli("--list-checks")
+    assert svg.returncode == 0, svg.stderr
+    names = [line.split("\t")[0] for line in svg.stdout.splitlines()]
     assert names == list(check_svg.CHECKS)
-    chart_names = set((SCRIPTS / "check_chart.py").read_text().split("CHECKS = {", 1)[1].split("\n}", 1)[0]
-                      .replace('"', " ").split())
+    # The chart CLI promises this command works without matplotlib.
+    chart = subprocess.run([sys.executable, "-S", str(SCRIPTS / "check_chart.py"), "--list-checks"],
+                           capture_output=True, text=True, check=True, timeout=120)
+    chart_names = {line.split("\t")[0] for line in chart.stdout.splitlines()}
     assert set(names) <= chart_names
 
 
@@ -193,12 +192,7 @@ def test_unknown_or_malformed_spec_exits_2(tmp_path, monkeypatch, capsys):
 
 
 @needs_chrome
-def test_cli_json_and_exit_codes():
-    r = cli(FIX / "svglite_bad.svg", "--json")
-    assert r.returncode == 1
-    res = json.loads(r.stdout)
-    assert res["result"] == "fail" and res["fails"] >= 1
-    assert {"check", "severity", "where", "detail", "fix"} <= set(res["findings"][0])
+def test_cli_text_success():
     r = cli(FIX / "d3_clean.svg")
     assert r.returncode == 0 and r.stdout.strip().endswith("dest=blog")
 

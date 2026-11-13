@@ -62,6 +62,13 @@ def test_archive_is_complete_and_reproducible(source, tmp_path):
             width, height = struct.unpack(">II", data[16:24])
             assert width == height and width > 0
 
+        links = re.findall(r'\]\(([^\s)]+)\)', archive.read("README.md").decode())
+        for link in links:
+            if "://" not in link and not link.startswith("#"):
+                target = link.split("#")[0]
+                present = any(n.startswith(target) for n in names) if target.endswith("/") else target in names
+                assert present, f"missing README target: {link}"
+
 
 def test_missing_icon_fails_without_archive(source, tmp_path):
     manifest = json.loads((source / "plugin.json").read_text())
@@ -72,20 +79,6 @@ def test_missing_icon_fails_without_archive(source, tmp_path):
     assert result.returncode != 0
     assert "missing" in result.stderr.lower()
     assert not output.exists()
-
-
-def test_readme_links_resolve_in_archive(source, tmp_path):
-    output = tmp_path / "release.zip"
-    result = build(source, output)
-    assert result.returncode == 0, result.stderr
-    with zipfile.ZipFile(output) as archive:
-        names = set(archive.namelist())
-        links = re.findall(r'\]\(([^\s)]+)\)', archive.read("README.md").decode())
-        for link in links:
-            if "://" not in link and not link.startswith("#"):
-                target = link.split("#")[0]
-                present = any(n.startswith(target) for n in names) if target.endswith("/") else target in names
-                assert present, f"missing README target: {link}"
 
 
 def test_version_mismatch_fails_without_archive(source, tmp_path):

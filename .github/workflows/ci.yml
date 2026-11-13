@@ -37,8 +37,9 @@ jobs:
              [ -s "$changed_paths" ]; then
             test=false
             while IFS= read -r -d '' path; do
+              # README.md ships in the ZIP and its links are tested.
               case "$path" in
-                AGENTS.md|CLAUDE.md|README.md) ;;
+                AGENTS.md|.claude/CLAUDE.md) ;;
                 *) test=true; break ;;
               esac
             done < "$changed_paths"
