@@ -6,8 +6,15 @@ y = [134, 120, 90, 70, 50, 36]
 ax.scatter(x, y, s=60, color="0.3")
 # "Norway" is anchored on Norway's dot but pushed right until it sits next to
 # Denmark's dot: a reader pairs it with the wrong country.
-ax.annotate("Norway", xy=(1400, 134), xytext=(42, -18), textcoords="offset points",
-            ha="left", va="center", fontsize=12)
+ax.annotate(
+    "Norway",
+    xy=(1400, 134),
+    xytext=(42, -18),
+    textcoords="offset points",
+    ha="left",
+    va="center",
+    fontsize=12,
+)
 # Free text right of two stacked dots, halfway between them: equally near both.
 ax.text(1915, 43, "Chile", va="center", fontsize=12)
 ax.set_xlim(1300, 2000)

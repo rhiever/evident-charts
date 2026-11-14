@@ -1,9 +1,8 @@
 import datetime as dt
 
 import matplotlib.dates as mdates
-from matplotlib.ticker import FuncFormatter, StrMethodFormatter
-
 from _clean import new
+from matplotlib.ticker import FuncFormatter, StrMethodFormatter
 
 years = [2018, 2019, 2020, 2021, 2022]
 # Millions abbreviated by hand on whole-year ticks.

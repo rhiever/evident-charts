@@ -1,5 +1,4 @@
 import numpy as np
-
 from _clean import new
 
 # Category order on horizontal bars: the inverted axis holds categories, not values.
@@ -18,7 +17,12 @@ ax2.invert_yaxis()
 fig2.text(0.02, 0.02, "Source: UN, World Happiness Report", fontsize=11)
 # Heatmaps put row 0 on top by convention.
 fig3, ax3 = new("Cases cluster in winter months")
-ax3.pcolormesh(np.arange(13), np.arange(2015, 2025), np.random.default_rng(0).random((9, 12)), cmap="Blues")
+ax3.pcolormesh(
+    np.arange(13),
+    np.arange(2015, 2025),
+    np.random.default_rng(0).random((9, 12)),
+    cmap="Blues",
+)
 ax3.invert_yaxis()
 ax3.set_xlabel("Month")
 ax3.set_ylabel("Year")

@@ -3,7 +3,9 @@ from _clean import new
 
 fig, ax = new()
 for k in range(8):
-    ax.plot([2019, 2020, 2021], [k, k + 1, k + 2], color=f"C{k}", marker="os^Dv<>p"[k])  # markers: cvd warns, not fails
+    ax.plot(
+        [2019, 2020, 2021], [k, k + 1, k + 2], color=f"C{k}", marker="os^Dv<>p"[k]
+    )  # markers: cvd warns, not fails
 ax.set_ylabel("Revenue ($M)")
 ax.set_xticks([2019, 2020, 2021])
 fig2, ax2 = new()

@@ -2,11 +2,17 @@ from _clean import new
 
 # Nominal bars in dataframe order.
 fig, ax = new("Germany leads on wind")
-ax.barh(["France", "Germany", "Italy", "Spain", "Poland", "Sweden"], [40, 82, 59, 47, 38, 10], color="C0")
+ax.barh(
+    ["France", "Germany", "Italy", "Spain", "Poland", "Sweden"],
+    [40, 82, 59, 47, 38, 10],
+    color="C0",
+)
 ax.set_xlabel("Capacity (GW)")
 # Alphabetical columns.
 fig1, ax1 = new("Mangoes cost the most")
-ax1.bar(["Apples", "Bananas", "Cherries", "Mangoes", "Pears"], [3, 1, 6, 8, 2], color="C0")
+ax1.bar(
+    ["Apples", "Bananas", "Cherries", "Mangoes", "Pears"], [3, 1, 6, 8, 2], color="C0"
+)
 ax1.set_ylabel("Price ($/kg)")
 # A line joining nominal categories.
 fig2, ax2 = new("South sells the most")

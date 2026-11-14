@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Build a reproducible plugin ZIP from an explicit file list. Python 3.12+."""
+
 import argparse
 import hashlib
 import json
@@ -62,12 +63,19 @@ def release_files(root):
         content[name] = path.read_bytes()
     versions = {}
     manifests = {}
-    for name in ("plugin.json", ".claude-plugin/plugin.json", ".codex-plugin/plugin.json",
-                 "gemini-extension.json"):
+    for name in (
+        "plugin.json",
+        ".claude-plugin/plugin.json",
+        ".codex-plugin/plugin.json",
+        "gemini-extension.json",
+    ):
         manifests[name] = json.loads(content[name])
         versions[name] = manifests[name]["version"]
-    match = re.search(r'^\s+version:\s*"?([^"\n]+)"?',
-                      content["skills/evident-charts/SKILL.md"].decode(), re.M)
+    match = re.search(
+        r'^\s+version:\s*"?([^"\n]+)"?',
+        content["skills/evident-charts/SKILL.md"].decode(),
+        re.MULTILINE,
+    )
     if not match:
         raise ValueError("missing skill version")
     versions["SKILL.md"] = match.group(1).strip()
@@ -77,8 +85,12 @@ def release_files(root):
     interface = manifests["plugin.json"]["extensions"]["com.openai"]["interface"]
     if interface != manifests[".codex-plugin/plugin.json"]["interface"]:
         raise ValueError("OpenAI interface metadata must agree")
-    for field, limit in (("displayName", 30), ("shortDescription", 30),
-                         ("longDescription", 4000), ("developerName", 80)):
+    for field, limit in (
+        ("displayName", 30),
+        ("shortDescription", 30),
+        ("longDescription", 4000),
+        ("developerName", 80),
+    ):
         value = interface.get(field)
         if not isinstance(value, str) or not 0 < len(value) <= limit:
             raise ValueError(f"{field} must contain 1-{limit} characters")
@@ -91,7 +103,11 @@ def release_files(root):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--output", type=Path, help="ZIP path (default: dist/evident-charts-VERSION.zip)")
+    parser.add_argument(
+        "--output",
+        type=Path,
+        help="ZIP path (default: dist/evident-charts-VERSION.zip)",
+    )
     args = parser.parse_args()
     try:
         version, content = release_files(ROOT)
@@ -99,7 +115,9 @@ def main():
         if output.resolve() in {(ROOT / name).resolve() for name in FILES}:
             raise ValueError("output would overwrite a release file")
         output.parent.mkdir(parents=True, exist_ok=True)
-        with zipfile.ZipFile(output, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=9) as archive:
+        with zipfile.ZipFile(
+            output, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=9
+        ) as archive:
             for name in sorted(content):
                 info = zipfile.ZipInfo(name, date_time=(1980, 1, 1, 0, 0, 0))
                 info.create_system = 3

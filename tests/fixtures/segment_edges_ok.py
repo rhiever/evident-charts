@@ -1,7 +1,6 @@
 import datetime as dt
 
 import numpy as np
-
 from _clean import new
 
 regions = ["North", "South", "East", "West"]
@@ -12,7 +11,12 @@ ax.bar(regions, [3, 4, 2, 5], color="#1f77b4", **edge)
 ax.bar(regions, [2, 3, 4, 1], bottom=[3, 4, 2, 5], color="#aec7e8", **edge)
 ax.set_ylabel("Sales ($M)")
 fig1, ax1 = new()
-ax1.pie([45, 30, 25], colors=["#1f77b4", "#6baed6", "#c6dbef"], labels=["Rent", "Food", "Other"], wedgeprops=edge)
+ax1.pie(
+    [45, 30, 25],
+    colors=["#1f77b4", "#6baed6", "#c6dbef"],
+    labels=["Rent", "Food", "Other"],
+    wedgeprops=edge,
+)
 fig2, ax2 = new()
 x = np.arange(10)
 ax2.stackplot(x, 1 + 0.1 * x, 2 + 0.05 * x, colors=["#1f77b4", "#aec7e8"], **edge)

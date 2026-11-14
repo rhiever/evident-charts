@@ -33,33 +33,57 @@ PALETTES_JSON = Path(__file__).resolve().parent.parent / "assets" / "palettes.js
 # ---------------------------------------------------------------------------
 # Thresholds. Tag says how firmly each is held.
 # ---------------------------------------------------------------------------
-TEXT_MIN, TEXT_MIN_LARGE = 4.5, 3.0          # V2  [P] WCAG 1.4.3
-MARK_MIN = 3.0                               # V3  [P] WCAG 1.4.11
-INVISIBLE = 1.5                              # V3/V4/V12 [T] practically invisible
-DE_FLOOR = {"bar": 10.0, "area": 10.0, "line": 15.0, "point": 20.0, "text": 20.0}  # V5 [T]
-CVD_FACTOR = 0.6                             # V6/V7/V15 floor = 0.6 x V5 floor [T]
-RG_RATIO = 2.0                               # V7 normal dE >= 2x CVD dE [T]
-DL_HIGHLIGHT = 0.15                          # V8 accent vs context OKLab dL [T]
-DL_CATEGORICAL = 0.05                        # V8 categorical grayscale merge [T]
-CAT_WARN, CAT_MAX, MAX_ACCENTS = 4, 7, 2     # V9  [P]
-UNIFORM_CV = 0.35                            # V11 [T]
-MID_CHROMA = 0.03                            # V13 [P] OKLCH C
-ARM_ASYM = 0.05                              # V14 [T] OKLab L
+TEXT_MIN, TEXT_MIN_LARGE = 4.5, 3.0  # V2  [P] WCAG 1.4.3
+MARK_MIN = 3.0  # V3  [P] WCAG 1.4.11
+INVISIBLE = 1.5  # V3/V4/V12 [T] practically invisible
+DE_FLOOR = {
+    "bar": 10.0,
+    "area": 10.0,
+    "line": 15.0,
+    "point": 20.0,
+    "text": 20.0,
+}  # V5 [T]
+CVD_FACTOR = 0.6  # V6/V7/V15 floor = 0.6 x V5 floor [T]
+RG_RATIO = 2.0  # V7 normal dE >= 2x CVD dE [T]
+DL_HIGHLIGHT = 0.15  # V8 accent vs context OKLab dL [T]
+DL_CATEGORICAL = 0.05  # V8 categorical grayscale merge [T]
+CAT_WARN, CAT_MAX, MAX_ACCENTS = 4, 7, 2  # V9  [P]
+UNIFORM_CV = 0.35  # V11 [T]
+MID_CHROMA = 0.03  # V13 [P] OKLCH C
+ARM_ASYM = 0.05  # V14 [T] OKLab L
 DARK_DEFAULT = "#121212"
 
 CHECKS = {
     "V2": ("P", "text contrast >= 4.5:1 (3:1 with --large-text)"),
-    "V3": ("P", "mark contrast vs background >= 3:1, else WARN; line/point/text < 1.5:1 FAIL"),
+    "V3": (
+        "P",
+        "mark contrast vs background >= 3:1, else WARN; line/point/text < 1.5:1 FAIL",
+    ),
     "V4": ("T", "context grays < 3:1 allowed only in highlight role with an accent"),
-    "V5": ("T", "CIEDE2000 >= mark floor (bar/area 10, line 15, point/text 20); direction is [E]"),
+    "V5": (
+        "T",
+        "CIEDE2000 >= mark floor (bar/area 10, line 15, point/text 20); direction is [E]",
+    ),
     "V6": ("T", "CIEDE2000 under protan/deutan >= 0.6x V5 floor; tritan WARN only"),
-    "V7": ("T", "red-green reliance: normal dE >= 2x protan/deutan dE and CVD dE < V6 floor"),
-    "V8": ("T", "OKLab lightness: accent vs context dL >= 0.15; categorical min dL < 0.05 WARN"),
+    "V7": (
+        "T",
+        "red-green reliance: normal dE >= 2x protan/deutan dE and CVD dE < V6 floor",
+    ),
+    "V8": (
+        "T",
+        "OKLab lightness: accent vs context dL >= 0.15; categorical min dL < 0.05 WARN",
+    ),
     "V9": ("P", "categorical count WARN > 4, FAIL > 7; highlight accents <= 2"),
     "V10": ("E", "sequential lightness strictly monotone (diverging: each arm)"),
     "V11": ("T", "sequential step uniformity: CV of adjacent dE00 <= 0.35"),
-    "V12": ("T", "faintest step (seq) or midpoint (div) >= 1.5:1 for bar/line/point/text marks"),
-    "V13": ("P", "diverging midpoint: odd count, OKLCH C <= 0.03, closest to background lightness"),
+    "V12": (
+        "T",
+        "faintest step (seq) or midpoint (div) >= 1.5:1 for bar/line/point/text marks",
+    ),
+    "V13": (
+        "P",
+        "diverging midpoint: odd count, OKLCH C <= 0.03, closest to background lightness",
+    ),
     "V14": ("T", "diverging arm symmetry: |L_i - L_mirror| <= 0.05"),
     "V15": ("T", "diverging endpoints distinct under protan/deutan (>= V6 floor)"),
     "V16": ("P", "rerun all checks per background: --background A,B or --dark"),
@@ -68,15 +92,29 @@ CHECKS = {
 # ---------------------------------------------------------------------------
 # Color math
 # ---------------------------------------------------------------------------
-SRGB_TO_XYZ = ((0.4124564, 0.3575761, 0.1804375),
-               (0.2126729, 0.7151522, 0.0721750),
-               (0.0193339, 0.1191920, 0.9503041))
+SRGB_TO_XYZ = (
+    (0.4124564, 0.3575761, 0.1804375),
+    (0.2126729, 0.7151522, 0.0721750),
+    (0.0193339, 0.1191920, 0.9503041),
+)
 WHITE_D65 = (0.95047, 1.0, 1.08883)
 # Machado, Oliveira & Fernandes 2009, severity 1.0 (authors' published table).
 CVD = {
-    "protan": ((0.152286, 1.052583, -0.204868), (0.114503, 0.786281, 0.099216), (-0.003882, -0.048116, 1.051998)),
-    "deutan": ((0.367322, 0.860646, -0.227968), (0.280085, 0.672501, 0.047413), (-0.011820, 0.042940, 0.968881)),
-    "tritan": ((1.255528, -0.076749, -0.178779), (-0.078411, 0.930809, 0.147602), (0.004733, 0.691367, 0.303900)),
+    "protan": (
+        (0.152286, 1.052583, -0.204868),
+        (0.114503, 0.786281, 0.099216),
+        (-0.003882, -0.048116, 1.051998),
+    ),
+    "deutan": (
+        (0.367322, 0.860646, -0.227968),
+        (0.280085, 0.672501, 0.047413),
+        (-0.011820, 0.042940, 0.968881),
+    ),
+    "tritan": (
+        (1.255528, -0.076749, -0.178779),
+        (-0.078411, 0.930809, 0.147602),
+        (0.004733, 0.691367, 0.303900),
+    ),
 }
 VISIONS = ("normal", "protan", "deutan", "tritan")
 
@@ -102,7 +140,7 @@ def srgb_to_linear(c8: int) -> float:
 
 def hex_to_linear(h: str):
     h = parse_hex(h)
-    return tuple(srgb_to_linear(int(h[i:i + 2], 16)) for i in (1, 3, 5))
+    return tuple(srgb_to_linear(int(h[i : i + 2], 16)) for i in (1, 3, 5))
 
 
 def linear_to_lab(rgb):
@@ -110,7 +148,7 @@ def linear_to_lab(rgb):
     d = 6.0 / 29.0
 
     def f(t):
-        return t ** (1.0 / 3.0) if t > d ** 3 else t / (3 * d * d) + 4.0 / 29.0
+        return t ** (1.0 / 3.0) if t > d**3 else t / (3 * d * d) + 4.0 / 29.0
 
     fx, fy, fz = f(x / WHITE_D65[0]), f(y / WHITE_D65[1]), f(z / WHITE_D65[2])
     return (116.0 * fy - 16.0, 500.0 * (fx - fy), 200.0 * (fy - fz))
@@ -122,9 +160,11 @@ def linear_to_oklab(rgb):
     m = 0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b
     s = 0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b
     l, m, s = (math.copysign(abs(v) ** (1.0 / 3.0), v) for v in (l, m, s))
-    return (0.2104542553 * l + 0.7936177850 * m - 0.0040720468 * s,
-            1.9779984951 * l - 2.4285922050 * m + 0.4505937099 * s,
-            0.0259040371 * l + 0.7827717662 * m - 0.8086757660 * s)
+    return (
+        0.2104542553 * l + 0.7936177850 * m - 0.0040720468 * s,
+        1.9779984951 * l - 2.4285922050 * m + 0.4505937099 * s,
+        0.0259040371 * l + 0.7827717662 * m - 0.8086757660 * s,
+    )
 
 
 def simulate(rgb, vision: str):
@@ -138,7 +178,7 @@ def ciede2000(lab1, lab2, kl=1.0, kc=1.0, kh=1.0) -> float:
     L1, a1, b1 = lab1
     L2, a2, b2 = lab2
     cbar = (math.hypot(a1, b1) + math.hypot(a2, b2)) / 2.0
-    g = 0.5 * (1.0 - math.sqrt(cbar ** 7 / (cbar ** 7 + 25.0 ** 7)))
+    g = 0.5 * (1.0 - math.sqrt(cbar**7 / (cbar**7 + 25.0**7)))
     a1p, a2p = (1.0 + g) * a1, (1.0 + g) * a2
     c1p, c2p = math.hypot(a1p, b1), math.hypot(a2p, b2)
     h1p = math.degrees(math.atan2(b1, a1p)) % 360.0 if c1p else 0.0
@@ -162,10 +202,15 @@ def ciede2000(lab1, lab2, kl=1.0, kc=1.0, kh=1.0) -> float:
         hbar = (h1p + h2p + 360.0) / 2.0
     else:
         hbar = (h1p + h2p - 360.0) / 2.0
-    t = (1.0 - 0.17 * math.cos(math.radians(hbar - 30.0)) + 0.24 * math.cos(math.radians(2.0 * hbar))
-         + 0.32 * math.cos(math.radians(3.0 * hbar + 6.0)) - 0.20 * math.cos(math.radians(4.0 * hbar - 63.0)))
+    t = (
+        1.0
+        - 0.17 * math.cos(math.radians(hbar - 30.0))
+        + 0.24 * math.cos(math.radians(2.0 * hbar))
+        + 0.32 * math.cos(math.radians(3.0 * hbar + 6.0))
+        - 0.20 * math.cos(math.radians(4.0 * hbar - 63.0))
+    )
     dtheta = 30.0 * math.exp(-(((hbar - 275.0) / 25.0) ** 2))
-    rc = 2.0 * math.sqrt(cbarp ** 7 / (cbarp ** 7 + 25.0 ** 7))
+    rc = 2.0 * math.sqrt(cbarp**7 / (cbarp**7 + 25.0**7))
     sl = 1.0 + 0.015 * (lbar - 50.0) ** 2 / math.sqrt(20.0 + (lbar - 50.0) ** 2)
     sc = 1.0 + 0.045 * cbarp
     sh = 1.0 + 0.015 * cbarp * t
@@ -263,8 +308,13 @@ def self_test(tol=1e-4):
 # Checks
 # ---------------------------------------------------------------------------
 def _r(cid, status, detail, offenders=()):
-    return {"id": cid, "status": status, "tag": CHECKS[cid][0], "detail": detail,
-            "offenders": list(offenders)}
+    return {
+        "id": cid,
+        "status": status,
+        "tag": CHECKS[cid][0],
+        "detail": detail,
+        "offenders": list(offenders),
+    }
 
 
 def _pairs(colors, context, pairs):
@@ -294,8 +344,13 @@ def check_text(texts, bg, large):
     bad = [h for cr, h in rows if cr < floor]
     worst = rows[0]
     status = "FAIL" if bad else "PASS"
-    return _r("V2", status, f"min {worst[0]:.2f}:1 {worst[1]}; floor {floor}:1"
-              + (f"; below: {','.join(bad)}" if bad else ""), bad)
+    return _r(
+        "V2",
+        status,
+        f"min {worst[0]:.2f}:1 {worst[1]}; floor {floor}:1"
+        + (f"; below: {','.join(bad)}" if bad else ""),
+        bad,
+    )
 
 
 def check_marks(colors, bg, mark, label="marks"):
@@ -306,9 +361,18 @@ def check_marks(colors, bg, mark, label="marks"):
     detail = f"{label} {'min ' if len(rows) > 1 else ''}{worst[0]:.2f}:1 {worst[1]}"
     dim = [h for h in low if h not in invisible]
     if invisible and mark in ("line", "point", "text"):
-        return _r("V3", "FAIL", detail + f"; < {INVISIBLE}:1 invisible as {mark}: {','.join(invisible)}", invisible)
+        return _r(
+            "V3",
+            "FAIL",
+            detail + f"; < {INVISIBLE}:1 invisible as {mark}: {','.join(invisible)}",
+            invisible,
+        )
     if low:
-        parts = [f"< {INVISIBLE}:1 fills need dark outline: {','.join(invisible)}"] if invisible else []
+        parts = (
+            [f"< {INVISIBLE}:1 fills need dark outline: {','.join(invisible)}"]
+            if invisible
+            else []
+        )
         parts += [f"< 3:1 needs direct labels or table: {','.join(dim)}"] if dim else []
         return _r("V3", "WARN", detail + "; " + "; ".join(parts), low)
     return _r("V3", "PASS", detail + "; floor 3:1")
@@ -321,10 +385,16 @@ def check_context(context, bg, role, has_accent):
     if worst[0] >= MARK_MIN:
         return _r("V4", "PASS", detail)
     if worst[0] < INVISIBLE:
-        return _r("V4", "WARN", detail + f"; < {INVISIBLE}:1 barely visible", [worst[1]])
+        return _r(
+            "V4", "WARN", detail + f"; < {INVISIBLE}:1 barely visible", [worst[1]]
+        )
     if role == "highlight" and has_accent:
-        return _r("V4", "PASS", detail + "; exempt < 3:1: direct-label the accent series")
-    return _r("V4", "WARN", detail + "; < 3:1 exempt only in highlight role", [worst[1]])
+        return _r(
+            "V4", "PASS", detail + "; exempt < 3:1: direct-label the accent series"
+        )
+    return _r(
+        "V4", "WARN", detail + "; < 3:1 exempt only in highlight role", [worst[1]]
+    )
 
 
 def check_distinct(pairs, floor, label):
@@ -333,17 +403,32 @@ def check_distinct(pairs, floor, label):
     out = []
     n = _min_pair(pairs, "normal")
     status = "PASS" if n[0] >= floor else "FAIL"
-    out.append(_r("V5", status, f"min dE00 {_fmt(n)} ({label}); floor {floor:g}",
-                  [n[1].hex, n[2].hex] if status == "FAIL" else ()))
+    out.append(
+        _r(
+            "V5",
+            status,
+            f"min dE00 {_fmt(n)} ({label}); floor {floor:g}",
+            [n[1].hex, n[2].hex] if status == "FAIL" else (),
+        )
+    )
     cfloor = floor * CVD_FACTOR
     mins = {v: _min_pair(pairs, v) for v in ("protan", "deutan", "tritan")}
     red_green_bad = [v for v in ("protan", "deutan") if mins[v][0] < cfloor]
-    status = "FAIL" if red_green_bad else ("WARN" if mins["tritan"][0] < cfloor else "PASS")
+    status = (
+        "FAIL" if red_green_bad else ("WARN" if mins["tritan"][0] < cfloor else "PASS")
+    )
     offs = []
     for v in red_green_bad or (["tritan"] if status == "WARN" else []):
         offs += [mins[v][1].hex, mins[v][2].hex]
-    out.append(_r("V6", status, "; ".join(f"{v} {_fmt(mins[v])}" for v in mins)
-                  + f"; floor {cfloor:.1f} (tritan WARN only)", offs))
+    out.append(
+        _r(
+            "V6",
+            status,
+            "; ".join(f"{v} {_fmt(mins[v])}" for v in mins)
+            + f"; floor {cfloor:.1f} (tritan WARN only)",
+            offs,
+        )
+    )
     out.append(check_red_green(pairs, cfloor))
     return out
 
@@ -358,8 +443,13 @@ def check_red_green(pairs, cfloor):
                 worst = (dv, a, b, v, dn)
     if worst:
         dv, a, b, v, dn = worst
-        return _r("V7", "FAIL", f"{a.hex}~{b.hex} dE00 {dn:.1f} normal -> {dv:.1f} {v}; "
-                  "add labels/position/lightness or swap to blue/orange", [a.hex, b.hex])
+        return _r(
+            "V7",
+            "FAIL",
+            f"{a.hex}~{b.hex} dE00 {dn:.1f} normal -> {dv:.1f} {v}; "
+            "add labels/position/lightness or swap to blue/orange",
+            [a.hex, b.hex],
+        )
     return _r("V7", "PASS", "no pair relies on red-green alone")
 
 
@@ -370,13 +460,22 @@ def check_lightness(pairs, role, context, colors):
             return None
         d, a, g = rows[0]
         status = "PASS" if d >= DL_HIGHLIGHT else "FAIL"
-        return _r("V8", status, f"accent~context min dL {d:.3f} {a}~{g}; floor {DL_HIGHLIGHT}",
-                  [a, g] if status == "FAIL" else ())
+        return _r(
+            "V8",
+            status,
+            f"accent~context min dL {d:.3f} {a}~{g}; floor {DL_HIGHLIGHT}",
+            [a, g] if status == "FAIL" else (),
+        )
     if not pairs:
         return None
     d, a, b = min((abs(a.L - b.L), a, b) for a, b in pairs)
     if d < DL_CATEGORICAL:
-        return _r("V8", "WARN", f"min dL {d:.3f} {a.hex}~{b.hex} merge in grayscale; direct-label", [a.hex, b.hex])
+        return _r(
+            "V8",
+            "WARN",
+            f"min dL {d:.3f} {a.hex}~{b.hex} merge in grayscale; direct-label",
+            [a.hex, b.hex],
+        )
     return _r("V8", "PASS", f"min dL {d:.3f} {a.hex}~{b.hex}")
 
 
@@ -388,37 +487,62 @@ def check_monotone(colors, role):
         bad = [(-s * sign, i) for i, s in enumerate(steps) if s * sign <= 0]
         if bad:
             _, i = max(bad)
-            return _r("V10", "FAIL", f"L reverses {colors[i].hex}->{colors[i + 1].hex} "
-                      f"({Ls[i]:.3f}->{Ls[i + 1]:.3f}), {len(bad)} reversal(s); use a monotone ramp (viridis)",
-                      [colors[i].hex, colors[i + 1].hex])
-        return _r("V10", "PASS", f"L {Ls[0]:.3f}->{Ls[-1]:.3f} monotone, min step {min(abs(s) for s in steps):.3f}")
+            return _r(
+                "V10",
+                "FAIL",
+                f"L reverses {colors[i].hex}->{colors[i + 1].hex} "
+                f"({Ls[i]:.3f}->{Ls[i + 1]:.3f}), {len(bad)} reversal(s); use a monotone ramp (viridis)",
+                [colors[i].hex, colors[i + 1].hex],
+            )
+        return _r(
+            "V10",
+            "PASS",
+            f"L {Ls[0]:.3f}->{Ls[-1]:.3f} monotone, min step {min(abs(s) for s in steps):.3f}",
+        )
     n = len(colors)
-    left = list(range((n - 1) // 2, -1, -1))         # middle outward
+    left = list(range((n - 1) // 2, -1, -1))  # middle outward
     right = list(range(n // 2, n))
     signs = set()
     for arm in (left, right):
         for i, j in zip(arm, arm[1:]):
             d = Ls[j] - Ls[i]
             if d == 0:
-                return _r("V10", "FAIL", f"arm flat {colors[i].hex}->{colors[j].hex}",
-                          [colors[i].hex, colors[j].hex])
+                return _r(
+                    "V10",
+                    "FAIL",
+                    f"arm flat {colors[i].hex}->{colors[j].hex}",
+                    [colors[i].hex, colors[j].hex],
+                )
             signs.add(d > 0)
     if len(signs) > 1:
-        return _r("V10", "FAIL", "arm lightness not monotone away from midpoint", [c.hex for c in colors])
+        return _r(
+            "V10",
+            "FAIL",
+            "arm lightness not monotone away from midpoint",
+            [c.hex for c in colors],
+        )
     return _r("V10", "PASS", "each arm monotone in L away from midpoint")
 
 
 def check_uniform(colors):
     steps = [de(colors[i], colors[i + 1]) for i in range(len(colors) - 1)]
-    cv = statistics.pstdev(steps) / statistics.mean(steps) if statistics.mean(steps) else float("inf")
+    cv = (
+        statistics.pstdev(steps) / statistics.mean(steps)
+        if statistics.mean(steps)
+        else float("inf")
+    )
     status = "PASS" if cv <= UNIFORM_CV else "WARN"
-    return _r("V11", status, f"step dE00 {min(steps):.1f}-{max(steps):.1f}, CV {cv:.2f}; max {UNIFORM_CV}")
+    return _r(
+        "V11",
+        status,
+        f"step dE00 {min(steps):.1f}-{max(steps):.1f}, CV {cv:.2f}; max {UNIFORM_CV}",
+    )
 
 
 def check_visible_end(colors, bg, role):
     if role == "diverging":
         n = len(colors)
-        mids = colors[(n - 1) // 2:n // 2 + 1]
+        mids = colors[(n - 1) // 2 : n // 2 + 1]
         cr, h = min((contrast(c.hex, bg.hex), c.hex) for c in mids)
         what, fix = "midpoint", "outline marks or use a darker neutral"
     else:
@@ -436,27 +560,53 @@ def check_midpoint(colors, bg):
     mids, rest = colors[lo:hi], colors[:lo] + colors[hi:]
     if max(abs(m.L - bgL) for m in mids) > min(abs(c.L - bgL) for c in rest):
         far = [m.hex for m in mids]
-        return _r("V13", "FAIL", f"midpoint {','.join(far)} is not the step closest to background lightness", far)
+        return _r(
+            "V13",
+            "FAIL",
+            f"midpoint {','.join(far)} is not the step closest to background lightness",
+            far,
+        )
     if n % 2 == 0:
-        return _r("V13", "WARN", f"even count {n}: no neutral class; OK only if 0 is a class boundary")
+        return _r(
+            "V13",
+            "WARN",
+            f"even count {n}: no neutral class; OK only if 0 is a class boundary",
+        )
     m = mids[0]
     if m.C > MID_CHROMA:
-        return _r("V13", "WARN", f"midpoint {m.hex} OKLCH C {m.C:.3f} > {MID_CHROMA}; use a neutral", [m.hex])
+        return _r(
+            "V13",
+            "WARN",
+            f"midpoint {m.hex} OKLCH C {m.C:.3f} > {MID_CHROMA}; use a neutral",
+            [m.hex],
+        )
     return _r("V13", "PASS", f"midpoint {m.hex} C {m.C:.3f}, closest to background")
 
 
 def check_symmetry(colors):
     n = len(colors)
-    rows = [(abs(colors[i].L - colors[n - 1 - i].L), colors[i].hex, colors[n - 1 - i].hex) for i in range(n // 2)]
+    rows = [
+        (abs(colors[i].L - colors[n - 1 - i].L), colors[i].hex, colors[n - 1 - i].hex)
+        for i in range(n // 2)
+    ]
     d, a, b = max(rows)
     status = "PASS" if d <= ARM_ASYM else "WARN"
-    return _r("V14", status, f"max arm dL {d:.3f} {a}~{b}; max {ARM_ASYM}", [a, b] if status == "WARN" else ())
+    return _r(
+        "V14",
+        status,
+        f"max arm dL {d:.3f} {a}~{b}; max {ARM_ASYM}",
+        [a, b] if status == "WARN" else (),
+    )
 
 
 def check_div_cvd(colors, cfloor):
     a, b = colors[0], colors[-1]
     d = {v: de(a, b, v) for v in ("protan", "deutan", "tritan")}
-    detail = f"ends {a.hex}~{b.hex} " + ", ".join(f"{v} {x:.1f}" for v, x in d.items()) + f"; floor {cfloor:.1f}"
+    detail = (
+        f"ends {a.hex}~{b.hex} "
+        + ", ".join(f"{v} {x:.1f}" for v, x in d.items())
+        + f"; floor {cfloor:.1f}"
+    )
     if min(d["protan"], d["deutan"]) < cfloor:
         return _r("V15", "FAIL", detail, [a.hex, b.hex])
     if d["tritan"] < cfloor:
@@ -464,8 +614,16 @@ def check_div_cvd(colors, cfloor):
     return _r("V15", "PASS", detail)
 
 
-def validate(colors, role="categorical", background="#FFFFFF", mark="bar", pairs=None,
-             context=(), text=(), large_text=False):
+def validate(
+    colors,
+    role="categorical",
+    background="#FFFFFF",
+    mark="bar",
+    pairs=None,
+    context=(),
+    text=(),
+    large_text=False,
+):
     """Run checks for one background. Returns a run dict."""
     cols = [Color(c) for c in colors]
     ctx = [Color(c) for c in context]
@@ -487,7 +645,11 @@ def validate(colors, role="categorical", background="#FFFFFF", mark="bar", pairs
         res.append(check_text(text_cols, bg, large_text))
     if role in ("categorical", "highlight"):
         if mark != "text":
-            res.append(check_marks(cols, bg, mark, "accents" if role == "highlight" else "marks"))
+            res.append(
+                check_marks(
+                    cols, bg, mark, "accents" if role == "highlight" else "marks"
+                )
+            )
     elif role == "sequential":
         ends = [cols[0], cols[-1]]
         best = max(ends, key=lambda c: contrast(c.hex, bg.hex))
@@ -502,7 +664,9 @@ def validate(colors, role="categorical", background="#FFFFFF", mark="bar", pairs
             res.append(v8)
         n = len(cols)
         st = "FAIL" if n > CAT_MAX else ("WARN" if n > CAT_WARN else "PASS")
-        res.append(_r("V9", st, f"{n} hues; default cap {CAT_WARN}, hard cap {CAT_MAX}"))
+        res.append(
+            _r("V9", st, f"{n} hues; default cap {CAT_WARN}, hard cap {CAT_MAX}")
+        )
     elif role == "highlight":
         pl = _pairs(cols, ctx, "all")
         res += check_distinct(pl, floor, f"accents+context, {mark}")
@@ -510,7 +674,13 @@ def validate(colors, role="categorical", background="#FFFFFF", mark="bar", pairs
         if v8:
             res.append(v8)
         n = len(cols)
-        res.append(_r("V9", "FAIL" if n > MAX_ACCENTS else "PASS", f"{n} accent(s); max {MAX_ACCENTS}"))
+        res.append(
+            _r(
+                "V9",
+                "FAIL" if n > MAX_ACCENTS else "PASS",
+                f"{n} accent(s); max {MAX_ACCENTS}",
+            )
+        )
     else:
         res.append(check_monotone(cols, role))
         if role == "sequential":
@@ -523,9 +693,16 @@ def validate(colors, role="categorical", background="#FFFFFF", mark="bar", pairs
             res.append(check_red_green([(cols[0], cols[-1])], floor * CVD_FACTOR))
             res.append(check_div_cvd(cols, floor * CVD_FACTOR))
     res.sort(key=lambda r: int(r["id"][1:]))
-    return {"role": role, "mark": mark, "pairs": pairs, "background": bg.hex,
-            "colors": [c.hex for c in cols], "context": [c.hex for c in ctx], "text": [c.hex for c in txt],
-            "checks": res}
+    return {
+        "role": role,
+        "mark": mark,
+        "pairs": pairs,
+        "background": bg.hex,
+        "colors": [c.hex for c in cols],
+        "context": [c.hex for c in ctx],
+        "text": [c.hex for c in txt],
+        "checks": res,
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -544,11 +721,17 @@ def presets(p, n_cat=None):
     return {
         "categorical": dict(colors=cat[:n], role="categorical", mark="line"),
         "categorical_all": dict(colors=cat, role="categorical", mark="bar"),
-        "highlight": dict(colors=[t["accent"], t["accent_alt"]], role="highlight", mark="line",
-                          context=[t["context_gray"]],
-                          text=[t["accent_text"], t["accent_alt"]] + list(t["text"].values())),
+        "highlight": dict(
+            colors=[t["accent"], t["accent_alt"]],
+            role="highlight",
+            mark="line",
+            context=[t["context_gray"]],
+            text=[t["accent_text"], t["accent_alt"]] + list(t["text"].values()),
+        ),
         "viridis": dict(colors=seq["viridis"]["hex"], role="sequential", mark="area"),
-        "viridis_marks": dict(colors=seq["viridis"]["hex_marks"], role="sequential", mark="point"),
+        "viridis_marks": dict(
+            colors=seq["viridis"]["hex_marks"], role="sequential", mark="point"
+        ),
         "cividis": dict(colors=seq["cividis"]["hex"], role="sequential", mark="area"),
         "blues": dict(colors=seq["blues"]["hex"], role="sequential", mark="area"),
         "rdbu": dict(colors=div["rdbu"]["hex"], role="diverging", mark="area"),
@@ -572,32 +755,72 @@ def _split(values):
 def summarize(runs):
     fails = sum(c["status"] == "FAIL" for r in runs for c in r["checks"])
     warns = sum(c["status"] == "WARN" for r in runs for c in r["checks"])
-    return {"result": "fail" if fails else ("warn" if warns else "pass"), "fails": fails, "warns": warns,
-            "runs": runs}
+    return {
+        "result": "fail" if fails else ("warn" if warns else "pass"),
+        "fails": fails,
+        "warns": warns,
+        "runs": runs,
+    }
 
 
 def main(argv=None):
-    ap = argparse.ArgumentParser(description="Validate chart palette contrast, distinctness, CVD safety.")
-    ap.add_argument("colors", nargs="*", help="hex colors, comma or space separated, in order")
-    ap.add_argument("--role", choices=["categorical", "sequential", "diverging", "highlight"], default=None)
-    ap.add_argument("--mark", choices=sorted(DE_FLOOR), default=None, help="default bar (presets set their own)")
-    ap.add_argument("--pairs", choices=["adjacent", "all"], default=None,
-                    help="default: all for line/point/text, adjacent for bar/area")
-    ap.add_argument("--background", default="#FFFFFF", help="hex; comma list reruns per background (V16)")
+    ap = argparse.ArgumentParser(
+        description="Validate chart palette contrast, distinctness, CVD safety."
+    )
+    ap.add_argument(
+        "colors", nargs="*", help="hex colors, comma or space separated, in order"
+    )
+    ap.add_argument(
+        "--role",
+        choices=["categorical", "sequential", "diverging", "highlight"],
+        default=None,
+    )
+    ap.add_argument(
+        "--mark",
+        choices=sorted(DE_FLOOR),
+        default=None,
+        help="default bar (presets set their own)",
+    )
+    ap.add_argument(
+        "--pairs",
+        choices=["adjacent", "all"],
+        default=None,
+        help="default: all for line/point/text, adjacent for bar/area",
+    )
+    ap.add_argument(
+        "--background",
+        default="#FFFFFF",
+        help="hex; comma list reruns per background (V16)",
+    )
     ap.add_argument("--dark", action="store_true", help=f"also rerun on {DARK_DEFAULT}")
     ap.add_argument("--context", action="append", help="context grays (highlight role)")
     ap.add_argument("--text", action="append", help="colors used for text (V2)")
-    ap.add_argument("--large-text", action="store_true", help="V2 floor 3:1 (18pt, or 14pt bold, and up)")
-    ap.add_argument("--preset", help="house palette from palettes.json; 'all' runs every preset")
-    ap.add_argument("--n", type=int, default=None, help="categorical preset: first N Okabe-Ito slots")
+    ap.add_argument(
+        "--large-text",
+        action="store_true",
+        help="V2 floor 3:1 (18pt, or 14pt bold, and up)",
+    )
+    ap.add_argument(
+        "--preset", help="house palette from palettes.json; 'all' runs every preset"
+    )
+    ap.add_argument(
+        "--n",
+        type=int,
+        default=None,
+        help="categorical preset: first N Okabe-Ito slots",
+    )
     ap.add_argument("--json", action="store_true")
     ap.add_argument("--list-checks", action="store_true")
     ap.add_argument("--list-presets", action="store_true")
-    ap.add_argument("--self-test", action="store_true", help="CIEDE2000 vs Sharma et al. 2005 pairs")
+    ap.add_argument(
+        "--self-test", action="store_true", help="CIEDE2000 vs Sharma et al. 2005 pairs"
+    )
     a = ap.parse_args(argv)
 
     def err(msg):
-        print(json.dumps({"result": "error", "error": msg}) if a.json else f"ERROR {msg}")
+        print(
+            json.dumps({"result": "error", "error": msg}) if a.json else f"ERROR {msg}"
+        )
         return 2
 
     if a.list_checks:
@@ -606,7 +829,9 @@ def main(argv=None):
         return 0
     if a.self_test:
         ok, e = self_test()
-        print(f"SELFTEST {'PASS' if ok else 'FAIL'} ciede2000 {len(SHARMA_PAIRS)} Sharma pairs x2 orders, max err {e:.1e}")
+        print(
+            f"SELFTEST {'PASS' if ok else 'FAIL'} ciede2000 {len(SHARMA_PAIRS)} Sharma pairs x2 orders, max err {e:.1e}"
+        )
         return 0 if ok else 1
     try:
         bgs = [parse_hex(b) for b in _split([a.background])]
@@ -620,13 +845,17 @@ def main(argv=None):
                 return err(f"cannot load presets from {PALETTES_JSON}: {e}")
             if a.list_presets:
                 for k, v in table.items():
-                    print(f"{k} role={v['role']} mark={v['mark']} {','.join(v['colors'])}")
+                    print(
+                        f"{k} role={v['role']} mark={v['mark']} {','.join(v['colors'])}"
+                    )
                 return 0
             name = PRESET_ALIASES.get(a.preset, a.preset)
             names = list(table) if name == "all" else [name]
             for nm in names:
                 if nm not in table:
-                    return err(f"unknown preset {a.preset!r}; one of: all, {', '.join(table)}")
+                    return err(
+                        f"unknown preset {a.preset!r}; one of: all, {', '.join(table)}"
+                    )
                 spec = dict(table[nm])
                 if a.mark:
                     spec["mark"] = a.mark
@@ -635,13 +864,31 @@ def main(argv=None):
             cols = _split(a.colors)
             if not cols:
                 return err("no colors given (or use --preset)")
-            jobs.append(("cli", dict(colors=cols, role=a.role or "categorical", mark=a.mark or "bar",
-                                     context=_split(a.context), text=_split(a.text))))
+            jobs.append(
+                (
+                    "cli",
+                    dict(
+                        colors=cols,
+                        role=a.role or "categorical",
+                        mark=a.mark or "bar",
+                        context=_split(a.context),
+                        text=_split(a.text),
+                    ),
+                )
+            )
         runs = []
         for nm, spec in jobs:
             for bg in bgs:
-                run = validate(spec["colors"], spec["role"], bg, spec["mark"], a.pairs,
-                               spec.get("context", ()), spec.get("text", ()), a.large_text)
+                run = validate(
+                    spec["colors"],
+                    spec["role"],
+                    bg,
+                    spec["mark"],
+                    a.pairs,
+                    spec.get("context", ()),
+                    spec.get("text", ()),
+                    a.large_text,
+                )
                 run["name"] = nm
                 runs.append(run)
     except ValueError as e:
@@ -653,11 +900,15 @@ def main(argv=None):
     else:
         for r in runs:
             extra = f" context={','.join(r['context'])}" if r["context"] else ""
-            print(f"RUN {r['name']} role={r['role']} mark={r['mark']} pairs={r['pairs']} bg={r['background']} "
-                  f"colors={','.join(r['colors'])}{extra}")
+            print(
+                f"RUN {r['name']} role={r['role']} mark={r['mark']} pairs={r['pairs']} bg={r['background']} "
+                f"colors={','.join(r['colors'])}{extra}"
+            )
             for c in r["checks"]:
                 print(f"{c['id']} {c['status']} [{c['tag']}] {c['detail']}")
-        print(f"RESULT {out['result'].upper()}: {out['fails']} fail, {out['warns']} warn, {len(runs)} run(s)")
+        print(
+            f"RESULT {out['result'].upper()}: {out['fails']} fail, {out['warns']} warn, {len(runs)} run(s)"
+        )
     return 1 if out["fails"] else 0
 
 

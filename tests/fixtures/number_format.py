@@ -1,7 +1,6 @@
 import numpy as np
-from matplotlib.ticker import FormatStrFormatter, FuncFormatter, StrMethodFormatter
-
 from _clean import new
+from matplotlib.ticker import FormatStrFormatter, FuncFormatter, StrMethodFormatter
 
 years = [2018, 2019, 2020, 2021, 2022]
 # Offset text: the y ticks read 1.2 to 2.6 under a "1e6" in the corner.
@@ -37,7 +36,9 @@ ax5.yaxis.set_major_formatter(FuncFormatter(lambda v, _: f"${v:g}M"))
 ax5.set_ylabel("Revenue")
 # Raw floats as bar labels: 13.3333, 8.5, 6, 2.25.
 fig6, ax6 = new()
-bars = ax6.barh(["Oslo", "Bergen", "Tromso", "Bodo"], [2.25, 6, 8.5, 13.3333], color="C0")
+bars = ax6.barh(
+    ["Oslo", "Bergen", "Tromso", "Bodo"], [2.25, 6, 8.5, 13.3333], color="C0"
+)
 ax6.bar_label(bars)
 ax6.set_xlabel("Rainfall (mm)")
 for i, f in enumerate([fig, fig1, fig2, fig3, fig4, fig5, fig6]):

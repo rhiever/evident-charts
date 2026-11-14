@@ -1,4 +1,5 @@
 """A light-gray symbol used as a color key passes at the mark floor (3:1), not the text floor."""
+
 import matplotlib.pyplot as plt
 
 fig, ax = plt.subplots(figsize=(8, 6))
