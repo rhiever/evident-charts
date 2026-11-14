@@ -20,6 +20,7 @@ evident-charts is an agent skill for explanatory charts. The installable skill i
 ## Reviewing pull requests
 
 - Review `Code scanning results / CodeQL` in PR Checks and inline annotations before merging, even when the check is advisory. Fix confirmed findings introduced by the PR and report any unresolved findings with the reason.
+- For pull requests that change `pyproject.toml` or `uv.lock`, open `CI / Dependency review` in PR Checks and read the job summary and warning annotations before merging. Verify that the run obtained dependency data. Address confirmed vulnerabilities introduced by the PR or explain why they remain.
 
 ## Writing the skill
 
