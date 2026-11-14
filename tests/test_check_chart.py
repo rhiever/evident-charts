@@ -144,6 +144,17 @@ def test_annotation_arrow_through_other_text_fails():
     assert "Unrelated note" in hits[0]["where"] and "arrow" in hits[0]["where"]
 
 
+def test_arrow_with_noninvertible_transform_through_text_fails():
+    hits = [
+        f
+        for f in lint("arrow_singular_transform.py")["findings"]
+        if f["check"] == "text-on-line"
+    ]
+    assert [(f["severity"], f["where"]) for f in hits] == [
+        ("fail", "fig0/ax0 text 'Overlapped label' on annotation arrow")
+    ]
+
+
 def test_line_threading_between_lines_of_a_label_fails():
     hits = [
         f
