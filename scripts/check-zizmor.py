@@ -76,7 +76,9 @@ def git(*args: str) -> bytes:
     return subprocess.check_output(["git", *args], cwd=ROOT, stderr=subprocess.PIPE)
 
 
-def changed_audit_input(ci_base: str | None, local_base: str | None, staged: bool) -> bool:
+def changed_audit_input(
+    ci_base: str | None, local_base: str | None, staged: bool
+) -> bool:
     diff = ("diff", "--name-only", "--no-renames", "-z")
     try:
         if ci_base is not None:
@@ -85,7 +87,9 @@ def changed_audit_input(ci_base: str | None, local_base: str | None, staged: boo
             git("merge-base", "--is-ancestor", ci_base, "HEAD")
             paths = git(*diff, ci_base, "HEAD", "--")
         elif local_base is not None:
-            revision = git("rev-parse", "--verify", "--end-of-options", f"{local_base}^{{commit}}")
+            revision = git(
+                "rev-parse", "--verify", "--end-of-options", f"{local_base}^{{commit}}"
+            )
             base = git("merge-base", revision.decode().strip(), "HEAD").decode().strip()
             paths = b"\0".join(
                 (
@@ -100,7 +104,10 @@ def changed_audit_input(ci_base: str | None, local_base: str | None, staged: boo
         else:
             return True
     except (subprocess.CalledProcessError, ValueError):
-        print("Could not determine changed paths; scanning automation configuration.", flush=True)
+        print(
+            "Could not determine changed paths; scanning automation configuration.",
+            flush=True,
+        )
         return True
     return any(audit_path(os.fsdecode(path)) for path in paths.split(b"\0") if path)
 
@@ -139,7 +146,10 @@ def scan(output_format: str, archive_path: Path | None, staged: bool) -> int:
         binary = Path(temp) / "zizmor"
         if archive_path is None:
             archive_path = Path(temp) / filename
-            print(f"Downloading zizmor {VERSION} for {target}; the audit runs offline.", flush=True)
+            print(
+                f"Downloading zizmor {VERSION} for {target}; the audit runs offline.",
+                flush=True,
+            )
             with (
                 urlopen(f"{RELEASE}/{filename}", timeout=60) as source,
                 archive_path.open("wb") as archive,
@@ -155,7 +165,9 @@ def scan(output_format: str, archive_path: Path | None, staged: bool) -> int:
             with tarfile.open(fileobj=archive, mode="r:gz") as tar:
                 member = tar.getmember("zizmor")
                 if not member.isfile():
-                    raise ValueError("The zizmor archive does not contain a regular executable")
+                    raise ValueError(
+                        "The zizmor archive does not contain a regular executable"
+                    )
                 source = tar.extractfile(member)
                 if source is None:
                     raise ValueError("Could not read the zizmor executable")
@@ -163,7 +175,12 @@ def scan(output_format: str, archive_path: Path | None, staged: bool) -> int:
                     shutil.copyfileobj(source, destination)
         binary.chmod(0o700)
         env = os.environ.copy()
-        for name in ("GH_TOKEN", "GITHUB_TOKEN", "ZIZMOR_GITHUB_TOKEN", "ZIZMOR_CONFIG"):
+        for name in (
+            "GH_TOKEN",
+            "GITHUB_TOKEN",
+            "ZIZMOR_GITHUB_TOKEN",
+            "ZIZMOR_CONFIG",
+        ):
             env.pop(name, None)
         audit_root = Path(temp) / "inputs"
         audit_root.mkdir()
@@ -171,7 +188,10 @@ def scan(output_format: str, archive_path: Path | None, staged: bool) -> int:
         for name in git("rev-parse", "--local-env-vars").decode().splitlines():
             env.pop(name, None)
         subprocess.run(
-            ["git", "init", "--quiet", "--template="], cwd=audit_root, env=env, check=True
+            ["git", "init", "--quiet", "--template="],
+            cwd=audit_root,
+            env=env,
+            check=True,
         )
         result = subprocess.run(
             [
@@ -210,7 +230,9 @@ def main() -> int:
         help="Check branch, staged, unstaged and untracked changes against BASE (default: origin/main).",
     )
     scope.add_argument(
-        "--staged", action="store_true", help="Audit the index if relevant files are staged."
+        "--staged",
+        action="store_true",
+        help="Audit the index if relevant files are staged.",
     )
     parser.add_argument("--format", choices=("plain", "github"), default="plain")
     parser.add_argument(
@@ -224,7 +246,13 @@ def main() -> int:
             print("No automation configuration changes; skipping zizmor.")
             return 0
         return scan(args.format, args.archive, args.staged)
-    except (OSError, ValueError, KeyError, subprocess.CalledProcessError, tarfile.TarError) as exc:
+    except (
+        OSError,
+        ValueError,
+        KeyError,
+        subprocess.CalledProcessError,
+        tarfile.TarError,
+    ) as exc:
         print(f"zizmor: {exc}", file=sys.stderr)
         return 1
 

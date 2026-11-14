@@ -1,6 +1,5 @@
-from matplotlib.ticker import FixedLocator, FuncFormatter
-
 from _clean import new
+from matplotlib.ticker import FixedLocator, FuncFormatter
 
 fig, ax = new("Solar costs fell a hundredfold since 1980")
 ax.plot([1980, 1990, 2000, 2010, 2020], [30, 8, 4, 1.5, 0.3], color="C0", lw=2)

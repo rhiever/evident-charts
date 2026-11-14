@@ -40,16 +40,22 @@ from pathlib import Path
 os.environ["MPLBACKEND"] = "Agg"
 try:  # --list-checks and the missing-dependency error (exit 2) need only the standard library
     import matplotlib  # noqa: E402
+
     matplotlib.use("Agg")
     import matplotlib.figure  # noqa: E402
     import matplotlib.patches  # noqa: E402
-    import matplotlib.text  # noqa: E402
     import matplotlib.pyplot as plt  # noqa: E402
+    import matplotlib.text  # noqa: E402
     import numpy as np  # noqa: E402
     from matplotlib import patheffects  # noqa: E402
     from matplotlib.backends.backend_agg import FigureCanvasAgg  # noqa: E402
     from matplotlib.cbook import STEP_LOOKUP_MAP  # noqa: E402
-    from matplotlib.collections import LineCollection, PathCollection, PolyCollection, QuadMesh  # noqa: E402
+    from matplotlib.collections import (  # noqa: E402
+        LineCollection,
+        PathCollection,
+        PolyCollection,
+        QuadMesh,
+    )
     from matplotlib.colors import CenteredNorm, TwoSlopeNorm, to_hex, to_rgba  # noqa: E402
     from matplotlib.container import BarContainer  # noqa: E402
     from matplotlib.contour import ContourSet  # noqa: E402
@@ -66,12 +72,15 @@ try:  # --list-checks and the missing-dependency error (exit 2) need only the st
     # evident.plot_aspect and the presets.json plot_aspect band, as ev.titles() warns with.
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     from evident import ASPECT, fits_title, plot_aspect  # noqa: E402
+
     MISSING = None
 except ModuleNotFoundError as e:
     if __name__ != "__main__":
         raise
     MISSING = f"{e}; check_chart.py needs matplotlib and numpy"
-    ASPECT = json.loads((Path(__file__).resolve().parent.parent / "assets" / "presets.json").read_text())["_plot_aspect"]
+    ASPECT = json.loads(
+        (Path(__file__).resolve().parent.parent / "assets" / "presets.json").read_text()
+    )["_plot_aspect"]
 
 # ---------------------------------------------------------------------------
 # Tunable constants. Lengths in points are converted to pixels with fig.dpi.
@@ -79,8 +88,22 @@ except ModuleNotFoundError as e:
 
 # small-text: display width (px) the whole figure is shown at, per destination,
 # and the minimum rendered font em-size (px) at that width.
-DEST_WIDTH_PX = {"blog": 800, "slide": 1920, "social": 1080, "social_portrait": 1080, "report": 600, "mobile": 360}
-DEST_MIN_TEXT_PX = {"blog": 12, "slide": 12, "social": 12, "social_portrait": 12, "report": 12, "mobile": 12}
+DEST_WIDTH_PX = {
+    "blog": 800,
+    "slide": 1920,
+    "social": 1080,
+    "social_portrait": 1080,
+    "report": 600,
+    "mobile": 360,
+}
+DEST_MIN_TEXT_PX = {
+    "blog": 12,
+    "slide": 12,
+    "social": 12,
+    "social_portrait": 12,
+    "report": 12,
+    "mobile": 12,
+}
 # tick-crowding: fixed-height presets cannot grow for more category rows; bar_rows is how many fit.
 DEST_FIXED_HEIGHT, DEST_BAR_ROWS = set(), {}
 # plot-area-underused: canvas side margins (fraction of width) per destination, and the narrow destinations checked.
@@ -88,7 +111,9 @@ DEST_MARGINS = {}
 NARROW_DESTS = {"mobile", "social", "social_portrait"}
 # Prefer the skill's destination presets when present.
 try:
-    _presets = json.loads((Path(__file__).resolve().parent.parent / "assets" / "presets.json").read_text())
+    _presets = json.loads(
+        (Path(__file__).resolve().parent.parent / "assets" / "presets.json").read_text()
+    )
     for _name, _p in _presets.items():
         if not _name.startswith("_") and "display_px" in _p:
             DEST_WIDTH_PX[_name] = _p["display_px"]
@@ -101,31 +126,46 @@ except (OSError, ValueError):
     pass
 # cvd, contrast, and text-on-area reuse check_palette's color math and floors: CVD pairs must differ by
 # CVD_FACTOR x the mark's DE_FLOOR (V6), text meets TEXT_MIN (V2), marks MARK_MIN / INVISIBLE (V3).
-from check_palette import (CVD_FACTOR, DE_FLOOR, INVISIBLE, MARK_MIN, TEXT_MIN, TEXT_MIN_LARGE,  # noqa: E402
-                           Color, contrast, de)
+from check_palette import (  # noqa: E402
+    CVD_FACTOR,
+    DE_FLOOR,
+    INVISIBLE,
+    MARK_MIN,
+    TEXT_MIN,
+    TEXT_MIN_LARGE,
+    Color,
+    contrast,
+    de,
+)
 
-TEXT_OVERLAP_MIN_PT = 1.0      # unrotated texts: min horizontal overlap to fail
-TEXT_OVERLAP_MIN_FRAC = 0.15   # rotated texts: overlap area / smaller box area to fail
-TEXT_LINE_PAD_PT = 1.0         # shrink text boxes by this before line tests
-TEXT_LINE_MIN_PATH_PT = 4.0    # min length of line inside a text box to fail
-ENDPOINT_MIN_RADIUS_PT = 6.0   # endpoint exemption radius floor (see below)
-CANVAS_TOLERANCE_PX = 1.0      # text may poke this far past the canvas edge
+TEXT_OVERLAP_MIN_PT = 1.0  # unrotated texts: min horizontal overlap to fail
+TEXT_OVERLAP_MIN_FRAC = 0.15  # rotated texts: overlap area / smaller box area to fail
+TEXT_LINE_PAD_PT = 1.0  # shrink text boxes by this before line tests
+TEXT_LINE_MIN_PATH_PT = 4.0  # min length of line inside a text box to fail
+ENDPOINT_MIN_RADIUS_PT = 6.0  # endpoint exemption radius floor (see below)
+CANVAS_TOLERANCE_PX = 1.0  # text may poke this far past the canvas edge
 TICK_ROTATION_MAX_DEG = 30.0
-TICK_MIN_GAP_PT = 2.0          # adjacent tick labels closer than this: crowded
+TICK_MIN_GAP_PT = 2.0  # adjacent tick labels closer than this: crowded
 MAX_LINE_COLORS = 6
 MAX_CATEGORICAL_COLORS = 8
 MAX_PIE_WEDGES = 5
-NEUTRAL_SATURATION = 0.15      # colors below this saturation count as gray
+NEUTRAL_SATURATION = 0.15  # colors below this saturation count as gray
 # label-ambiguous: distances are gaps from a scatter marker's edge to the
 # nearest edge of the label's glyph box, each padded by LABEL_PAD_FRAC of one
 # label line height so a label touching its dot does not make ratios explode.
-LABEL_AMBIG_RATIO = 1.25       # rival gap <= this x own gap: nearly equidistant
+LABEL_AMBIG_RATIO = 1.25  # rival gap <= this x own gap: nearly equidistant
 LABEL_PAD_FRAC = 0.5
-LABEL_GATE_RADII = 3.0         # labels farther than 3 marker radii + 1 line height from every dot are notes
-LABEL_SAME_POINT_FRAC = 1.0    # dots closer than this x own radius read as one blob (or one dot redrawn)
-LABEL_MAX_WORDS = 4            # longer texts are callouts about a region, not names of one dot
-LABEL_DENSE_DOTS = 2           # free text (no known own dot) lying on this many dots is lettering over a field
-LEADER_TOL_PT = 4.0            # leader end within dot radius + this lands on the dot
+LABEL_GATE_RADII = (
+    3.0  # labels farther than 3 marker radii + 1 line height from every dot are notes
+)
+LABEL_SAME_POINT_FRAC = (
+    1.0  # dots closer than this x own radius read as one blob (or one dot redrawn)
+)
+LABEL_MAX_WORDS = 4  # longer texts are callouts about a region, not names of one dot
+LABEL_DENSE_DOTS = (
+    2  # free text (no known own dot) lying on this many dots is lettering over a field
+)
+LEADER_TOL_PT = 4.0  # leader end within dot radius + this lands on the dot
 TITLE_MAX_LINES = 2
 # value-labels-and-axis: a numeric text within a bar's width and along its length (or up to this many
 # line heights past either end) whose number matches the bar's value is a value label. Warn when at
@@ -138,44 +178,57 @@ VALUE_LABEL_MIN_FRAC = 0.5
 # process-note: agent-to-user process language and data file names. Past tenses such as "confirmed
 # cases" or "verified accounts" are reader-facing and allowed.
 PROCESS_RE = re.compile(
-    r"\b(confirm|to be confirmed|inferred|add before publishing|todo|tbd|placeholder|verify|not stated in)\b", re.I)
+    r"\b(confirm|to be confirmed|inferred|add before publishing|todo|tbd|placeholder|verify|not stated in)\b",
+    re.I,
+)
 DATA_FILE_RE = re.compile(r"\b[\w.-]+\.(csv|tsv|xlsx?|json|parquet)\b", re.I)
 # missing-source: "Source:" anywhere in a text, or a line (or a " | "-separated part) starting "Source" or "Data:".
-SOURCE_RE = re.compile(r"\bsources?\s*:|(^\s*|[|\u00b7\u2022]\s*)(sources?\b|data\s*:)", re.I | re.M)
+SOURCE_RE = re.compile(
+    r"\bsources?\s*:|(^\s*|[|\u00b7\u2022]\s*)(sources?\b|data\s*:)", re.I | re.M
+)
 # cumulative-as-rate: a series that only rises (a running total) under a label that promises a rate or share; only a
 # warn on a share or % axis, since a share can truly only grow.
 RATE_RE = re.compile(r"%|\b(rates?|share|per|percent(age)?)\b", re.I)
 SHARE_RE = re.compile(r"%|\b(share|percent(age)?)\b", re.I)
-CUMULATIVE_RE = re.compile(r"\b(cumulative|to date|year-to-date|ytd|ever|all-time|so far|running total|accumulated)\b",
-                           re.I)
-CUMULATIVE_MIN_POINTS = 6      # shorter series rise monotonically by chance
-CUMULATIVE_START_MULT = 2.0    # a running total of n similar periods starts near 1/n of its end: allow this multiple
-CUMULATIVE_STEP_FRAC = 0.8     # and increase on at least this share of steps (plateaus are not running totals)
-STACK_MAX_LAYERS = 2           # stacked-area: more layers than this warn
+CUMULATIVE_RE = re.compile(
+    r"\b(cumulative|to date|year-to-date|ytd|ever|all-time|so far|running total|accumulated)\b",
+    re.I,
+)
+CUMULATIVE_MIN_POINTS = 6  # shorter series rise monotonically by chance
+CUMULATIVE_START_MULT = 2.0  # a running total of n similar periods starts near 1/n of its end: allow this multiple
+CUMULATIVE_STEP_FRAC = 0.8  # and increase on at least this share of steps (plateaus are not running totals)
+STACK_MAX_LAYERS = 2  # stacked-area: more layers than this warn
 # segment-edges: touching fills of different colors (stack segments, wedges, stacked layers) need a background-colored
 # edge at least SEGMENT_EDGE_MIN_PX wide at display size (within SEGMENT_BG_DE dE00 of the background). Segments or
 # shared boundaries under SEGMENT_MIN_PX at display size are skipped: an edge would erase them (daily bars, fine bins).
 SEGMENT_MIN_PX = 3.0
 SEGMENT_EDGE_MIN_PX = 0.5
 SEGMENT_BG_DE = 5.0
-SEGMENT_TOUCH_PX = 0.5         # boundaries this close (figure px) touch
-PLOT_TINY_FRAC = 0.15          # plot-area-tiny: axes narrower or shorter than this share of the figure (per 3 panels)
-PLOT_UNDERUSED_FRAC = 0.65     # plot-area-underused: one plot box narrower than this share of the usable width...
-PLOT_EMPTY_FRAC = 0.15         # ...while its labels leave at least this share of the usable width empty at the sides
+SEGMENT_TOUCH_PX = 0.5  # boundaries this close (figure px) touch
+PLOT_TINY_FRAC = 0.15  # plot-area-tiny: axes narrower or shorter than this share of the figure (per 3 panels)
+PLOT_UNDERUSED_FRAC = 0.65  # plot-area-underused: one plot box narrower than this share of the usable width...
+PLOT_EMPTY_FRAC = 0.15  # ...while its labels leave at least this share of the usable width empty at the sides
 # cvd: a text names a series when it contains the series' label (or, unlabeled, shares its hue within
 # HUE_MATCH_DEG) and sits within DIRECT_LABEL_REACH_LINES of its own line heights of the mark, nearer it than the rival.
 DIRECT_LABEL_REACH_LINES = 2.0
 HUE_MATCH_DEG = 15.0
-LARGE_TEXT_PT, LARGE_BOLD_PT = 18.0, 14.0   # contrast: WCAG large text gets TEXT_MIN_LARGE
+LARGE_TEXT_PT, LARGE_BOLD_PT = (
+    18.0,
+    14.0,
+)  # contrast: WCAG large text gets TEXT_MIN_LARGE
 # text-on-area: fills lighter than this alpha (confidence bands, shading) are context, not data regions; text counts as
 # on the fills when this share of its glyph box is; backdrops differing by DE_FLOOR["area"] or more are an edge.
 FILL_MIN_ALPHA = 0.3
 AREA_OVERLAP_FRAC = TEXT_OVERLAP_MIN_FRAC
 LOG_WORD_RE = re.compile(r"\blog(arithmic)?(?![a-z])", re.I)
-RANK_RE = re.compile(r"\b(rank|depth)|\b\d+(st|nd|rd|th)\b", re.I)   # H5 escape hatches: ranks, ordinals, depth
+RANK_RE = re.compile(
+    r"\b(rank|depth)|\b\d+(st|nd|rd|th)\b", re.I
+)  # H5 escape hatches: ranks, ordinals, depth
 # number-format: scientific tick text (1e6, 2.5x10^3), and numeric ticks on a non-value axis read as years: all within
 # YEAR_MIN..YEAR_MAX at a median step of at most YEAR_MAX_STEP.
-SCI_TICK_RE = re.compile(r"[-+]?\d+(\.\d+)?[eE][-+]?\d+|([-+]?\d+(\.\d+)?\s*(\\times|\\cdot|×)\s*)?10\^\{?[-+]?\d+\}?")
+SCI_TICK_RE = re.compile(
+    r"[-+]?\d+(\.\d+)?[eE][-+]?\d+|([-+]?\d+(\.\d+)?\s*(\\times|\\cdot|×)\s*)?10\^\{?[-+]?\d+\}?"
+)
 YEAR_MIN, YEAR_MAX, YEAR_MAX_STEP = 1000, 2200, 10
 YEAR_RE = re.compile(r"(1[89]|2[01])\d\d")
 # category-order: labels with digits (ranges, quarters, ranks), comparators, or these words have a natural order;
@@ -190,80 +243,178 @@ CATEGORY_ORDINAL_RE = re.compile(
     r"severe|none|some|most|all|less|more|under|over|before|after|pre|post|baseline|first|second|third|last|grade|"
     r"level|tier|stage|phase|step|round|wave|week|day|month|year|quarter|beginner|intermediate|advanced|expert|"
     r"junior|senior|freshman|sophomore|infant|child|teen|adult|school|college|bachelor'?s?|master'?s?|doctorate|phd|"
-    r"graduate|degree)\b", re.I)
-CATEGORY_TAIL_RE = re.compile(r"\b(other|others|rest|all|total|average|avg|median|overall|national|world|eu|us)\b",
-                              re.I)
+    r"graduate|degree)\b",
+    re.I,
+)
+CATEGORY_TAIL_RE = re.compile(
+    r"\b(other|others|rest|all|total|average|avg|median|overall|national|world|eu|us)\b",
+    re.I,
+)
 CATEGORY_MIN_BARS = 4
 CATEGORY_GAP_STEPS = 1.3
 CATEGORY_TIE_FRAC = 0.02
 
 # rainbow-cmap: the house ban list (palettes.json sequential.banned, C11) plus gist_ncar.
-RAINBOW_CMAPS = {"jet", "rainbow", "hsv", "gist_rainbow", "nipy_spectral", "turbo", "gist_ncar"}
+RAINBOW_CMAPS = {
+    "jet",
+    "rainbow",
+    "hsv",
+    "gist_rainbow",
+    "nipy_spectral",
+    "turbo",
+    "gist_ncar",
+}
 try:
-    RAINBOW_CMAPS |= set(json.loads((Path(__file__).resolve().parent.parent / "assets" / "palettes.json")
-                                    .read_text())["sequential"]["banned"])
+    RAINBOW_CMAPS |= set(
+        json.loads(
+            (
+                Path(__file__).resolve().parent.parent / "assets" / "palettes.json"
+            ).read_text()
+        )["sequential"]["banned"]
+    )
 except (OSError, ValueError, KeyError):
     pass
 SPECTRAL_CMAPS = {"Spectral"}
 
 CHECKS = {
-    "text-overlap": ("fail", "Two visible text boxes intersect (titles, labels, ticks, ...), a legend covers text, "
-                             "text covers a data marker, or text straddles a bar edge or lies on another bar."),
-    "text-on-line": ("fail", "Text sits on a data line, 2-point segment, or annotation arrow."),
-    "text-on-area": ("fail", "Unboxed text over filled data (area/stack layers, heatmap cells, pie wedges) straddles "
-                             "an edge between fills, or sits inside one fill below text contrast (4.5:1, large 3:1)."),
-    "cvd": ("fail", "Two data hues in one axes collapse under protan/deutan simulation (check_palette V6 floor) with "
-                    "nothing else telling them apart (direct labels, dash, marker, hatch, mark type, bar position); "
-                    "warn when redundantly encoded or tritan-only."),
-    "contrast": ("fail", "Text below 4.5:1 (large text 3:1) against what is behind it, or a colored line/point below "
-                         "1.5:1; warn: colored line/point below 3:1 and not direct-labeled, or a fill below 1.5:1 "
-                         "without an outline."),
+    "text-overlap": (
+        "fail",
+        "Two visible text boxes intersect (titles, labels, ticks, ...), a legend covers text, "
+        "text covers a data marker, or text straddles a bar edge or lies on another bar.",
+    ),
+    "text-on-line": (
+        "fail",
+        "Text sits on a data line, 2-point segment, or annotation arrow.",
+    ),
+    "text-on-area": (
+        "fail",
+        "Unboxed text over filled data (area/stack layers, heatmap cells, pie wedges) straddles "
+        "an edge between fills, or sits inside one fill below text contrast (4.5:1, large 3:1).",
+    ),
+    "cvd": (
+        "fail",
+        "Two data hues in one axes collapse under protan/deutan simulation (check_palette V6 floor) with "
+        "nothing else telling them apart (direct labels, dash, marker, hatch, mark type, bar position); "
+        "warn when redundantly encoded or tritan-only.",
+    ),
+    "contrast": (
+        "fail",
+        "Text below 4.5:1 (large text 3:1) against what is behind it, or a colored line/point below "
+        "1.5:1; warn: colored line/point below 3:1 and not direct-labeled, or a fill below 1.5:1 "
+        "without an outline.",
+    ),
     "text-clipped": ("fail", "Text extends beyond the figure canvas or its clip box."),
     "bar-baseline": ("fail", "Bar value axis excludes zero or is log-scaled."),
     "dual-axis": ("warn", "Twin axes plot data on two different y (or x) scales."),
     "pie-slices": ("warn", "Pie present; more than 5 slices is a stronger warning."),
-    "rainbow-cmap": ("fail", "Rainbow colormap (jet, hsv, ...); Spectral on diverging data is a warn."),
+    "rainbow-cmap": (
+        "fail",
+        "Rainbow colormap (jet, hsv, ...); Spectral on diverging data is a warn.",
+    ),
     "3d-axes": ("fail", "3D projection used."),
-    "legend-direct-label": ("warn", "Line chart legend with <=4 entries; label lines directly."),
-    "missing-axis-label": ("warn", "Numeric axis with no label and no unit in ticks or title, or a unit on only "
-                                   "some of its ticks."),
-    "default-title": ("warn", "Missing title (suptitle, figure text, or ax.set_title; similar titles on several panels "
-                              "are panel titles), or a descriptive 'X by Y' title instead of a takeaway (a short "
-                              "kicker over a larger hero number passes)."),
+    "legend-direct-label": (
+        "warn",
+        "Line chart legend with <=4 entries; label lines directly.",
+    ),
+    "missing-axis-label": (
+        "warn",
+        "Numeric axis with no label and no unit in ticks or title, or a unit on only "
+        "some of its ticks.",
+    ),
+    "default-title": (
+        "warn",
+        "Missing title (suptitle, figure text, or ax.set_title; similar titles on several panels "
+        "are panel titles), or a descriptive 'X by Y' title instead of a takeaway (a short "
+        "kicker over a larger hero number passes).",
+    ),
     "small-text": ("warn", "Text renders below the destination's minimum pixel size."),
-    "tick-crowding": ("warn", "Tick labels rotated past 30 degrees or nearly touching."),
+    "tick-crowding": (
+        "warn",
+        "Tick labels rotated past 30 degrees or nearly touching.",
+    ),
     "too-many-series": ("warn", ">6 line colors or >8 categorical colors in one axes."),
-    "spines-gridlines": ("warn", "All four spines plus gridlines on both axes (heavy default styling)."),
-    "label-ambiguous": ("warn", "Scatter point label sits nearer another dot than its own, or about equally near two."),
-    "process-note": ("fail", "Chart text addressed to the user (confirm, TODO, inferred, ...) or a data file name."),
-    "missing-source": ("warn", "No text contains 'Source:' or has a line (or ' | ' part) starting 'Source' or 'Data:'."),
-    "value-labels-and-axis": ("warn", "Bars carry value labels while the value axis ticks are also shown."),
-    "number-format": ("fail", "Axis offset text or scientific-notation ticks (1e6, +2.019e3), or year ticks with "
-                              "decimals or separators (2019.5, 2,019); warn: mixed decimals across an axis's ticks "
-                              "or a set of bar value labels."),
-    "category-order": ("warn", "Bars on a nominal category axis neither ascending nor descending, a line drawn across "
-                               "nominal categories, or year categories with uneven gaps drawn evenly spaced."),
-    "title-too-long": ("warn", "Title wraps past 2 lines or does not fit 2 lines at the destination (ev.fits_title)."),
-    "inverted-axis": ("fail", "Value axis inverted, and its label and ticks do not say 'rank'."),
-    "log-unlabeled": ("fail", "Log-scaled axis; no axis label, title, subtitle, or in-axes note says 'log'."),
-    "cumulative-as-rate": ("fail", "A series (line or area layer) only ever rises, like a running total, but its "
-                                   "axis label or title promises a rate, share, %, or per-unit value (a warn on a "
-                                   "share or % y axis)."),
-    "stacked-area": ("warn", "Stacked area (stackplot or stacked fill_between) with 3+ layers: only the bottom layer "
-                             "has a flat baseline."),
-    "invisible-arrow": ("fail", "Annotation arrow drawn with no visible stroke or fill (zero width, or a color matching "
-                                "the background), as unstyled arrows are under the house style."),
-    "segment-edges": ("warn", "Touching fills of different colors (stacked or adjacent bars, pie wedges, stacked area "
-                              "layers) share a boundary with no background-colored edge on either; narrow segments, "
-                              "same-color neighbors, and heatmaps are skipped."),
-    "plot-area-underused": ("warn", "Mobile and social presets: a single plot box under 65% of the usable canvas "
-                                    "width with 15%+ of it left empty beside the axes (a square aspect on a narrow "
-                                    "canvas, hand-set margins)."),
-    "plot-area-tiny": ("fail", "A plot panel under 15% of the figure's width or height (collapsed by long labels "
-                               "or margins); the threshold scales down for grids of more than 3 panels."),
-    "plot-aspect": ("warn", f"The one main plot box is wider than {ASPECT['widest']:g}:1 or taller than "
-                            f"1:{1 / ASPECT['tallest']:g} (horizontal-bar and category-row charts may run taller); "
-                            "small multiples, insets, sparklines, fixed-aspect maps, and big-number cards are skipped."),
+    "spines-gridlines": (
+        "warn",
+        "All four spines plus gridlines on both axes (heavy default styling).",
+    ),
+    "label-ambiguous": (
+        "warn",
+        "Scatter point label sits nearer another dot than its own, or about equally near two.",
+    ),
+    "process-note": (
+        "fail",
+        "Chart text addressed to the user (confirm, TODO, inferred, ...) or a data file name.",
+    ),
+    "missing-source": (
+        "warn",
+        "No text contains 'Source:' or has a line (or ' | ' part) starting 'Source' or 'Data:'.",
+    ),
+    "value-labels-and-axis": (
+        "warn",
+        "Bars carry value labels while the value axis ticks are also shown.",
+    ),
+    "number-format": (
+        "fail",
+        "Axis offset text or scientific-notation ticks (1e6, +2.019e3), or year ticks with "
+        "decimals or separators (2019.5, 2,019); warn: mixed decimals across an axis's ticks "
+        "or a set of bar value labels.",
+    ),
+    "category-order": (
+        "warn",
+        "Bars on a nominal category axis neither ascending nor descending, a line drawn across "
+        "nominal categories, or year categories with uneven gaps drawn evenly spaced.",
+    ),
+    "title-too-long": (
+        "warn",
+        "Title wraps past 2 lines or does not fit 2 lines at the destination (ev.fits_title).",
+    ),
+    "inverted-axis": (
+        "fail",
+        "Value axis inverted, and its label and ticks do not say 'rank'.",
+    ),
+    "log-unlabeled": (
+        "fail",
+        "Log-scaled axis; no axis label, title, subtitle, or in-axes note says 'log'.",
+    ),
+    "cumulative-as-rate": (
+        "fail",
+        "A series (line or area layer) only ever rises, like a running total, but its "
+        "axis label or title promises a rate, share, %, or per-unit value (a warn on a "
+        "share or % y axis).",
+    ),
+    "stacked-area": (
+        "warn",
+        "Stacked area (stackplot or stacked fill_between) with 3+ layers: only the bottom layer "
+        "has a flat baseline.",
+    ),
+    "invisible-arrow": (
+        "fail",
+        "Annotation arrow drawn with no visible stroke or fill (zero width, or a color matching "
+        "the background), as unstyled arrows are under the house style.",
+    ),
+    "segment-edges": (
+        "warn",
+        "Touching fills of different colors (stacked or adjacent bars, pie wedges, stacked area "
+        "layers) share a boundary with no background-colored edge on either; narrow segments, "
+        "same-color neighbors, and heatmaps are skipped.",
+    ),
+    "plot-area-underused": (
+        "warn",
+        "Mobile and social presets: a single plot box under 65% of the usable canvas "
+        "width with 15%+ of it left empty beside the axes (a square aspect on a narrow "
+        "canvas, hand-set margins).",
+    ),
+    "plot-area-tiny": (
+        "fail",
+        "A plot panel under 15% of the figure's width or height (collapsed by long labels "
+        "or margins); the threshold scales down for grids of more than 3 panels.",
+    ),
+    "plot-aspect": (
+        "warn",
+        f"The one main plot box is wider than {ASPECT['widest']:g}:1 or taller than "
+        f"1:{1 / ASPECT['tallest']:g} (horizontal-bar and category-row charts may run taller); "
+        "small multiples, insets, sparklines, fixed-aspect maps, and big-number cards are skipped.",
+    ),
 }
 
 
@@ -279,11 +430,11 @@ class Finding:
 @dataclass
 class TextRec:
     obj: Text
-    kind: str          # tick, axis_label, title, legend, annotation, text, figtext
+    kind: str  # tick, axis_label, title, legend, annotation, text, figtext
     ax: object | None
-    axis: str | None   # "x"/"y" for ticks and axis labels
+    axis: str | None  # "x"/"y" for ticks and axis labels
     label: str
-    size: float        # font size in points
+    size: float  # font size in points
     zorder: float
     cx: float
     cy: float
@@ -291,7 +442,7 @@ class TextRec:
     h: float
     angle: float
     aabb: tuple
-    knockout: bool     # opaque bbox, stroke halo, or framed legend behind text
+    knockout: bool  # opaque bbox, stroke halo, or framed legend behind text
     # Per-line boxes (x0, y0, x1, y1) for unrotated text, so the empty corners
     # of a multi-line, centered label are not treated as ink.
     lines: list = field(default_factory=list)
@@ -307,12 +458,27 @@ class TextRec:
         space that rarely holds ink)."""
         if self.rotated:
             vpad = max(pad, 0.12 * self.h)
-            return [rect_poly(self.cx, self.cy, max(self.w - 2 * pad, 0.0), max(self.h - 2 * vpad, 0.0), self.angle)]
+            return [
+                rect_poly(
+                    self.cx,
+                    self.cy,
+                    max(self.w - 2 * pad, 0.0),
+                    max(self.h - 2 * vpad, 0.0),
+                    self.angle,
+                )
+            ]
         out = []
         for x0, y0, x1, y1 in self.lines:
             vpad = max(pad, 0.12 * (y1 - y0)) if pad else 0.0
             if x1 - x0 > 2 * pad and y1 - y0 > 2 * vpad:
-                out.append([(x0 + pad, y0 + vpad), (x1 - pad, y0 + vpad), (x1 - pad, y1 - vpad), (x0 + pad, y1 - vpad)])
+                out.append(
+                    [
+                        (x0 + pad, y0 + vpad),
+                        (x1 - pad, y0 + vpad),
+                        (x1 - pad, y1 - vpad),
+                        (x0 + pad, y1 - vpad),
+                    ]
+                )
         return out
 
 
@@ -320,18 +486,30 @@ class TextRec:
 # Geometry helpers (pure Python floats; polygons are CCW lists of (x, y)).
 # ---------------------------------------------------------------------------
 
+
 def rect_poly(cx, cy, w, h, angle_deg=0.0):
     a = math.radians(angle_deg)
     c, s = math.cos(a), math.sin(a)
     hw, hh = w / 2, h / 2
-    return [(cx + x * c - y * s, cy + x * s + y * c) for x, y in ((-hw, -hh), (hw, -hh), (hw, hh), (-hw, hh))]
+    return [
+        (cx + x * c - y * s, cy + x * s + y * c)
+        for x, y in ((-hw, -hh), (hw, -hh), (hw, hh), (-hw, hh))
+    ]
 
 
 def poly_area(poly):
     n = len(poly)
     if n < 3:
         return 0.0
-    return abs(sum(poly[i][0] * poly[(i + 1) % n][1] - poly[(i + 1) % n][0] * poly[i][1] for i in range(n))) / 2
+    return (
+        abs(
+            sum(
+                poly[i][0] * poly[(i + 1) % n][1] - poly[(i + 1) % n][0] * poly[i][1]
+                for i in range(n)
+            )
+        )
+        / 2
+    )
 
 
 def clip_poly(subject, clip):
@@ -354,11 +532,18 @@ def clip_poly(subject, clip):
             if sc >= 0:
                 if sp < 0:
                     t = sp / (sp - sc)
-                    out.append((prev[0] + t * (cur[0] - prev[0]), prev[1] + t * (cur[1] - prev[1])))
+                    out.append(
+                        (
+                            prev[0] + t * (cur[0] - prev[0]),
+                            prev[1] + t * (cur[1] - prev[1]),
+                        )
+                    )
                 out.append(cur)
             elif sp >= 0:
                 t = sp / (sp - sc)
-                out.append((prev[0] + t * (cur[0] - prev[0]), prev[1] + t * (cur[1] - prev[1])))
+                out.append(
+                    (prev[0] + t * (cur[0] - prev[0]), prev[1] + t * (cur[1] - prev[1]))
+                )
             prev = cur
     return out
 
@@ -408,7 +593,7 @@ def circle_interval(p0, p1, c, r):
 
 def snip(s: str, n: int = 40) -> str:
     s = " / ".join(part.strip() for part in s.strip().splitlines() if part.strip())
-    return f"'{s[:n - 3]}...'" if len(s) > n else f"'{s}'"
+    return f"'{s[: n - 3]}...'" if len(s) > n else f"'{s}'"
 
 
 def is_neutral(color) -> bool:
@@ -427,6 +612,7 @@ def color_key(color) -> str:
 # Running the chart script
 # ---------------------------------------------------------------------------
 
+
 class ScriptError(Exception):
     def __init__(self, tail: str):
         super().__init__(tail)
@@ -437,14 +623,22 @@ def traceback_tail() -> str:
     return "".join(traceback.format_exc().splitlines(keepends=True)[-12:])
 
 
-SAVEFIG_RC = {"bbox_inches": "savefig.bbox", "pad_inches": "savefig.pad_inches", "facecolor": "savefig.facecolor",
-              "transparent": "savefig.transparent"}
+SAVEFIG_RC = {
+    "bbox_inches": "savefig.bbox",
+    "pad_inches": "savefig.pad_inches",
+    "facecolor": "savefig.facecolor",
+    "transparent": "savefig.transparent",
+}
 
 
 def canvas_save(saves):
     """The save the canvas checks judge: the first one not cropped to bbox_inches='tight' (text off its canvas is
     lost), else the last."""
-    return next((kw for kw in saves if kw.get("bbox_inches") != "tight"), saves[-1]) if saves else None
+    return (
+        next((kw for kw in saves if kw.get("bbox_inches") != "tight"), saves[-1])
+        if saves
+        else None
+    )
 
 
 @contextlib.contextmanager
@@ -465,7 +659,15 @@ def patched_matplotlib():
             saved.append(self)
         # Every save, with the savefig.* rcParams matplotlib falls back to for options left unset.
         save_kwargs.setdefault(id(self), []).append(
-            {**kw, **{k: matplotlib.rcParams[rc] for k, rc in SAVEFIG_RC.items() if kw.get(k) is None}})
+            {
+                **kw,
+                **{
+                    k: matplotlib.rcParams[rc]
+                    for k, rc in SAVEFIG_RC.items()
+                    if kw.get(k) is None
+                },
+            }
+        )
 
     matplotlib.figure.Figure.__init__ = init
     matplotlib.figure.Figure.savefig = savefig
@@ -489,7 +691,10 @@ def run_script(chart: Path, cwd: Path | None, verbose: bool = False):
     sys.argv = [str(chart)]
     sys.path.insert(0, str(chart.parent))
     sink = sys.stderr if verbose else io.StringIO()
-    old_dwb, sys.dont_write_bytecode = sys.dont_write_bytecode, True  # no __pycache__ in chart dirs
+    old_dwb, sys.dont_write_bytecode = (
+        sys.dont_write_bytecode,
+        True,
+    )  # no __pycache__ in chart dirs
     try:
         with patched_matplotlib() as (created, saved, save_kwargs):
             try:
@@ -515,6 +720,7 @@ def run_script(chart: Path, cwd: Path | None, verbose: bool = False):
 # Figure inventory
 # ---------------------------------------------------------------------------
 
+
 def drawn_ticks(axis):
     try:
         return axis._update_ticks()  # exactly the ticks draw() would render
@@ -528,12 +734,17 @@ def text_has_knockout(t: Text) -> bool:
         fc = patch.get_facecolor()
         if fc[3] * (patch.get_alpha() if patch.get_alpha() is not None else 1.0) >= 0.8:
             return True
-    return any(isinstance(pe, patheffects.Stroke) for pe in (t.get_path_effects() or []))
+    return any(
+        isinstance(pe, patheffects.Stroke) for pe in (t.get_path_effects() or [])
+    )
 
 
 def legend_has_frame(leg: Legend) -> bool:
     frame = leg.get_frame()
-    return leg.get_frame_on() and frame.get_facecolor()[3] * (frame.get_alpha() or 1.0) >= 0.8
+    return (
+        leg.get_frame_on()
+        and frame.get_facecolor()[3] * (frame.get_alpha() or 1.0) >= 0.8
+    )
 
 
 def line_boxes(t: Text, bb, angle: float, renderer) -> list:
@@ -544,7 +755,11 @@ def line_boxes(t: Text, bb, angle: float, renderer) -> list:
     if angle != 0 or len(lines) < 2 or t.get_usetex():
         return whole
     try:
-        malign = t._get_multialignment() if hasattr(t, "_get_multialignment") else t.get_horizontalalignment()
+        malign = (
+            t._get_multialignment()
+            if hasattr(t, "_get_multialignment")
+            else t.get_horizontalalignment()
+        )
         prop = t.get_fontproperties()
         rh = bb.height / len(lines)
         out = []
@@ -553,7 +768,13 @@ def line_boxes(t: Text, bb, angle: float, renderer) -> list:
                 continue
             sub, ismath = t._preprocess_math(line)
             w = renderer.get_text_width_height_descent(sub, prop, ismath=ismath)[0]
-            x0 = bb.x0 if malign == "left" else bb.x1 - w if malign == "right" else (bb.x0 + bb.x1 - w) / 2
+            x0 = (
+                bb.x0
+                if malign == "left"
+                else bb.x1 - w
+                if malign == "right"
+                else (bb.x0 + bb.x1 - w) / 2
+            )
             y1 = bb.y1 - i * rh
             out.append((x0, y1 - rh, x0 + w, y1))
         return out or whole
@@ -572,12 +793,20 @@ def all_axes(fig) -> list:
 def collect_texts(fig, renderer) -> list[TextRec]:
     role = {}
     hidden = set()
-    for ax in all_axes(fig):  # child axes too, so their ticks and titles are not taken for free text
+    for ax in all_axes(
+        fig
+    ):  # child axes too, so their ticks and titles are not taken for free text
         if getattr(ax, "name", "") == "3d":
             # 3D axes are flagged by 3d-axes; their projected tick labels
             # would only add noise to the text checks (small-text reads them via texts_3d).
             leg = ax.get_legend()
-            keep = {id(t) for t in [ax.title, *(leg.get_texts() + [leg.get_title()] if leg else [])]}
+            keep = {
+                id(t)
+                for t in [
+                    ax.title,
+                    *(leg.get_texts() + [leg.get_title()] if leg else []),
+                ]
+            }
             hidden.update(id(t) for t in ax.findobj(match=Text) if id(t) not in keep)
             continue
         for name, axis in (("x", ax.xaxis), ("y", ax.yaxis)):
@@ -590,17 +819,31 @@ def collect_texts(fig, renderer) -> list[TextRec]:
                     else:
                         hidden.add(id(lab))
             role[id(axis.label)] = ("axis_label", ax, name)
-            role[id(axis.get_offset_text())] = ("tick", ax, name) if shown else ("hidden", ax, name)
-        for t in (ax.title, getattr(ax, "_left_title", None), getattr(ax, "_right_title", None)):
+            role[id(axis.get_offset_text())] = (
+                ("tick", ax, name) if shown else ("hidden", ax, name)
+            )
+        for t in (
+            ax.title,
+            getattr(ax, "_left_title", None),
+            getattr(ax, "_right_title", None),
+        ):
             if t is not None:
                 role[id(t)] = ("title", ax, None)
-    legends = [(ax.get_legend(), ax) for ax in all_axes(fig) if ax.get_legend()] + [(lg, None) for lg in fig.legends]
+    legends = [(ax.get_legend(), ax) for ax in all_axes(fig) if ax.get_legend()] + [
+        (lg, None) for lg in fig.legends
+    ]
     legend_knock = {}
     for leg, ax in legends:
         for t in list(leg.get_texts()) + [leg.get_title()]:
-            role[id(t)] = ("legend", ax, None) if leg.get_visible() else ("hidden", ax, None)
+            role[id(t)] = (
+                ("legend", ax, None) if leg.get_visible() else ("hidden", ax, None)
+            )
             legend_knock[id(t)] = legend_has_frame(leg)
-    for attr, kind in (("_suptitle", "title"), ("_supxlabel", "axis_label"), ("_supylabel", "axis_label")):
+    for attr, kind in (
+        ("_suptitle", "title"),
+        ("_supxlabel", "axis_label"),
+        ("_supylabel", "axis_label"),
+    ):
         t = getattr(fig, attr, None)
         if t is not None:
             role[id(t)] = (kind, None, None)
@@ -622,7 +865,11 @@ def collect_texts(fig, renderer) -> list[TextRec]:
         if ax is not None and not ax.get_visible():
             continue
         if kind is None:
-            kind = "annotation" if isinstance(t, Annotation) else ("figtext" if t.axes is None else "text")
+            kind = (
+                "annotation"
+                if isinstance(t, Annotation)
+                else ("figtext" if t.axes is None else "text")
+            )
         if isinstance(t, Annotation):
             try:
                 if not t._check_xy(renderer):  # annotation_clip hides it
@@ -651,9 +898,19 @@ def collect_texts(fig, renderer) -> list[TextRec]:
                 w, h = h, w
             angle = round(angle / 90) * 90
         rec = TextRec(
-            obj=t, kind=kind, ax=ax, axis=axis, label=s.strip(), size=float(t.get_fontsize()),
+            obj=t,
+            kind=kind,
+            ax=ax,
+            axis=axis,
+            label=s.strip(),
+            size=float(t.get_fontsize()),
             zorder=t.get_zorder() if kind != "legend" else 5.0,
-            cx=cx, cy=cy, w=w, h=h, angle=angle, aabb=(bb.x0, bb.y0, bb.x1, bb.y1),
+            cx=cx,
+            cy=cy,
+            w=w,
+            h=h,
+            angle=angle,
+            aabb=(bb.x0, bb.y0, bb.x1, bb.y1),
             knockout=legend_knock.get(id(t), False) or text_has_knockout(t),
         )
         if rec.rotated:
@@ -675,7 +932,7 @@ def collect_texts(fig, renderer) -> list[TextRec]:
 
 @dataclass
 class SegOwner:
-    kind: str          # line, collection, rule (axhline/axvline), arrow
+    kind: str  # line, collection, rule (axhline/axvline), arrow
     name: str
     zorder: float
     ann_id: int | None = None
@@ -687,7 +944,9 @@ def is_reference_line(line: Line2D, ax) -> bool:
     if ls in ("None", "none", " ", "") or line.get_linewidth() <= 0:
         return True
     tr = line.get_transform()
-    if tr is ax.get_xaxis_transform(which="grid") or tr is ax.get_yaxis_transform(which="grid"):
+    if tr is ax.get_xaxis_transform(which="grid") or tr is ax.get_yaxis_transform(
+        which="grid"
+    ):
         return True
     if type(line).__name__ == "_AxLine":
         return True
@@ -710,12 +969,17 @@ def line_name(artist, color, kind="line") -> str:
 def is_axis_rule(line: Line2D, ax) -> bool:
     """Solid, visible axhline/axvline (zero baseline, drawn reference): a rule text must not run across."""
     tr = line.get_transform()
-    if not (tr is ax.get_xaxis_transform(which="grid") or tr is ax.get_yaxis_transform(which="grid")):
+    if not (
+        tr is ax.get_xaxis_transform(which="grid")
+        or tr is ax.get_yaxis_transform(which="grid")
+    ):
         return False
     if line.get_linestyle() in ("None", "none", " ", "") or line.get_linewidth() <= 0:
         return False
     alpha = to_rgba(line.get_color(), line.get_alpha())[3]
-    return alpha >= 0.2 and not (line.get_linestyle() in (":", "--", "-.") and alpha < 0.6)
+    return alpha >= 0.2 and not (
+        line.get_linestyle() in (":", "--", "-.") and alpha < 0.6
+    )
 
 
 def continued_ends(polys, tol):
@@ -740,7 +1004,12 @@ def continued_ends(polys, tol):
         flags = []
         for side, (e, n) in enumerate(((pts[0], pts[1]), (pts[-1], pts[-2]))):
             cx, cy = int(e[0] // tol), int(e[1] // tol)
-            near = [jk for dx in (-1, 0, 1) for dy in (-1, 0, 1) for jk in grid.get((cx + dx, cy + dy), ())]
+            near = [
+                jk
+                for dx in (-1, 0, 1)
+                for dy in (-1, 0, 1)
+                for jk in grid.get((cx + dx, cy + dy), ())
+            ]
             flags.append(any(carries_on(i, side, e, n - e, j, k) for j, k in near))
         out.append(tuple(flags))
     return out
@@ -750,7 +1019,9 @@ def finite_runs(pts) -> list:
     """Pieces of polyline pts [N, 2] between non-finite vertices, as matplotlib draws it: a NaN breaks the line."""
     pts = np.asarray(pts, dtype=float)
     runs = np.split(pts, np.flatnonzero(~np.all(np.isfinite(pts), axis=1)))
-    runs = [r[np.all(np.isfinite(r), axis=1)] for r in runs]  # each later piece starts with its NaN row
+    runs = [
+        r[np.all(np.isfinite(r), axis=1)] for r in runs
+    ]  # each later piece starts with its NaN row
     return [r for r in runs if len(r) >= 2]
 
 
@@ -782,13 +1053,25 @@ def collect_segments(fig, renderer):
             if ds and ds != "default" and ds in STEP_LOOKUP_MAP:
                 xy = np.column_stack(STEP_LOOKUP_MAP[ds](xy[:, 0], xy[:, 1]))
             pts = line.get_transform().transform(xy)
-            clip = line.get_clip_box().extents if line.get_clip_on() and line.get_clip_box() else [np.nan] * 4
+            clip = (
+                line.get_clip_box().extents
+                if line.get_clip_on() and line.get_clip_box()
+                else [np.nan] * 4
+            )
             if rule:
-                owners.append(SegOwner("rule", line_name(line, line.get_color(), "rule"), line.get_zorder()))
+                owners.append(
+                    SegOwner(
+                        "rule",
+                        line_name(line, line.get_color(), "rule"),
+                        line.get_zorder(),
+                    )
+                )
                 for run in finite_runs(pts):
                     add_polyline(run, len(owners) - 1, clip)
                 continue
-            owners.append(SegOwner("line", line_name(line, line.get_color()), line.get_zorder()))
+            owners.append(
+                SegOwner("line", line_name(line, line.get_color()), line.get_zorder())
+            )
             data_polys += [(len(owners) - 1, run, clip) for run in finite_runs(pts)]
         for coll in ax.collections:
             if not isinstance(coll, LineCollection) or not coll.get_visible():
@@ -801,14 +1084,27 @@ def collect_segments(fig, renderer):
             dashed = any(d[1] is not None for d in coll.get_linestyles())
             if alpha < 0.2 or (dashed and alpha < 0.6):
                 continue
-            clip = coll.get_clip_box().extents if coll.get_clip_on() and coll.get_clip_box() else [np.nan] * 4
-            owners.append(SegOwner("collection", line_name(coll, ecs[0] if len(ecs) else "k", "segments"),
-                                  coll.get_zorder()))
+            clip = (
+                coll.get_clip_box().extents
+                if coll.get_clip_on() and coll.get_clip_box()
+                else [np.nan] * 4
+            )
+            owners.append(
+                SegOwner(
+                    "collection",
+                    line_name(coll, ecs[0] if len(ecs) else "k", "segments"),
+                    coll.get_zorder(),
+                )
+            )
             tr = coll.get_transform()
             for seg in coll.get_segments():
                 if len(seg) >= 2:
-                    data_polys += [(len(owners) - 1, run, clip)
-                                   for run in finite_runs(tr.transform(np.asarray(seg, dtype=float)))]
+                    data_polys += [
+                        (len(owners) - 1, run, clip)
+                        for run in finite_runs(
+                            tr.transform(np.asarray(seg, dtype=float))
+                        )
+                    ]
 
     conts = continued_ends([p for _, p, _ in data_polys], 0.5 * fig.dpi / 72)
     for (o, pts, clip), cont in zip(data_polys, conts):
@@ -826,10 +1122,18 @@ def collect_segments(fig, renderer):
                 pass
             arrows.append((ap, id(t)))
     known = {id(a) for a, _ in arrows}
-    arrows += [(p, None) for p in fig.findobj(match=FancyArrowPatch) if id(p) not in known and p.get_visible()]
+    arrows += [
+        (p, None)
+        for p in fig.findobj(match=FancyArrowPatch)
+        if id(p) not in known and p.get_visible()
+    ]
     for ap, ann_id in arrows:
         try:
-            polys = ap.get_transform().transform_path(ap.get_path()).to_polygons(closed_only=False)
+            polys = (
+                ap.get_transform()
+                .transform_path(ap.get_path())
+                .to_polygons(closed_only=False)
+            )
         except Exception:
             continue
         if not polys or len(polys[0]) < 2:
@@ -853,14 +1157,21 @@ def clip_to_box(p0, p1, box):
         return None
     t0, t1 = r
     d = (p1[0] - p0[0], p1[1] - p0[1])
-    return (p0[0] + t0 * d[0], p0[1] + t0 * d[1]), (p0[0] + t1 * d[0], p0[1] + t1 * d[1])
+    return (p0[0] + t0 * d[0], p0[1] + t0 * d[1]), (
+        p0[0] + t1 * d[0],
+        p0[1] + t1 * d[1],
+    )
 
 
 def data_axes(fig, children=False):
     """(index, axes) worth style checks: visible, not colorbars. children adds insets and secondary axes."""
     out = []
     for i, ax in enumerate(all_axes(fig) if children else fig.axes):
-        if not ax.get_visible() or getattr(ax, "_colorbar", None) is not None or ax.get_label() == "<colorbar>":
+        if (
+            not ax.get_visible()
+            or getattr(ax, "_colorbar", None) is not None
+            or ax.get_label() == "<colorbar>"
+        ):
             continue
         out.append((i, ax))
     return out
@@ -869,7 +1180,12 @@ def data_axes(fig, children=False):
 def drawn_bar(p) -> bool:
     """A visible bar of finite, nonzero size: a NaN value draws no bar (and has no extent)."""
     w, h = p.get_width(), p.get_height()
-    return p.get_visible() and bool(w) and bool(h) and bool(np.all(np.isfinite([p.get_x(), p.get_y(), w, h])))
+    return (
+        p.get_visible()
+        and bool(w)
+        and bool(h)
+        and bool(np.all(np.isfinite([p.get_x(), p.get_y(), w, h])))
+    )
 
 
 def has_data(ax) -> bool:
@@ -879,6 +1195,7 @@ def has_data(ax) -> bool:
 # ---------------------------------------------------------------------------
 # Checks
 # ---------------------------------------------------------------------------
+
 
 class Ctx:
     def __init__(self, fig, fi, dest, save_kwargs):
@@ -892,15 +1209,21 @@ class Ctx:
         self.findings: list[Finding] = []
         self.overlapping_ticks: set = set()
         self.legend_hits: set = set()  # texts already reported against a legend text
-        self.on_area: set = set()      # texts text-on-area judged, so contrast skips them
-        self.series: dict = {}         # id(ax) -> color_series(ax), shared by cvd and contrast
+        self.on_area: set = set()  # texts text-on-area judged, so contrast skips them
+        self.series: dict = {}  # id(ax) -> color_series(ax), shared by cvd and contrast
 
     def where(self, ax=None, extra: str = "") -> str:
-        loc = f"fig{self.fi}/ax{self.ax_index[id(ax)]}" if ax is not None and id(ax) in self.ax_index else f"fig{self.fi}/figure"
+        loc = (
+            f"fig{self.fi}/ax{self.ax_index[id(ax)]}"
+            if ax is not None and id(ax) in self.ax_index
+            else f"fig{self.fi}/figure"
+        )
         return f"{loc} {extra}".strip()
 
     def add(self, check, where, detail, fix, severity=None):
-        self.findings.append(Finding(check, severity or CHECKS[check][0], where, detail, fix))
+        self.findings.append(
+            Finding(check, severity or CHECKS[check][0], where, detail, fix)
+        )
 
 
 def text_collision(a: TextRec, b: TextRec, min_w: float):
@@ -917,7 +1240,11 @@ def text_collision(a: TextRec, b: TextRec, min_w: float):
         pa, pb = a.shapes(), b.shapes()
         inter = sum(poly_area(clip_poly(p, q)) for p in pa for q in pb)
         frac = inter / max(min(sum(map(poly_area, pa)), sum(map(poly_area, pb))), 1e-9)
-        return f"rotated boxes overlap {frac:.0%} of the smaller" if frac >= TEXT_OVERLAP_MIN_FRAC else None
+        return (
+            f"rotated boxes overlap {frac:.0%} of the smaller"
+            if frac >= TEXT_OVERLAP_MIN_FRAC
+            else None
+        )
     best = None
     for la in a.lines:
         for lb in b.lines:
@@ -953,8 +1280,12 @@ def check_text_overlap(c: Ctx):
         if "legend" in (a.kind, b.kind):
             c.legend_hits.update((id(a.obj), id(b.obj)))
         ax = a.ax if a.ax is not None else b.ax
-        c.add("text-overlap", c.where(ax, f"{a.kind} {snip(a.label, 30)} x {b.kind} {snip(b.label, 30)}"),
-              hit, "Move, shorten, or resize one label so the two no longer intersect.")
+        c.add(
+            "text-overlap",
+            c.where(ax, f"{a.kind} {snip(a.label, 30)} x {b.kind} {snip(b.label, 30)}"),
+            hit,
+            "Move, shorten, or resize one label so the two no longer intersect.",
+        )
     check_legend_boxes(c, min_w)
     check_text_on_markers(c)
     check_text_on_bars(c)
@@ -962,7 +1293,9 @@ def check_text_overlap(c: Ctx):
 
 def check_legend_boxes(c: Ctx, min_w: float):
     """text-overlap for a legend's content box (handles and texts) covering text outside it."""
-    legends = [(ax.get_legend(), ax) for ax in c.fig.axes if ax.get_legend()] + [(lg, None) for lg in c.fig.legends]
+    legends = [(ax.get_legend(), ax) for ax in c.fig.axes if ax.get_legend()] + [
+        (lg, None) for lg in c.fig.legends
+    ]
     for leg, ax in legends:
         if not leg.get_visible():
             continue
@@ -975,12 +1308,21 @@ def check_legend_boxes(c: Ctx, min_w: float):
             if id(r.obj) in own or id(r.obj) in c.legend_hits:
                 continue
             for x0, y0, x1, y1 in r.lines or [r.aabb]:
-                w_ov, h_ov = min(x1, box.x1) - max(x0, box.x0), min(y1, box.y1) - max(y0, box.y0)
+                w_ov, h_ov = (
+                    min(x1, box.x1) - max(x0, box.x0),
+                    min(y1, box.y1) - max(y0, box.y0),
+                )
                 if w_ov > min_w and h_ov > 0.3 * (y1 - y0):
-                    where = c.where(ax if ax is not None else r.ax, f"legend box x {r.kind} {snip(r.label, 30)}")
-                    c.add("text-overlap", where,
-                          f"legend covers the text by {w_ov / c.px_per_pt:.1f} x {h_ov / c.px_per_pt:.1f} pt",
-                          "Move the legend into open space (or label series directly) so it clears the text.")
+                    where = c.where(
+                        ax if ax is not None else r.ax,
+                        f"legend box x {r.kind} {snip(r.label, 30)}",
+                    )
+                    c.add(
+                        "text-overlap",
+                        where,
+                        f"legend covers the text by {w_ov / c.px_per_pt:.1f} x {h_ov / c.px_per_pt:.1f} pt",
+                        "Move the legend into open space (or label series directly) so it clears the text.",
+                    )
                     break
 
 
@@ -993,7 +1335,11 @@ def marker_points(ax, renderer):
         rads.append(pts[1])
         zs.append(np.array([pts[3][k].get_zorder() for k in pts[2]], dtype=float))
     for ln in ax.lines:
-        if not ln.get_visible() or ln.get_marker() in (None, "None", "none", "", " ") or ln.get_markersize() <= 0:
+        if (
+            not ln.get_visible()
+            or ln.get_marker() in (None, "None", "none", "", " ")
+            or ln.get_markersize() <= 0
+        ):
             continue
         xy = ln.get_transform().transform(np.asarray(ln.get_xydata(), dtype=float))
         xy = xy[np.all(np.isfinite(xy), axis=1)]
@@ -1036,9 +1382,12 @@ def check_text_on_markers(c: Ctx):
                 hit &= z > r.zorder
             if hit.any():
                 k = int(np.nonzero(hit)[0][0])
-                c.add("text-overlap", c.where(ax, f"{r.kind} {snip(r.label, 30)} x marker"),
-                      f"text covers {int(hit.sum())} data marker(s), e.g. at {data_coords(ax, xy[k])}",
-                      "Move the label beside its marker (e.g. ev.label_points) or into open space.")
+                c.add(
+                    "text-overlap",
+                    c.where(ax, f"{r.kind} {snip(r.label, 30)} x marker"),
+                    f"text covers {int(hit.sum())} data marker(s), e.g. at {data_coords(ax, xy[k])}",
+                    "Move the label beside its marker (e.g. ev.label_points) or into open space.",
+                )
                 break
 
 
@@ -1046,9 +1395,16 @@ def check_text_on_bars(c: Ctx):
     """text-overlap for text drawn across bars: its glyphs straddle a bar edge or touch two bars. A label wholly
     inside one bar (an inside value label) passes; so do ticks, legends, and opaque-boxed text drawn above the bars."""
     pad = TEXT_LINE_PAD_PT * c.px_per_pt
-    bars = {id(ax): [(p.get_window_extent(c.renderer), p.get_zorder()) for cont in ax.containers
-                     if isinstance(cont, BarContainer) for p in cont.patches if drawn_bar(p)]
-            for _, ax in data_axes(c.fig)}
+    bars = {
+        id(ax): [
+            (p.get_window_extent(c.renderer), p.get_zorder())
+            for cont in ax.containers
+            if isinstance(cont, BarContainer)
+            for p in cont.patches
+            if drawn_bar(p)
+        ]
+        for _, ax in data_axes(c.fig)
+    }
     for r in c.texts:
         if r.kind in ("tick", "legend") or r.rotated:
             continue
@@ -1059,14 +1415,27 @@ def check_text_on_bars(c: Ctx):
                     continue
                 inside = []
                 for (x0, y0), _, (x1, y1), _ in r.shapes(pad):
-                    if min(x1, b.x1) - max(x0, b.x0) > pad and min(y1, b.y1) - max(y0, b.y0) > pad:
-                        inside.append(b.x0 - pad <= x0 and x1 <= b.x1 + pad and b.y0 - pad <= y0 and y1 <= b.y1 + pad)
+                    if (
+                        min(x1, b.x1) - max(x0, b.x0) > pad
+                        and min(y1, b.y1) - max(y0, b.y0) > pad
+                    ):
+                        inside.append(
+                            b.x0 - pad <= x0
+                            and x1 <= b.x1 + pad
+                            and b.y0 - pad <= y0
+                            and y1 <= b.y1 + pad
+                        )
                 touched += bool(inside)
                 straddled += bool(inside) and not all(inside)
             if straddled or touched > 1:
-                c.add("text-overlap", c.where(ax, f"{r.kind} {snip(r.label, 30)} x bar"),
-                      f"text straddles {straddled} bar edge(s)" if straddled else f"text lies on {touched} bars",
-                      "Move the label past the bar end or into open space, or fit it wholly inside one bar.")
+                c.add(
+                    "text-overlap",
+                    c.where(ax, f"{r.kind} {snip(r.label, 30)} x bar"),
+                    f"text straddles {straddled} bar edge(s)"
+                    if straddled
+                    else f"text lies on {touched} bars",
+                    "Move the label past the bar end or into open space, or fit it wholly inside one bar.",
+                )
                 break
 
 
@@ -1111,7 +1480,14 @@ def check_text_on_line(c: Ctx):
             p0, p1 = clipped
             seg_len = math.hypot(p1[0] - p0[0], p1[1] - p0[1])
             for poly in shapes:
-                ends = [pt for pt, cont in (((row[8], row[9]), row[13]), ((row[10], row[11]), row[14])) if not cont]
+                ends = [
+                    pt
+                    for pt, cont in (
+                        ((row[8], row[9]), row[13]),
+                        ((row[10], row[11]), row[14]),
+                    )
+                    if not cont
+                ]
                 inside = inside_length(p0, p1, seg_len, poly, ends, radius)
                 if inside > 0:
                     per_owner[int(row[12])] = per_owner.get(int(row[12]), 0.0) + inside
@@ -1120,9 +1496,12 @@ def check_text_on_line(c: Ctx):
             continue
         names = ", ".join(sorted({c.owners[o].name for o, _ in hits}))[:80]
         longest = max(L for _, L in hits) / c.px_per_pt
-        c.add("text-on-line", c.where(r.ax, f"{r.kind} {snip(r.label)} on {names}"),
-              f"{longest:.0f} pt of path crosses the text",
-              "Move the label into open space or to the line end, or give it an opaque background box.")
+        c.add(
+            "text-on-line",
+            c.where(r.ax, f"{r.kind} {snip(r.label)} on {names}"),
+            f"{longest:.0f} pt of path crosses the text",
+            "Move the label into open space or to the line end, or give it an opaque background box.",
+        )
 
 
 def line_gaps(r: TextRec, pad: float) -> list:
@@ -1132,7 +1511,10 @@ def line_gaps(r: TextRec, pad: float) -> list:
     for (ax0, ay0, ax1, _), (bx0, _, bx1, by1) in zip(r.lines, r.lines[1:]):
         x0, x1 = max(ax0, bx0) + pad, min(ax1, bx1) - pad
         vpad = max(pad, 0.12 * (by1 - r.lines[1][1]))
-        lo, hi = by1 - vpad, ay0 + vpad  # lower line's inked top to upper line's inked bottom
+        lo, hi = (
+            by1 - vpad,
+            ay0 + vpad,
+        )  # lower line's inked top to upper line's inked bottom
         if x1 > x0 and hi > lo:
             out.append([(x0, lo), (x1, lo), (x1, hi), (x0, hi)])
     return out
@@ -1150,8 +1532,14 @@ def inside_length(p0, p1, seg_len, poly, ends, radius) -> float:
         iv = circle_interval(p0, p1, pt, radius)
         if iv and min(iv[1], tb) > max(iv[0], ta):
             covered.append((max(iv[0], ta), min(iv[1], tb)))
-    if len(covered) == 2 and covered[1][0] < covered[0][1] and covered[0][0] < covered[1][1]:
-        covered = [(min(covered[0][0], covered[1][0]), max(covered[0][1], covered[1][1]))]
+    if (
+        len(covered) == 2
+        and covered[1][0] < covered[0][1]
+        and covered[0][0] < covered[1][1]
+    ):
+        covered = [
+            (min(covered[0][0], covered[1][0]), max(covered[0][1], covered[1][1]))
+        ]
     return max(0.0, (tb - ta - sum(hi - lo for lo, hi in covered)) * seg_len)
 
 
@@ -1163,19 +1551,38 @@ def check_text_clipped(c: Ctx):
         x0, y0, x1, y1 = r.aabb
         sides = []
         if not tight:
-            sides = [s for s, bad in (("left", x0 < -tol), ("right", x1 > fw + tol),
-                                      ("bottom", y0 < -tol), ("top", y1 > fh + tol)) if bad]
+            sides = [
+                s
+                for s, bad in (
+                    ("left", x0 < -tol),
+                    ("right", x1 > fw + tol),
+                    ("bottom", y0 < -tol),
+                    ("top", y1 > fh + tol),
+                )
+                if bad
+            ]
         if sides:
-            c.add("text-clipped", c.where(r.ax, f"{r.kind} {snip(r.label)}"),
-                  f"extends past the canvas {'/'.join(sides)} edge",
-                  "Move the text inside the figure or widen that margin with subplots_adjust.")
+            c.add(
+                "text-clipped",
+                c.where(r.ax, f"{r.kind} {snip(r.label)}"),
+                f"extends past the canvas {'/'.join(sides)} edge",
+                "Move the text inside the figure or widen that margin with subplots_adjust.",
+            )
             continue
         t = r.obj
         box = t.get_clip_box() if t.get_clip_on() else None
-        if box is not None and (x0 < box.x0 - tol or x1 > box.x1 + tol or y0 < box.y0 - tol or y1 > box.y1 + tol):
-            c.add("text-clipped", c.where(r.ax, f"{r.kind} {snip(r.label)}"),
-                  "cut off by its clip box (clip_on=True)",
-                  "Set clip_on=False or move the text inside the axes.")
+        if box is not None and (
+            x0 < box.x0 - tol
+            or x1 > box.x1 + tol
+            or y0 < box.y0 - tol
+            or y1 > box.y1 + tol
+        ):
+            c.add(
+                "text-clipped",
+                c.where(r.ax, f"{r.kind} {snip(r.label)}"),
+                "cut off by its clip box (clip_on=True)",
+                "Set clip_on=False or move the text inside the axes.",
+            )
 
 
 def check_bar_baseline(c: Ctx):
@@ -1193,21 +1600,30 @@ def check_bar_baseline(c: Ctx):
             lo, hi = sorted(ax.get_xlim() if horizontal else ax.get_ylim())
             span = max(hi - lo, 1e-12)
             if scale != "linear":
-                c.add("bar-baseline", c.where(ax, f"{name}-axis"), f"bars on a {scale} value axis",
-                      "Plot bars on a linear axis from zero, or use a dot plot for log data.")
+                c.add(
+                    "bar-baseline",
+                    c.where(ax, f"{name}-axis"),
+                    f"bars on a {scale} value axis",
+                    "Plot bars on a linear axis from zero, or use a dot plot for log data.",
+                )
                 break
             if not (lo <= 1e-9 * span and hi >= -1e-9 * span):
-                c.add("bar-baseline", c.where(ax, f"{name}-axis"),
-                      f"value axis spans {lo:.4g} to {hi:.4g}, excluding 0",
-                      "Start the bar value axis at zero, or switch to a dot plot.")
+                c.add(
+                    "bar-baseline",
+                    c.where(ax, f"{name}-axis"),
+                    f"value axis spans {lo:.4g} to {hi:.4g}, excluding 0",
+                    "Start the bar value axis at zero, or switch to a dot plot.",
+                )
                 break
 
 
 def check_dual_axis(c: Ctx):
     axes = data_axes(c.fig)
     for n, (i, a) in enumerate(axes):
-        for j, b in axes[n + 1:]:
-            if not np.allclose(a.get_position().bounds, b.get_position().bounds, atol=1e-6):
+        for j, b in axes[n + 1 :]:
+            if not np.allclose(
+                a.get_position().bounds, b.get_position().bounds, atol=1e-6
+            ):
                 continue
             if not (has_data(a) and has_data(b)):
                 continue
@@ -1217,8 +1633,12 @@ def check_dual_axis(c: Ctx):
                 kind = "twiny"
             else:
                 continue
-            c.add("dual-axis", f"fig{c.fi}/ax{i}+ax{j}", f"{kind} axes both plot data on separate scales",
-                  "Split into two aligned panels or index both series to a common baseline.")
+            c.add(
+                "dual-axis",
+                f"fig{c.fi}/ax{i}+ax{j}",
+                f"{kind} axes both plot data on separate scales",
+                "Split into two aligned panels or index both series to a common baseline.",
+            )
 
 
 def check_pie(c: Ctx):
@@ -1227,11 +1647,19 @@ def check_pie(c: Ctx):
         if not n:
             continue
         if n > MAX_PIE_WEDGES:
-            c.add("pie-slices", c.where(ax), f"pie with {n} slices",
-                  "Replace the pie with a sorted horizontal bar chart.")
+            c.add(
+                "pie-slices",
+                c.where(ax),
+                f"pie with {n} slices",
+                "Replace the pie with a sorted horizontal bar chart.",
+            )
         else:
-            c.add("pie-slices", c.where(ax), f"pie with {n} slices (angles are hard to compare)",
-                  "If comparing parts, use a sorted bar chart; keep pies for 2-3 parts of a whole.")
+            c.add(
+                "pie-slices",
+                c.where(ax),
+                f"pie with {n} slices (angles are hard to compare)",
+                "If comparing parts, use a sorted bar chart; keep pies for 2-3 parts of a whole.",
+            )
 
 
 def check_rainbow(c: Ctx):
@@ -1246,53 +1674,92 @@ def check_rainbow(c: Ctx):
         name = m.get_cmap().name
         base = name[:-2] if name.endswith("_r") else name
         if base in RAINBOW_CMAPS:
-            c.add("rainbow-cmap", c.where(ax, f"cmap={name}"), f"rainbow colormap '{name}' distorts data order",
-                  "Use a perceptually uniform colormap: viridis/cividis (sequential) or RdBu/PuOr (diverging).")
+            c.add(
+                "rainbow-cmap",
+                c.where(ax, f"cmap={name}"),
+                f"rainbow colormap '{name}' distorts data order",
+                "Use a perceptually uniform colormap: viridis/cividis (sequential) or RdBu/PuOr (diverging).",
+            )
         elif base in SPECTRAL_CMAPS:
             norm = m.norm
             vmin, vmax = norm.vmin, norm.vmax
             diverging = isinstance(norm, (TwoSlopeNorm, CenteredNorm)) or (
-                vmin is not None and vmax is not None and vmin < 0 < vmax)
+                vmin is not None and vmax is not None and vmin < 0 < vmax
+            )
             if diverging:
-                c.add("rainbow-cmap", c.where(ax, f"cmap={name}"), "Spectral on diverging data is rainbow-like",
-                      "Prefer RdBu or PuOr for diverging data.", severity="warn")
+                c.add(
+                    "rainbow-cmap",
+                    c.where(ax, f"cmap={name}"),
+                    "Spectral on diverging data is rainbow-like",
+                    "Prefer RdBu or PuOr for diverging data.",
+                    severity="warn",
+                )
             else:
-                c.add("rainbow-cmap", c.where(ax, f"cmap={name}"), "Spectral used for sequential data",
-                      "Use a sequential colormap such as viridis or Blues.")
+                c.add(
+                    "rainbow-cmap",
+                    c.where(ax, f"cmap={name}"),
+                    "Spectral used for sequential data",
+                    "Use a sequential colormap such as viridis or Blues.",
+                )
 
 
 def check_3d(c: Ctx):
     for i, ax in enumerate(c.fig.axes):
         if getattr(ax, "name", "") == "3d":
-            c.add("3d-axes", c.where(ax), "3D projection distorts values through perspective",
-                  "Plot in 2D; encode the third variable with color, size, or small multiples.")
+            c.add(
+                "3d-axes",
+                c.where(ax),
+                "3D projection distorts values through perspective",
+                "Plot in 2D; encode the third variable with color, size, or small multiples.",
+            )
 
 
 def data_lines(ax):
-    return [ln for ln in ax.lines if ln.get_visible() and not is_reference_line(ln, ax) and len(ln.get_xydata()) >= 2]
+    return [
+        ln
+        for ln in ax.lines
+        if ln.get_visible()
+        and not is_reference_line(ln, ax)
+        and len(ln.get_xydata()) >= 2
+    ]
 
 
 def check_legend(c: Ctx):
-    legends = [(ax.get_legend(), ax, data_lines(ax)) for ax in c.fig.axes if ax.get_legend()]
+    legends = [
+        (ax.get_legend(), ax, data_lines(ax)) for ax in c.fig.axes if ax.get_legend()
+    ]
     all_lines = [ln for ax in c.fig.axes for ln in data_lines(ax)]
     legends += [(lg, None, all_lines) for lg in c.fig.legends]
     for leg, ax, lines in legends:
         if not leg.get_visible() or not lines:
             continue
-        handles = getattr(leg, "legend_handles", None) or getattr(leg, "legendHandles", [])
+        handles = getattr(leg, "legend_handles", None) or getattr(
+            leg, "legendHandles", []
+        )
         n = len(leg.get_texts())
-        line_handles = [h for h in handles if isinstance(h, Line2D) and h.get_linestyle() not in ("None", "none", "")]
+        line_handles = [
+            h
+            for h in handles
+            if isinstance(h, Line2D) and h.get_linestyle() not in ("None", "none", "")
+        ]
         if 1 <= n <= 4 and line_handles:
-            c.add("legend-direct-label", c.where(ax, "legend"), f"legend with {n} entries on a line chart",
-                  "Remove the legend and label each line directly at its end in the line's color.")
+            c.add(
+                "legend-direct-label",
+                c.where(ax, "legend"),
+                f"legend with {n} entries on a line chart",
+                "Remove the legend and label each line directly at its end in the line's color.",
+            )
 
 
 NUM_RE = re.compile(r"^[-+]?(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?[kKMBT]?$")
-UNIT_SYMBOL_RE = re.compile(r"[%$€£¥°]|\b(kg|km|mi|mph|ppm|kwh|mwh|gwh|twh|usd|lbs?|hrs?|yrs?|min|sec)\b", re.I)
+UNIT_SYMBOL_RE = re.compile(
+    r"[%$€£¥°]|\b(kg|km|mi|mph|ppm|kwh|mwh|gwh|twh|usd|lbs?|hrs?|yrs?|min|sec)\b", re.I
+)
 UNIT_CUE_RE = re.compile(
     r"\(.*[a-z%$].*\)|%|\$|€|£|°|\bper\b|\bin (thousands|millions|billions|trillions|percent|dollars|"
     r"hours|days|minutes|seconds|years|miles|kilometers|tons|tonnes)\b|\b(usd|kwh|mwh|gwh|twh|mph|ppm|kg|km|lbs?)\b",
-    re.I)
+    re.I,
+)
 
 
 def parse_tick(s: str):
@@ -1306,7 +1773,9 @@ def parse_tick(s: str):
     return float(re.sub(r"[kKMBT]$", "", s))
 
 
-VALUE_TICK_RE = re.compile(r"[-+]?[$\u20ac\u00a3\u00a5]?\d[\d,.:]*\s*[A-Za-z%\u00b0]{0,3}")
+VALUE_TICK_RE = re.compile(
+    r"[-+]?[$\u20ac\u00a3\u00a5]?\d[\d,.:]*\s*[A-Za-z%\u00b0]{0,3}"
+)
 
 
 def value_tick(s: str) -> bool:
@@ -1323,7 +1792,9 @@ def title_like_texts(c: Ctx):
     for r in c.texts:
         if r.kind == "title":
             out.append(r)
-        elif r.kind in ("figtext", "text", "annotation") and (r.cy > 0.75 * fh or r.aabb[1] >= max(tops)):
+        elif r.kind in ("figtext", "text", "annotation") and (
+            r.cy > 0.75 * fh or r.aabb[1] >= max(tops)
+        ):
             out.append(r)
     return out
 
@@ -1332,16 +1803,22 @@ def check_mixed_tick_units(c: Ctx):
     """missing-axis-label for a unit on only some value ticks ("9%" above "6" and "3"): readers see two scales."""
     for i, ax in data_axes(c.fig):
         for name in ("x", "y"):
-            ticks = [re.sub(r"\$\\mathdefault\{(.*?)\}\$", r"\1", r.label) for r in c.texts
-                     if r.kind == "tick" and r.ax is ax and r.axis == name]
+            ticks = [
+                re.sub(r"\$\\mathdefault\{(.*?)\}\$", r"\1", r.label)
+                for r in c.texts
+                if r.kind == "tick" and r.ax is ax and r.axis == name
+            ]
             if len(ticks) < 2 or not all(value_tick(t) for t in ticks):
                 continue
             units = [bool(UNIT_SYMBOL_RE.search(t)) for t in ticks]
             if any(units) and not all(units):
-                c.add("missing-axis-label", c.where(ax, f"{name}-axis"),
-                      f"unit on {sum(units)} of {len(ticks)} ticks ({', '.join(ticks)})",
-                      "Put the unit on every tick (PercentFormatter, StrMethodFormatter) or only in the axis label "
-                      "or subtitle.")
+                c.add(
+                    "missing-axis-label",
+                    c.where(ax, f"{name}-axis"),
+                    f"unit on {sum(units)} of {len(ticks)} ticks ({', '.join(ticks)})",
+                    "Put the unit on every tick (PercentFormatter, StrMethodFormatter) or only in the axis label "
+                    "or subtitle.",
+                )
 
 
 def check_missing_axis_label(c: Ctx):
@@ -1349,17 +1826,30 @@ def check_missing_axis_label(c: Ctx):
     titles = " ".join(r.label for r in title_like_texts(c))
     if UNIT_CUE_RE.search(titles):
         return
-    if getattr(c.fig, "_supxlabel", None) is not None or getattr(c.fig, "_supylabel", None) is not None:
+    if (
+        getattr(c.fig, "_supxlabel", None) is not None
+        or getattr(c.fig, "_supylabel", None) is not None
+    ):
         return
     for i, ax in data_axes(c.fig):
-        if getattr(ax, "name", "") != "rectilinear" or not ax.axison or not has_data(ax):
+        if (
+            getattr(ax, "name", "") != "rectilinear"
+            or not ax.axison
+            or not has_data(ax)
+        ):
             continue
         axbox = ax.get_window_extent(c.renderer)
         for name, axis in (("x", ax.xaxis), ("y", ax.yaxis)):
             if axis.label.get_visible() and axis.label.get_text().strip():
                 continue
-            ticks = [r.label for r in c.texts if r.kind == "tick" and r.ax is ax and r.axis == name
-                     and r.obj is not axis.get_offset_text()]
+            ticks = [
+                r.label
+                for r in c.texts
+                if r.kind == "tick"
+                and r.ax is ax
+                and r.axis == name
+                and r.obj is not axis.get_offset_text()
+            ]
             if not ticks:
                 continue
             if any(UNIT_SYMBOL_RE.search(t) for t in ticks):
@@ -1370,12 +1860,19 @@ def check_missing_axis_label(c: Ctx):
             if name == "x" and all(YEAR_MIN <= v <= YEAR_MAX for v in vals):
                 continue  # year axis explains itself
             if name == "y" and any(
-                    r.kind in ("text", "figtext", "annotation") and r.aabb[1] >= axbox.y1 - 2
-                    and r.aabb[0] <= axbox.x0 + 0.3 * axbox.width and r.aabb[2] >= axbox.x0 - 0.15 * axbox.width
-                    for r in c.texts):
+                r.kind in ("text", "figtext", "annotation")
+                and r.aabb[1] >= axbox.y1 - 2
+                and r.aabb[0] <= axbox.x0 + 0.3 * axbox.width
+                and r.aabb[2] >= axbox.x0 - 0.15 * axbox.width
+                for r in c.texts
+            ):
                 continue  # unit label placed above the top of the y axis
-            c.add("missing-axis-label", c.where(ax, f"{name}-axis"), "numeric ticks with no axis label or unit",
-                  "Label the axis with quantity and unit, or state the unit in the subtitle.")
+            c.add(
+                "missing-axis-label",
+                c.where(ax, f"{name}-axis"),
+                "numeric ticks with no axis label or unit",
+                "Label the axis with quantity and unit, or state the unit in the subtitle.",
+            )
 
 
 TAKEAWAY_CUE_RE = re.compile(
@@ -1384,15 +1881,19 @@ TAKEAWAY_CUE_RE = re.compile(
     r"remains?|outpaces?|overtook|overtakes?|peaks?|lags?|dominates?|flips?|makes?|made|gets?|got|became|"
     r"becomes?|keeps?|kept|takes?|took|than|never|only|still|record|most|least|nearly|twice|half|now|"
     r"can|could|will|would|should|did|does|do|don't|isn't|aren't|wasn't)\b|\b\w{3,}ed\b",
-    re.I)
+    re.I,
+)
 DESCRIPTIVE_RE = re.compile(
     r"\b(by|vs\.?|versus|over time|over the (years|decades)|across|trends?|distribution|breakdown|comparison|overview)\b",
-    re.I)
+    re.I,
+)
 
 
 def main_title(c: Ctx):
     """The largest non-numeric title-like text (highest on ties), or None."""
-    cands = [r for r in title_like_texts(c) if not value_tick(r.label)]  # big-number stats are not titles
+    cands = [
+        r for r in title_like_texts(c) if not value_tick(r.label)
+    ]  # big-number stats are not titles
     return max(cands, key=lambda r: (r.size, r.cy)) if cands else None
 
 
@@ -1405,18 +1906,33 @@ def check_default_title(c: Ctx):
         return
     if n_axes > 1 and main.kind == "title" and main.ax is not None:
         # ax.set_title on one panel can be the chart title; titles on several panels of similar size are panel titles.
-        others = [r for r in c.texts if r.kind == "title" and r.ax is not None and r.ax is not main.ax]
+        others = [
+            r
+            for r in c.texts
+            if r.kind == "title" and r.ax is not None and r.ax is not main.ax
+        ]
         if any(r.size * 1.15 > main.size for r in others):
-            c.add("default-title", c.where(), "only panel titles; no overall title", fix_none)
+            c.add(
+                "default-title",
+                c.where(),
+                "only panel titles; no overall title",
+                fix_none,
+            )
             return
     text = " ".join(main.label.split())
     words = re.findall(r"[A-Za-z']+", text)
     hero = any(value_tick(r.label) and r.size > main.size for r in title_like_texts(c))
-    if text.endswith("?") or TAKEAWAY_CUE_RE.search(text) or hero:  # a hero number and its caption carry the claim
+    if (
+        text.endswith("?") or TAKEAWAY_CUE_RE.search(text) or hero
+    ):  # a hero number and its caption carry the claim
         return
     if DESCRIPTIVE_RE.search(text) or (len(words) <= 2 and not re.search(r"\d", text)):
-        c.add("default-title", c.where(main.ax, snip(text, 50)), "title describes the chart instead of the takeaway",
-              "Rewrite the title as the finding, e.g. 'Sales doubled after the 2020 launch'.")
+        c.add(
+            "default-title",
+            c.where(main.ax, snip(text, 50)),
+            "title describes the chart instead of the takeaway",
+            "Rewrite the title as the finding, e.g. 'Sales doubled after the 2020 launch'.",
+        )
 
 
 def check_title_too_long(c: Ctx):
@@ -1432,10 +1948,16 @@ def check_title_too_long(c: Ctx):
     if n_lines > TITLE_MAX_LINES:
         problems.append(f"{n_lines} lines")
     if not fits:
-        problems.append(f"past 2 lines at {c.dest} ({len(text)} chars, cut about {over})")
+        problems.append(
+            f"past 2 lines at {c.dest} ({len(text)} chars, cut about {over})"
+        )
     if problems:
-        c.add("title-too-long", c.where(main.ax, snip(text, 50)), "title runs " + ", ".join(problems),
-              "Cut to one sentence that ev.fits_title accepts, on 1-2 lines; move detail to the subtitle.")
+        c.add(
+            "title-too-long",
+            c.where(main.ax, snip(text, 50)),
+            "title runs " + ", ".join(problems),
+            "Cut to one sentence that ev.fits_title accepts, on 1-2 lines; move detail to the subtitle.",
+        )
 
 
 def check_process_note(c: Ctx):
@@ -1443,15 +1965,22 @@ def check_process_note(c: Ctx):
         hits = [m.group(0) for m in PROCESS_RE.finditer(r.label)]
         hits += [f"file name {m.group(0)}" for m in DATA_FILE_RE.finditer(r.label)]
         if hits:
-            c.add("process-note", c.where(r.ax, f"{r.kind} {snip(r.label)}"),
-                  f"addressed to the user: {', '.join(hits)}",
-                  "Move process notes and caveats to your reply; cite the publisher and dataset, never a file name.")
+            c.add(
+                "process-note",
+                c.where(r.ax, f"{r.kind} {snip(r.label)}"),
+                f"addressed to the user: {', '.join(hits)}",
+                "Move process notes and caveats to your reply; cite the publisher and dataset, never a file name.",
+            )
 
 
 def check_missing_source(c: Ctx):
     if not any(SOURCE_RE.search(r.obj.get_text()) for r in c.texts if r.kind != "tick"):
-        c.add("missing-source", c.where(), "no text contains 'Source:' and no line starts with 'Source' or 'Data:'",
-              "Add a bottom-left line 'Source: <publisher>, <dataset>'.")
+        c.add(
+            "missing-source",
+            c.where(),
+            "no text contains 'Source:' and no line starts with 'Source' or 'Data:'",
+            "Add a bottom-left line 'Source: <publisher>, <dataset>'.",
+        )
 
 
 def number_matches(label: str, value: float) -> bool:
@@ -1461,7 +1990,9 @@ def number_matches(label: str, value: float) -> bool:
     scales = (1, 1e3, 1e-3, 1e6, 1e-6, 1e9, 1e-9, 100, 0.01)
     for m in re.finditer(r"\d[\d,]*(\.\d+)?", label.replace("\u2212", "-")):
         num = float(m.group(0).replace(",", ""))
-        tol = 0.5 * 10.0 ** -(len(m.group(1) or ".") - 1) * 1.001  # half a unit in the last printed digit
+        tol = (
+            0.5 * 10.0 ** -(len(m.group(1) or ".") - 1) * 1.001
+        )  # half a unit in the last printed digit
         if any(abs(value / k - num) <= tol + 1e-9 * num for k in scales):
             return True
     return False
@@ -1471,15 +2002,25 @@ def bar_value_labels(c: Ctx, ax, conts, horizontal):
     """(bars, labels): the count of nonzero bars in `conts` and, per labeled bar, (value, TextRec) for the first
     numeric text within the bar's width and along its length (or VALUE_LABEL_REACH_LINES past either end) that
     prints its value."""
-    texts = [r for r in c.texts if r.kind in ("text", "annotation") and r.ax is ax and not r.rotated
-             and re.search(r"\d", r.label)]
+    texts = [
+        r
+        for r in c.texts
+        if r.kind in ("text", "annotation")
+        and r.ax is ax
+        and not r.rotated
+        and re.search(r"\d", r.label)
+    ]
     bars, labels = 0, []
     for ct in conts:
         vals = getattr(ct, "datavalues", None)
         for k, p in enumerate(ct.patches):
             if not (isinstance(p, Rectangle) and p.get_visible()):
                 continue
-            v = vals[k] if vals is not None else (p.get_width() if horizontal else p.get_height())
+            v = (
+                vals[k]
+                if vals is not None
+                else (p.get_width() if horizontal else p.get_height())
+            )
             if not np.isfinite(v) or v == 0:
                 continue
             bars += 1
@@ -1501,22 +2042,34 @@ def bar_value_labels(c: Ctx, ax, conts, horizontal):
 
 def check_value_labels_and_axis(c: Ctx):
     for i, ax in data_axes(c.fig):
-        conts = [ct for ct in ax.containers if isinstance(ct, BarContainer) and ct.patches]
+        conts = [
+            ct for ct in ax.containers if isinstance(ct, BarContainer) and ct.patches
+        ]
         if not conts:
             continue
         horizontal = getattr(conts[0], "orientation", "vertical") == "horizontal"
         name = "x" if horizontal else "y"
         axis = getattr(ax, f"{name}axis")
-        ticks = [r for r in c.texts if r.kind == "tick" and r.ax is ax and r.axis == name
-                 and r.obj is not axis.get_offset_text() and value_tick(r.label)]
+        ticks = [
+            r
+            for r in c.texts
+            if r.kind == "tick"
+            and r.ax is ax
+            and r.axis == name
+            and r.obj is not axis.get_offset_text()
+            and value_tick(r.label)
+        ]
         if len(ticks) < 2:
             continue
         bars, labels = bar_value_labels(c, ax, conts, horizontal)
         labeled = len(labels)
         if labeled >= VALUE_LABEL_MIN_BARS and labeled >= VALUE_LABEL_MIN_FRAC * bars:
-            c.add("value-labels-and-axis", c.where(ax, f"{name}-axis"),
-                  f"{labeled} of {bars} bars carry value labels and the {name}-axis shows {len(ticks)} numeric ticks",
-                  f"Keep one readout: hide the {name}-axis ticks, spine, and gridlines, or drop the value labels.")
+            c.add(
+                "value-labels-and-axis",
+                c.where(ax, f"{name}-axis"),
+                f"{labeled} of {bars} bars carry value labels and the {name}-axis shows {len(ticks)} numeric ticks",
+                f"Keep one readout: hide the {name}-axis ticks, spine, and gridlines, or drop the value labels.",
+            )
 
 
 def plain_tick(s: str) -> str:
@@ -1542,57 +2095,94 @@ def check_number_format(c: Ctx):
         for name in ("x", "y"):
             axis = getattr(ax, f"{name}axis")
             off = axis.get_offset_text()
-            recs = [r for r in c.texts if r.kind == "tick" and r.ax is ax and r.axis == name]
+            recs = [
+                r for r in c.texts if r.kind == "tick" and r.ax is ax and r.axis == name
+            ]
             where = c.where(ax, f"{name}-axis")
             # ScalarFormatter's offset shifts every value; a date formatter's offset (2021-Apr) is a date label
-            if any(r.obj is off for r in recs) and isinstance(axis.get_major_formatter(), ScalarFormatter):
-                c.add("number-format", where, f"offset text {snip(off.get_text())} changes every tick's value",
-                      "Format the ticks yourself (FuncFormatter: 2M, $1.5bn, 2019) or "
-                      "ax.ticklabel_format(useOffset=False, style='plain').")
+            if any(r.obj is off for r in recs) and isinstance(
+                axis.get_major_formatter(), ScalarFormatter
+            ):
+                c.add(
+                    "number-format",
+                    where,
+                    f"offset text {snip(off.get_text())} changes every tick's value",
+                    "Format the ticks yourself (FuncFormatter: 2M, $1.5bn, 2019) or "
+                    "ax.ticklabel_format(useOffset=False, style='plain').",
+                )
                 continue
             ticks = [plain_tick(r.label) for r in recs if r.obj is not off]
             if len(ticks) < 2:
                 continue
             linear = axis.get_scale() == "linear"
             if linear and any(SCI_TICK_RE.fullmatch(t) for t in ticks):
-                c.add("number-format", where, f"scientific-notation ticks ({', '.join(ticks[:4])})",
-                      "Abbreviate with k, M, bn in a FuncFormatter and name the unit in the axis label.")
+                c.add(
+                    "number-format",
+                    where,
+                    f"scientific-notation ticks ({', '.join(ticks[:4])})",
+                    "Abbreviate with k, M, bn in a FuncFormatter and name the unit in the axis label.",
+                )
                 continue
             vals = [parse_tick(t) for t in ticks]
             # only time/category axes hold years: a value axis at 1010.25 hPa or 1,005 members is a measurement
-            if name not in value_axes(ax) and None not in vals and all(YEAR_MIN <= v <= YEAR_MAX for v in vals) and \
-                    0 < np.median(np.diff(sorted(vals))) <= YEAR_MAX_STEP and any("." in t or "," in t for t in ticks):
-                c.add("number-format", where, f"year ticks print as {', '.join(ticks[:4])}",
-                      "Use whole-year ticks without separators: MaxNLocator(integer=True) with "
-                      "FormatStrFormatter('%d'), or plot real dates.")
+            if (
+                name not in value_axes(ax)
+                and None not in vals
+                and all(YEAR_MIN <= v <= YEAR_MAX for v in vals)
+                and 0 < np.median(np.diff(sorted(vals))) <= YEAR_MAX_STEP
+                and any("." in t or "," in t for t in ticks)
+            ):
+                c.add(
+                    "number-format",
+                    where,
+                    f"year ticks print as {', '.join(ticks[:4])}",
+                    "Use whole-year ticks without separators: MaxNLocator(integer=True) with "
+                    "FormatStrFormatter('%d'), or plot real dates.",
+                )
                 continue
             if not linear or len(ticks) < 3 or not all(value_tick(t) for t in ticks):
                 continue
             # a bare 0 beside 0.5, 1.0 is house style, not a precision change
             ds = {decimals(t) for t in ticks if first_number(t) != "0"} - {None}
             if len(ds) > 1:
-                c.add("number-format", where, f"ticks mix {sorted(ds)} decimals ({', '.join(ticks[:5])})",
-                      "Give every tick the same decimals (StrMethodFormatter('{x:.1f}'), or ticks at whole numbers).",
-                      severity="warn")
+                c.add(
+                    "number-format",
+                    where,
+                    f"ticks mix {sorted(ds)} decimals ({', '.join(ticks[:5])})",
+                    "Give every tick the same decimals (StrMethodFormatter('{x:.1f}'), or ticks at whole numbers).",
+                    severity="warn",
+                )
         # bar value labels: the number that prints each bar's value, grouped by label shape ("$#M", "#%")
-        conts = [ct for ct in ax.containers if isinstance(ct, BarContainer) and ct.patches]
+        conts = [
+            ct for ct in ax.containers if isinstance(ct, BarContainer) and ct.patches
+        ]
         if not conts:
             continue
-        _, labels = bar_value_labels(c, ax, conts, getattr(conts[0], "orientation", "vertical") == "horizontal")
+        _, labels = bar_value_labels(
+            c, ax, conts, getattr(conts[0], "orientation", "vertical") == "horizontal"
+        )
         groups = {}
         for v, r in labels:
             for m in re.finditer(r"\d[\d,]*(\.\d+)?", r.label):
                 if number_matches(m.group(0), v):
-                    shape = re.sub(r"\d[\d,]*(\.\d+)?", "#", r.label.replace(m.group(0), "N", 1))
-                    groups.setdefault(shape, []).append((m.group(0), decimals(m.group(0))))
+                    shape = re.sub(
+                        r"\d[\d,]*(\.\d+)?", "#", r.label.replace(m.group(0), "N", 1)
+                    )
+                    groups.setdefault(shape, []).append(
+                        (m.group(0), decimals(m.group(0)))
+                    )
                     break
         for toks in groups.values():
             ds = {d for _, d in toks}
             if len(toks) >= 3 and len(ds) > 1:
-                c.add("number-format", c.where(ax, "value labels"),
-                      f"value labels mix {sorted(ds)} decimals ({', '.join(t for t, _ in toks[:4])})",
-                      "Format every label with one precision: ev.value_labels(ax, bars, fmt=ev.num(1)) or "
-                      "ax.bar_label(bars, fmt='{:,.1f}').", severity="warn")
+                c.add(
+                    "number-format",
+                    c.where(ax, "value labels"),
+                    f"value labels mix {sorted(ds)} decimals ({', '.join(t for t, _ in toks[:4])})",
+                    "Format every label with one precision: ev.value_labels(ax, bars, fmt=ev.num(1)) or "
+                    "ax.bar_label(bars, fmt='{:,.1f}').",
+                    severity="warn",
+                )
 
 
 def category_ticks(ax, name) -> list:
@@ -1617,7 +2207,10 @@ def unsorted_steps(vals, pos, tol) -> int:
     step = np.median(np.diff(pos))
     bad, sign = 0, 0
     for k in range(1, len(vals)):
-        if np.sign(vals[k]) != np.sign(vals[k - 1]) or pos[k] - pos[k - 1] > CATEGORY_GAP_STEPS * step:
+        if (
+            np.sign(vals[k]) != np.sign(vals[k - 1])
+            or pos[k] - pos[k - 1] > CATEGORY_GAP_STEPS * step
+        ):
             sign = 0
             continue
         d = vals[k] - vals[k - 1]
@@ -1635,7 +2228,10 @@ def category_bars(ax, name, ticks):
     None for grouped, stacked, floating, or off-tick bars."""
     conts = [ct for ct in ax.containers if isinstance(ct, BarContainer) and ct.patches]
     horizontal = name == "y"
-    if not conts or any((getattr(ct, "orientation", "vertical") == "horizontal") != horizontal for ct in conts):
+    if not conts or any(
+        (getattr(ct, "orientation", "vertical") == "horizontal") != horizontal
+        for ct in conts
+    ):
         return None
     locs = np.array([p for p, _ in ticks])
     tol = 0.05 * (np.median(np.diff(np.sort(locs))) or 1)
@@ -1647,13 +2243,25 @@ def category_bars(ax, name, ticks):
                 continue
             if abs(p.get_x() if horizontal else p.get_y()) > 1e-9:
                 return None  # floating (waterfall) or stacked segments
-            ctr = p.get_y() + p.get_height() / 2 if horizontal else p.get_x() + p.get_width() / 2
+            ctr = (
+                p.get_y() + p.get_height() / 2
+                if horizontal
+                else p.get_x() + p.get_width() / 2
+            )
             j = int(np.argmin(abs(locs - ctr)))
             if abs(locs[j] - ctr) > tol or j in rows:
                 return None  # grouped (off-tick) bars or two bars in one row
-            v = vals[k] if vals is not None else (p.get_width() if horizontal else p.get_height())
+            v = (
+                vals[k]
+                if vals is not None
+                else (p.get_width() if horizontal else p.get_height())
+            )
             rows[j] = float(v)
-    keep = sorted(j for j in rows if np.isfinite(rows[j]) and not CATEGORY_TAIL_RE.search(ticks[j][1]))
+    keep = sorted(
+        j
+        for j in rows
+        if np.isfinite(rows[j]) and not CATEGORY_TAIL_RE.search(ticks[j][1])
+    )
     return [locs[j] for j in keep], [rows[j] for j in keep]
 
 
@@ -1672,13 +2280,18 @@ def check_category_order(c: Ctx):
                 gaps = sorted({int(g) for g in np.diff(years)})
                 even = np.ptp(np.diff(locs)) <= 1e-6 * max(abs(locs[-1] - locs[0]), 1)
                 if not np.allclose(locs, years) and len(gaps) > 1 and even:
-                    c.add("category-order", where,
-                          f"years {labels[0]}-{labels[-1]} evenly spaced as categories, hiding gaps of {gaps} years",
-                          "Plot years as numbers so spacing is true (pass ints, not strings), or mark the gaps.")
+                    c.add(
+                        "category-order",
+                        where,
+                        f"years {labels[0]}-{labels[-1]} evenly spaced as categories, hiding gaps of {gaps} years",
+                        "Plot years as numbers so spacing is true (pass ints, not strings), or mark the gaps.",
+                    )
                 continue
             if all(len(s) <= 2 for s in labels):
                 continue  # month initials (J F M) and codes: cannot tell nominal from time
-            if sum(bool(CATEGORY_ORDINAL_RE.search(s)) for s in labels) >= 0.5 * len(labels):
+            if sum(bool(CATEGORY_ORDINAL_RE.search(s)) for s in labels) >= 0.5 * len(
+                labels
+            ):
                 continue  # time, ranges, ranks, scales: natural order is right
             pos = {round(p, 6) for p in locs}
             for ln in data_lines(ax):
@@ -1686,33 +2299,53 @@ def check_category_order(c: Ctx):
                 along = xy[np.isfinite(xy).all(axis=1), 0 if name == "x" else 1]
                 cats = {round(v, 6) for v in along}
                 if len(cats) >= 3 and cats <= pos:
-                    c.add("category-order", where, f"line drawn across nominal categories ({', '.join(labels[:3])}, "
-                          "...)", "Use bars or dots: a line implies order and continuity between categories.")
+                    c.add(
+                        "category-order",
+                        where,
+                        f"line drawn across nominal categories ({', '.join(labels[:3])}, "
+                        "...)",
+                        "Use bars or dots: a line implies order and continuity between categories.",
+                    )
                     break
             # shared rows follow another panel's sort, or one order kept across panels
-            siblings = [a for a in getattr(ax, f"get_shared_{name}_axes")().get_siblings(ax) if a is not ax]
-            if any(isinstance(ct, BarContainer) for a in siblings for ct in a.containers) or \
-                    any(a is not ax and [s for _, s in category_ticks(a, name)] == labels for _, a in axes):
+            siblings = [
+                a
+                for a in getattr(ax, f"get_shared_{name}_axes")().get_siblings(ax)
+                if a is not ax
+            ]
+            if any(
+                isinstance(ct, BarContainer) for a in siblings for ct in a.containers
+            ) or any(
+                a is not ax and [s for _, s in category_ticks(a, name)] == labels
+                for _, a in axes
+            ):
                 continue
             bars = category_bars(ax, name, ticks)
             if bars is None or len(bars[1]) < CATEGORY_MIN_BARS:
                 continue
             bpos, vals = bars
             tol = CATEGORY_TIE_FRAC * (max(vals) - min(vals) or 1)
-            if unsorted_steps(vals, bpos, tol) and unsorted_steps([abs(v) for v in vals], bpos, tol):
+            if unsorted_steps(vals, bpos, tol) and unsorted_steps(
+                [abs(v) for v in vals], bpos, tol
+            ):
                 n = len(vals)
                 inv = sum(vals[a] < vals[b] for a in range(n) for b in range(a + 1, n))
                 pairs = n * (n - 1) // 2
-                c.add("category-order", where,
-                      f"{n} nominal bars unsorted ({min(inv, pairs - inv)} of {pairs} pairs out of order)",
-                      "Sort the bars by value; keep natural order only for time or ordinal categories.")
+                c.add(
+                    "category-order",
+                    where,
+                    f"{n} nominal bars unsorted ({min(inv, pairs - inv)} of {pairs} pairs out of order)",
+                    "Sort the bars by value; keep natural order only for time or ordinal categories.",
+                )
 
 
 def value_axes(ax) -> list:
     """Names of the axes that carry values: x for horizontal bars, both for a pure scatter, else y."""
     conts = [ct for ct in ax.containers if isinstance(ct, BarContainer)]
     if conts:
-        return ["x" if getattr(conts[0], "orientation", "vertical") == "horizontal" else "y"]
+        return [
+            "x" if getattr(conts[0], "orientation", "vertical") == "horizontal" else "y"
+        ]
     if not ax.lines and any(isinstance(cl, PathCollection) for cl in ax.collections):
         return ["x", "y"]
     return ["y"]
@@ -1720,20 +2353,32 @@ def value_axes(ax) -> list:
 
 def check_inverted_axis(c: Ctx):
     for i, ax in data_axes(c.fig):
-        if getattr(ax, "name", "") != "rectilinear" or not has_data(ax) or ax.images or \
-                any(isinstance(cl, QuadMesh) for cl in ax.collections):
+        if (
+            getattr(ax, "name", "") != "rectilinear"
+            or not has_data(ax)
+            or ax.images
+            or any(isinstance(cl, QuadMesh) for cl in ax.collections)
+        ):
             continue  # images and heatmaps put row 0 on top by convention
         for name in value_axes(ax):
             axis = getattr(ax, f"{name}axis")
             if not (ax.xaxis_inverted() if name == "x" else ax.yaxis_inverted()):
                 continue
-            ticks = [r.label for r in c.texts if r.kind == "tick" and r.ax is ax and r.axis == name]
+            ticks = [
+                r.label
+                for r in c.texts
+                if r.kind == "tick" and r.ax is ax and r.axis == name
+            ]
             if not ticks or not all(value_tick(t) for t in ticks):
                 continue  # categorical axis: top-to-bottom order is not a value
             if RANK_RE.search(" ".join([axis.label.get_text(), *ticks])):
                 continue
-            c.add("inverted-axis", c.where(ax, f"{name}-axis"), "value axis inverted: higher values toward the origin",
-                  f"Restore normal order (ax.invert_{name}axis() again), or label ranks 'Rank (1 = best)'.")
+            c.add(
+                "inverted-axis",
+                c.where(ax, f"{name}-axis"),
+                "value axis inverted: higher values toward the origin",
+                f"Restore normal order (ax.invert_{name}axis() again), or label ranks 'Rank (1 = best)'.",
+            )
 
 
 def check_log_unlabeled(c: Ctx):
@@ -1746,18 +2391,30 @@ def check_log_unlabeled(c: Ctx):
             scale = axis.get_scale()
             if scale not in ("log", "symlog") or not axis.get_visible():
                 continue
-            notes = " ".join(r.label for r in c.texts if r.ax is ax and r.kind in ("text", "annotation"))
+            notes = " ".join(
+                r.label
+                for r in c.texts
+                if r.ax is ax and r.kind in ("text", "annotation")
+            )
             if LOG_WORD_RE.search(f"{axis.label.get_text()} {titles} {notes}"):
                 continue
-            c.add("log-unlabeled", c.where(ax, f"{name}-axis"),
-                  f"{scale} scale not stated in axis label, title, or subtitle",
-                  "Say 'log scale' in the axis label or subtitle, and keep real-value ticks (1, 10, 100).")
+            c.add(
+                "log-unlabeled",
+                c.where(ax, f"{name}-axis"),
+                f"{scale} scale not stated in axis label, title, or subtitle",
+                "Say 'log scale' in the axis label or subtitle, and keep real-value ticks (1, 10, 100).",
+            )
 
 
 def texts_3d(fig) -> list:
     """Visible, non-empty texts inside 3D axes (tick and axis labels) that collect_texts leaves out."""
-    return [t for ax in fig.axes if getattr(ax, "name", "") == "3d" and ax.get_visible()
-            for t in ax.findobj(match=Text) if t.get_visible() and t.get_text().strip() and t.get_fontsize() > 1.5]
+    return [
+        t
+        for ax in fig.axes
+        if getattr(ax, "name", "") == "3d" and ax.get_visible()
+        for t in ax.findobj(match=Text)
+        if t.get_visible() and t.get_text().strip() and t.get_fontsize() > 1.5
+    ]
 
 
 def check_small_text(c: Ctx):
@@ -1772,40 +2429,60 @@ def check_small_text(c: Ctx):
     dest_px, min_px = DEST_WIDTH_PX[c.dest], DEST_MIN_TEXT_PX[c.dest]
     px_per_pt = dest_px / (width_in * 72.0)
     known = {id(r.obj) for r in c.texts}
-    texts = [(r.label, r.size) for r in c.texts] + [(t.get_text().strip(), float(t.get_fontsize()))
-                                                     for t in texts_3d(c.fig) if id(t) not in known]
+    texts = [(r.label, r.size) for r in c.texts] + [
+        (t.get_text().strip(), float(t.get_fontsize()))
+        for t in texts_3d(c.fig)
+        if id(t) not in known
+    ]
     small = [(s, size) for s, size in texts if size * px_per_pt < min_px - 1e-6]
     if not small:
         return
     smallest = min(size for _, size in small)
     need_pt = math.ceil(min_px / px_per_pt * 2) / 2
     examples = ", ".join(snip(s, 20) for s, _ in sorted(small, key=lambda t: t[1])[:3])
-    c.add("small-text", c.where(None, examples),
-          f"{len(small)} text(s) below {min_px} px at {dest_px} px wide ({c.dest}); smallest {smallest:g} pt = "
-          f"{smallest * px_per_pt:.1f} px",
-          f"Use at least {need_pt:g} pt text at this {width_in:.1f} in figure width, or shrink figsize.")
+    c.add(
+        "small-text",
+        c.where(None, examples),
+        f"{len(small)} text(s) below {min_px} px at {dest_px} px wide ({c.dest}); smallest {smallest:g} pt = "
+        f"{smallest * px_per_pt:.1f} px",
+        f"Use at least {need_pt:g} pt text at this {width_in:.1f} in figure width, or shrink figsize.",
+    )
 
 
 def check_tick_crowding(c: Ctx):
     gap_min = TICK_MIN_GAP_PT * c.px_per_pt
     for i, ax in data_axes(c.fig):
         for name in ("x", "y"):
-            ticks = [r for r in c.texts if r.kind == "tick" and r.ax is ax and r.axis == name
-                     and r.obj is not getattr(ax, f"{name}axis").get_offset_text()]
+            ticks = [
+                r
+                for r in c.texts
+                if r.kind == "tick"
+                and r.ax is ax
+                and r.axis == name
+                and r.obj is not getattr(ax, f"{name}axis").get_offset_text()
+            ]
             if len(ticks) < 2:
                 continue
-            rotated = [r for r in ticks if min(r.angle, 180 - r.angle) > TICK_ROTATION_MAX_DEG]
+            rotated = [
+                r for r in ticks if min(r.angle, 180 - r.angle) > TICK_ROTATION_MAX_DEG
+            ]
             if name == "x" and rotated:
                 ang = max(min(r.angle, 180 - r.angle) for r in rotated)
-                c.add("tick-crowding", c.where(ax, "x-axis"), f"{len(rotated)} tick labels rotated {ang:.0f} deg",
-                      "Switch to a horizontal bar chart or shorten labels instead of rotating them.")
+                c.add(
+                    "tick-crowding",
+                    c.where(ax, "x-axis"),
+                    f"{len(rotated)} tick labels rotated {ang:.0f} deg",
+                    "Switch to a horizontal bar chart or shorten labels instead of rotating them.",
+                )
                 continue
             if any(r.angle % 90 for r in ticks):
                 continue
             k0, k1 = (0, 2) if name == "x" else (1, 3)
             # Group by side (label1 vs label2): which side of the axes center.
             axbox = ax.get_window_extent(c.renderer)
-            mid = (axbox.y0 + axbox.y1) / 2 if name == "x" else (axbox.x0 + axbox.x1) / 2
+            mid = (
+                (axbox.y0 + axbox.y1) / 2 if name == "x" else (axbox.x0 + axbox.x1) / 2
+            )
             sides: dict[bool, list[TextRec]] = {}
             for r in ticks:
                 sides.setdefault((r.cy if name == "x" else r.cx) > mid, []).append(r)
@@ -1813,64 +2490,113 @@ def check_tick_crowding(c: Ctx):
             for group in sides.values():
                 group.sort(key=lambda r: r.aabb[k0])
                 for a, b in zip(group, group[1:]):
-                    if id(a.obj) in c.overlapping_ticks and id(b.obj) in c.overlapping_ticks:
+                    if (
+                        id(a.obj) in c.overlapping_ticks
+                        and id(b.obj) in c.overlapping_ticks
+                    ):
                         continue
                     if b.aabb[k0] - a.aabb[k1] < gap_min:
                         tight += 1
             if tight:
                 rows = DEST_BAR_ROWS.get(c.dest)
-                fix = ("Use fewer ticks (MaxNLocator) or shorter tick labels." if all(value_tick(r.label) for r in ticks)
-                       else f"Every category needs its label, and {c.dest} has a fixed height: about {rows} bar rows fit, "
-                       "so show fewer rows (the top ones, the rest grouped as Other) or split the set across panels."
-                       if name == "y" and c.dest in DEST_FIXED_HEIGHT
-                       else "Every category needs its label: use a taller canvas or fewer categories (group the rest)."
-                       if name == "y" else "Every category needs its label: switch to horizontal bars, widen the "
-                       "canvas, or use fewer categories.")
-                c.add("tick-crowding", c.where(ax, f"{name}-axis"), f"{tight} adjacent tick label pair(s) nearly touch", fix)
+                fix = (
+                    "Use fewer ticks (MaxNLocator) or shorter tick labels."
+                    if all(value_tick(r.label) for r in ticks)
+                    else f"Every category needs its label, and {c.dest} has a fixed height: about {rows} bar rows fit, "
+                    "so show fewer rows (the top ones, the rest grouped as Other) or split the set across panels."
+                    if name == "y" and c.dest in DEST_FIXED_HEIGHT
+                    else "Every category needs its label: use a taller canvas or fewer categories (group the rest)."
+                    if name == "y"
+                    else "Every category needs its label: switch to horizontal bars, widen the "
+                    "canvas, or use fewer categories."
+                )
+                c.add(
+                    "tick-crowding",
+                    c.where(ax, f"{name}-axis"),
+                    f"{tight} adjacent tick label pair(s) nearly touch",
+                    fix,
+                )
 
 
 def check_too_many_series(c: Ctx):
     for i, ax in data_axes(c.fig):
-        line_colors = {color_key(ln.get_color()) for ln in data_lines(ax) if not is_neutral(ln.get_color())}
+        line_colors = {
+            color_key(ln.get_color())
+            for ln in data_lines(ax)
+            if not is_neutral(ln.get_color())
+        }
         if len(line_colors) > MAX_LINE_COLORS:
-            c.add("too-many-series", c.where(ax), f"{len(line_colors)} distinct line colors",
-                  "Highlight 1-3 key series in color and gray the rest, or use small multiples.")
+            c.add(
+                "too-many-series",
+                c.where(ax),
+                f"{len(line_colors)} distinct line colors",
+                "Highlight 1-3 key series in color and gray the rest, or use small multiples.",
+            )
         cat = set()
         for cont in ax.containers:
             if isinstance(cont, BarContainer):
-                cat |= {color_key(p.get_facecolor()) for p in cont.patches if not is_neutral(p.get_facecolor())}
+                cat |= {
+                    color_key(p.get_facecolor())
+                    for p in cont.patches
+                    if not is_neutral(p.get_facecolor())
+                }
         for coll in ax.collections:
             if type(coll).__name__ == "Poly3DCollection":
                 # bar3d shades each face by scaling RGB, which keeps hue and saturation.
-                cat |= {"%.2f/%.2f" % colorsys.rgb_to_hsv(*to_rgba(fc)[:3])[:2] for fc in coll.get_facecolors()
-                        if not is_neutral(fc)}
+                cat |= {
+                    "%.2f/%.2f" % colorsys.rgb_to_hsv(*to_rgba(fc)[:3])[:2]
+                    for fc in coll.get_facecolors()
+                    if not is_neutral(fc)
+                }
                 continue
             # One scatter call with one color is one category. Per-point
             # color lists are usually a hand-rolled continuous scale: skip.
             if isinstance(coll, PathCollection) and coll.get_array() is None:
-                fcs = {color_key(fc) for fc in coll.get_facecolors() if not is_neutral(fc)}
+                fcs = {
+                    color_key(fc) for fc in coll.get_facecolors() if not is_neutral(fc)
+                }
                 if len(fcs) == 1:
                     cat |= fcs
         if len(cat) > MAX_CATEGORICAL_COLORS:
-            c.add("too-many-series", c.where(ax), f"{len(cat)} distinct categorical colors",
-                  "Group minor categories into 'Other' or highlight a few and gray the rest.")
+            c.add(
+                "too-many-series",
+                c.where(ax),
+                f"{len(cat)} distinct categorical colors",
+                "Group minor categories into 'Other' or highlight a few and gray the rest.",
+            )
 
 
 def check_spines_gridlines(c: Ctx):
     for i, ax in data_axes(c.fig):
-        if getattr(ax, "name", "") != "rectilinear" or not ax.axison or not has_data(ax):
+        if (
+            getattr(ax, "name", "") != "rectilinear"
+            or not ax.axison
+            or not has_data(ax)
+        ):
             continue
-        spines = [ax.spines[s] for s in ("top", "right", "bottom", "left") if s in ax.spines]
-        if len(spines) < 4 or not all(sp.get_visible() and sp.get_linewidth() > 0
-                                      and sp.get_edgecolor()[3] > 0 for sp in spines):
+        spines = [
+            ax.spines[s] for s in ("top", "right", "bottom", "left") if s in ax.spines
+        ]
+        if len(spines) < 4 or not all(
+            sp.get_visible() and sp.get_linewidth() > 0 and sp.get_edgecolor()[3] > 0
+            for sp in spines
+        ):
             continue
 
         def grid_on(axis):
-            return any(t.gridline.get_visible() for t in drawn_ticks(axis) if t in axis.get_major_ticks())
+            return any(
+                t.gridline.get_visible()
+                for t in drawn_ticks(axis)
+                if t in axis.get_major_ticks()
+            )
 
         if grid_on(ax.xaxis) and grid_on(ax.yaxis):
-            c.add("spines-gridlines", c.where(ax), "all four spines plus gridlines on both axes",
-                  "Remove top/right spines and keep light gridlines on the value axis only.")
+            c.add(
+                "spines-gridlines",
+                c.where(ax),
+                "all four spines plus gridlines on both axes",
+                "Remove top/right spines and keep light gridlines on the value axis only.",
+            )
 
 
 def scatter_points(ax, renderer):
@@ -1885,10 +2611,17 @@ def scatter_points(ax, renderer):
             continue
         xy = coll.get_offset_transform().transform(off)
         sizes = np.atleast_1d(coll.get_sizes()).astype(float)
-        sizes = sizes if len(sizes) else np.array([plt.rcParams["lines.markersize"] ** 2])
+        sizes = (
+            sizes if len(sizes) else np.array([plt.rcParams["lines.markersize"] ** 2])
+        )
         r = np.sqrt(np.resize(sizes, len(xy))) / 2 * ax.figure.dpi / 72
-        ok = np.all(np.isfinite(xy), axis=1) & (xy[:, 0] >= box.x0 - r) & (xy[:, 0] <= box.x1 + r) \
-            & (xy[:, 1] >= box.y0 - r) & (xy[:, 1] <= box.y1 + r)
+        ok = (
+            np.all(np.isfinite(xy), axis=1)
+            & (xy[:, 0] >= box.x0 - r)
+            & (xy[:, 0] <= box.x1 + r)
+            & (xy[:, 1] >= box.y0 - r)
+            & (xy[:, 1] <= box.y1 + r)
+        )
         colls.append(coll)
         xys.append(xy[ok])
         rads.append(r[ok])
@@ -1905,18 +2638,28 @@ def leader_ends(c: Ctx) -> list:
     owner = c.segs[:, 12].astype(int)
     counts = np.bincount(owner)
     _, first = np.unique(owner, return_index=True)
-    return [(c.segs[i, 8:10], c.segs[i, 10:12], c.owners[owner[i]].kind == "arrow") for i in first
-            if c.owners[owner[i]].kind == "arrow" or (counts[owner[i]] == 1 and c.owners[owner[i]].kind != "rule")]
+    return [
+        (c.segs[i, 8:10], c.segs[i, 10:12], c.owners[owner[i]].kind == "arrow")
+        for i in first
+        if c.owners[owner[i]].kind == "arrow"
+        or (counts[owner[i]] == 1 and c.owners[owner[i]].kind != "rule")
+    ]
 
 
 def has_leader(r: TextRec, leaders, xy, rad, lh, tol) -> bool:
     """True if a leader starts at the text (within one line height) and ends on a dot. A plain
     2-point line must not start on a dot too, or dumbbell and slope segments would count."""
+
     def on_dot(q):
         return bool(np.any(np.hypot(xy[:, 0] - q[0], xy[:, 1] - q[1]) <= rad + tol))
+
     for a, b, arrow in leaders:
         for near, far in ((a, b), (b, a)):
-            if box_gaps(r, np.array([near]), np.zeros(1))[0] <= lh and (arrow or not on_dot(near)) and on_dot(far):
+            if (
+                box_gaps(r, np.array([near]), np.zeros(1))[0] <= lh
+                and (arrow or not on_dot(near))
+                and on_dot(far)
+            ):
                 return True
     return False
 
@@ -1924,7 +2667,7 @@ def has_leader(r: TextRec, leaders, xy, rad, lh, tol) -> bool:
 def box_gaps(r: TextRec, xy, rad):
     """Gap (px) from each dot's edge to the nearest glyph line box of text r (0 if they touch)."""
     best = np.full(len(xy), np.inf)
-    for x0, y0, x1, y1 in (r.lines or [r.aabb]):
+    for x0, y0, x1, y1 in r.lines or [r.aabb]:
         dx = np.maximum.reduce([x0 - xy[:, 0], np.zeros(len(xy)), xy[:, 0] - x1])
         dy = np.maximum.reduce([y0 - xy[:, 1], np.zeros(len(xy)), xy[:, 1] - y1])
         best = np.minimum(best, np.hypot(dx, dy))
@@ -1952,11 +2695,20 @@ def line_paths(ax):
     """Display-px segments [N, 4] of every drawn line in ax: data lines, reference rules, line collections."""
     out = []
     for ln in ax.lines:
-        if ln.get_visible() and ln.get_linestyle() not in ("None", "none", " ", "") and ln.get_linewidth() > 0:
-            out.append(ln.get_transform().transform(np.asarray(ln.get_xydata(), dtype=float)))
+        if (
+            ln.get_visible()
+            and ln.get_linestyle() not in ("None", "none", " ", "")
+            and ln.get_linewidth() > 0
+        ):
+            out.append(
+                ln.get_transform().transform(np.asarray(ln.get_xydata(), dtype=float))
+            )
     for coll in ax.collections:
         if isinstance(coll, LineCollection) and coll.get_visible():
-            out += [coll.get_transform().transform(np.asarray(seg, dtype=float)) for seg in coll.get_segments()]
+            out += [
+                coll.get_transform().transform(np.asarray(seg, dtype=float))
+                for seg in coll.get_segments()
+            ]
     segs = [np.hstack([p[:-1], p[1:]]) for p in out if len(p) >= 2]
     segs = np.vstack(segs) if segs else np.zeros((0, 4))
     return segs[np.all(np.isfinite(segs), axis=1)]
@@ -1968,10 +2720,19 @@ def line_label(r: TextRec, segs, anchor, reach) -> bool:
         return False
     if anchor is not None and np.hypot(*(segs.reshape(-1, 2) - anchor).T).min() <= 2:
         return True
-    x0, y0, x1, y1 = r.aabb[0] - reach, r.aabb[1] - reach, r.aabb[2] + reach, r.aabb[3] + reach
+    x0, y0, x1, y1 = (
+        r.aabb[0] - reach,
+        r.aabb[1] - reach,
+        r.aabb[2] + reach,
+        r.aabb[3] + reach,
+    )
     box = [(x0, y0), (x1, y0), (x1, y1), (x0, y1)]
-    near = (np.maximum(segs[:, 0], segs[:, 2]) >= x0) & (np.minimum(segs[:, 0], segs[:, 2]) <= x1) & \
-        (np.maximum(segs[:, 1], segs[:, 3]) >= y0) & (np.minimum(segs[:, 1], segs[:, 3]) <= y1)
+    near = (
+        (np.maximum(segs[:, 0], segs[:, 2]) >= x0)
+        & (np.minimum(segs[:, 0], segs[:, 2]) <= x1)
+        & (np.maximum(segs[:, 1], segs[:, 3]) >= y0)
+        & (np.minimum(segs[:, 1], segs[:, 3]) <= y1)
+    )
     return any(seg_clip_convex(s[:2], s[2:], box) is not None for s in segs[near])
 
 
@@ -2008,7 +2769,11 @@ def check_label_ambiguous(c: Ctx):
             continue
         xy, rad, owner, colls = pts
         t = r.obj
-        if isinstance(t, Annotation) and getattr(t, "arrow_patch", None) is not None and t.arrow_patch.get_visible():
+        if (
+            isinstance(t, Annotation)
+            and getattr(t, "arrow_patch", None) is not None
+            and t.arrow_patch.get_visible()
+        ):
             continue
         if len(r.label.split()) > LABEL_MAX_WORDS:
             continue
@@ -2036,7 +2801,11 @@ def check_label_ambiguous(c: Ctx):
             if line_label(r, lines[id(r.ax)], axy, gaps.min()):
                 continue  # labels a line, reference rule, or median tick, not a dot
         if own is None:
-            named = [i for i, coll in enumerate(colls) if (coll.get_label() or "").strip() == r.label]
+            named = [
+                i
+                for i, coll in enumerate(colls)
+                if (coll.get_label() or "").strip() == r.label
+            ]
             if len(named) == 1:
                 idx = np.nonzero(owner == named[0])[0]
                 if len(idx):
@@ -2051,7 +2820,9 @@ def check_label_ambiguous(c: Ctx):
             ok = np.nonzero((al > al[own]) & (eff <= LABEL_AMBIG_RATIO * eff[own]))[0]
             if len(ok):
                 own = int(ok[np.lexsort((eff[ok], -al[ok]))[0]])
-        rivals = np.hypot(xy[:, 0] - xy[own, 0], xy[:, 1] - xy[own, 1]) > LABEL_SAME_POINT_FRAC * max(rad[own], 1.0)
+        rivals = np.hypot(
+            xy[:, 0] - xy[own, 0], xy[:, 1] - xy[own, 1]
+        ) > LABEL_SAME_POINT_FRAC * max(rad[own], 1.0)
         if not rivals.any():
             continue
         # A dot on the label's row (label beside it) or under its middle
@@ -2068,13 +2839,22 @@ def check_label_ambiguous(c: Ctx):
             continue
         cand = np.nonzero(fire)[0]
         k = int(cand[np.argmin(eff[cand])])
-        closer = bool(known and eff[k] * LABEL_AMBIG_RATIO < eff[own])  # else "about equally"
+        closer = bool(
+            known and eff[k] * LABEL_AMBIG_RATIO < eff[own]
+        )  # else "about equally"
         at = lambda i: data_coords(r.ax, xy[i])  # noqa: E731
         go, gk = gaps[own] / c.px_per_pt, gaps[k] / c.px_per_pt
-        detail = (f"nearer the dot at {at(k)} ({gk:.0f} pt) than its own at {at(own)} ({go:.0f} pt)" if closer else
-                  f"about equally near the dots at {at(own)} ({go:.0f} pt) and {at(k)} ({gk:.0f} pt)")
-        c.add("label-ambiguous", c.where(r.ax, f"{r.kind} {snip(r.label)}"), detail,
-              "Put the label on the side of its dot away from neighbors, tight to the dot, or add a short leader line.")
+        detail = (
+            f"nearer the dot at {at(k)} ({gk:.0f} pt) than its own at {at(own)} ({go:.0f} pt)"
+            if closer
+            else f"about equally near the dots at {at(own)} ({go:.0f} pt) and {at(k)} ({gk:.0f} pt)"
+        )
+        c.add(
+            "label-ambiguous",
+            c.where(r.ax, f"{r.kind} {snip(r.label)}"),
+            detail,
+            "Put the label on the side of its dot away from neighbors, tight to the dot, or add a short leader line.",
+        )
 
 
 def layer_edges(coll):
@@ -2097,7 +2877,11 @@ def area_layers(ax):
     """Filled areas (fill_between / stackplot) in ax as (xs, lo, hi) edges."""
     out = []
     for coll in ax.collections:
-        if isinstance(coll, PolyCollection) and coll.get_visible() and type(coll).__name__ != "Poly3DCollection":
+        if (
+            isinstance(coll, PolyCollection)
+            and coll.get_visible()
+            and type(coll).__name__ != "Poly3DCollection"
+        ):
             e = layer_edges(coll)
             if e is not None and len(e[0]) >= 3:
                 out.append(e)
@@ -2114,29 +2898,52 @@ def sits_on(b, a, tol):
 
 def stack_depth(layers, tol):
     """Longest chain of areas each sitting on the one below."""
-    on = {j: [i for i in range(len(layers)) if i != j and sits_on(layers[j], layers[i], tol)] for j in range(len(layers))}
+    on = {
+        j: [
+            i
+            for i in range(len(layers))
+            if i != j and sits_on(layers[j], layers[i], tol)
+        ]
+        for j in range(len(layers))
+    }
     memo = {}
 
     def depth(j, seen=()):
         if j not in memo:
-            memo[j] = 1 + max([depth(i, seen + (j,)) for i in on[j] if i not in seen], default=0)
+            memo[j] = 1 + max(
+                [depth(i, seen + (j,)) for i in on[j] if i not in seen], default=0
+            )
         return memo[j]
+
     return max((depth(j) for j in range(len(layers))), default=0)
 
 
 ARROW_MIN_PX = 0.5  # thinner arrow strokes vanish at display size
-ARROW_FILLED = ("Fancy", "Simple", "Wedge")  # matplotlib.patches.ArrowStyle classes with a filled body
+ARROW_FILLED = (
+    "Fancy",
+    "Simple",
+    "Wedge",
+)  # matplotlib.patches.ArrowStyle classes with a filled body
 SEGMENT_FIX = {
     "bar": 'ax.bar(..., edgecolor={bg}, linewidth=ev.size("grid")) (barh alike)',
     "wedge": 'ax.pie(..., wedgeprops=dict(edgecolor={bg}, linewidth=ev.size("grid")))',
     "area": 'ax.stackplot(..., edgecolor={bg}, linewidth=ev.size("grid")) (fill_between alike)',
 }
-SEGMENT_NAME = {"bar": "bar segments", "wedge": "pie wedges", "area": "stacked area layers"}
+SEGMENT_NAME = {
+    "bar": "bar segments",
+    "wedge": "pie wedges",
+    "area": "stacked area layers",
+}
 
 
 def edge_separates(ec, lw_pt, bg, c, disp) -> bool:
     """True if an edge of color ec and width lw_pt (points) reads as a background-colored gap at display size."""
-    if ec is None or len(ec) < 4 or ec[3] < 0.5 or lw_pt * c.px_per_pt * disp < SEGMENT_EDGE_MIN_PX:
+    if (
+        ec is None
+        or len(ec) < 4
+        or ec[3] < 0.5
+        or lw_pt * c.px_per_pt * disp < SEGMENT_EDGE_MIN_PX
+    ):
         return False
     return de(Color(over(ec, bg)), Color(bg)) <= SEGMENT_BG_DE
 
@@ -2145,13 +2952,25 @@ def touching_rects(c, ax, bg, disp, min_px):
     """Pairs of touching data rectangles (bars, tiles) of different fills with no separating edge."""
     rs = []
     for p in ax.patches:
-        if not (isinstance(p, Rectangle) and p.get_visible() and p.get_fill()) or p.get_angle() % 90 or \
-                p.get_data_transform() is not ax.transData or p.get_facecolor()[3] < FILL_MIN_ALPHA:
+        if (
+            not (isinstance(p, Rectangle) and p.get_visible() and p.get_fill())
+            or p.get_angle() % 90
+            or p.get_data_transform() is not ax.transData
+            or p.get_facecolor()[3] < FILL_MIN_ALPHA
+        ):
             continue
         x0, y0, x1, y1 = p.get_window_extent(c.renderer).extents
         if x1 - x0 >= min_px and y1 - y0 >= min_px:
-            rs.append((x0, y0, x1, y1, over(p.get_facecolor(), bg),
-                       edge_separates(p.get_edgecolor(), p.get_linewidth(), bg, c, disp)))
+            rs.append(
+                (
+                    x0,
+                    y0,
+                    x1,
+                    y1,
+                    over(p.get_facecolor(), bg),
+                    edge_separates(p.get_edgecolor(), p.get_linewidth(), bg, c, disp),
+                )
+            )
     if len(rs) < 2:
         return 0
     x0, y0, x1, y1 = (np.array([r[k] for r in rs]) for k in range(4))
@@ -2159,31 +2978,48 @@ def touching_rects(c, ax, bg, disp, min_px):
     sep = np.array([r[5] for r in rs])
     over_x = np.minimum(x1[:, None], x1[None, :]) - np.maximum(x0[:, None], x0[None, :])
     over_y = np.minimum(y1[:, None], y1[None, :]) - np.maximum(y0[:, None], y0[None, :])
-    touch = (np.abs(y1[:, None] - y0[None, :]) <= SEGMENT_TOUCH_PX) & (over_x >= min_px) | \
-        (np.abs(x1[:, None] - x0[None, :]) <= SEGMENT_TOUCH_PX) & (over_y >= min_px)
+    touch = (np.abs(y1[:, None] - y0[None, :]) <= SEGMENT_TOUCH_PX) & (
+        over_x >= min_px
+    ) | (np.abs(x1[:, None] - x0[None, :]) <= SEGMENT_TOUCH_PX) & (over_y >= min_px)
     bad = touch & (keys[:, None] != keys[None, :]) & ~(sep[:, None] | sep[None, :])
     return int(bad.sum())
 
 
 def touching_wedges(c, ax, bg, disp, min_px):
     """Pairs of neighboring pie or donut wedges of different fills with no separating edge."""
-    ws = [p for p in ax.patches if isinstance(p, Wedge) and p.get_visible() and p.get_fill()
-          and p.get_facecolor()[3] >= FILL_MIN_ALPHA]
+    ws = [
+        p
+        for p in ax.patches
+        if isinstance(p, Wedge)
+        and p.get_visible()
+        and p.get_fill()
+        and p.get_facecolor()[3] >= FILL_MIN_ALPHA
+    ]
     bad = 0
     for a in ws:
         for b in ws:
-            if a is b or not np.allclose(a.center, b.center) or abs((a.theta2 - b.theta1 + 180) % 360 - 180) > 1e-3:
+            if (
+                a is b
+                or not np.allclose(a.center, b.center)
+                or abs((a.theta2 - b.theta1 + 180) % 360 - 180) > 1e-3
+            ):
                 continue
             ina, inb = a.r - (a.width or a.r), b.r - (b.width or b.r)
             shared = min(a.r, b.r) - max(ina, inb)
             if shared <= 0:
                 continue  # different rings of a nested donut
-            px = abs(ax.transData.transform((a.center[0] + shared, a.center[1]))[0] -
-                     ax.transData.transform(a.center)[0])
-            if px < min_px or over(a.get_facecolor(), bg) == over(b.get_facecolor(), bg):
+            px = abs(
+                ax.transData.transform((a.center[0] + shared, a.center[1]))[0]
+                - ax.transData.transform(a.center)[0]
+            )
+            if px < min_px or over(a.get_facecolor(), bg) == over(
+                b.get_facecolor(), bg
+            ):
                 continue
-            if not (edge_separates(a.get_edgecolor(), a.get_linewidth(), bg, c, disp) or
-                    edge_separates(b.get_edgecolor(), b.get_linewidth(), bg, c, disp)):
+            if not (
+                edge_separates(a.get_edgecolor(), a.get_linewidth(), bg, c, disp)
+                or edge_separates(b.get_edgecolor(), b.get_linewidth(), bg, c, disp)
+            ):
                 bad += 1
     return bad
 
@@ -2193,8 +3029,12 @@ def stacked_layers(c, ax, bg, disp, min_px):
     no separating edge. Bands that overlap a line or each other do not sit on one another."""
     layers = []
     for coll in ax.collections:
-        if not isinstance(coll, PolyCollection) or not coll.get_visible() or \
-                type(coll).__name__ == "Poly3DCollection" or len(coll.get_offsets()) > 1:
+        if (
+            not isinstance(coll, PolyCollection)
+            or not coll.get_visible()
+            or type(coll).__name__ == "Poly3DCollection"
+            or len(coll.get_offsets()) > 1
+        ):
             continue
         fcs = coll.get_facecolors()
         e = layer_edges(coll)
@@ -2206,30 +3046,51 @@ def stacked_layers(c, ax, bg, disp, min_px):
         if thick < min_px:
             continue
         ecs, lws = coll.get_edgecolors(), coll.get_linewidths()
-        sep = len(ecs) > 0 and len(lws) > 0 and edge_separates(ecs[0], lws[0], bg, c, disp)
+        sep = (
+            len(ecs) > 0
+            and len(lws) > 0
+            and edge_separates(ecs[0], lws[0], bg, c, disp)
+        )
         layers.append((e, over(fcs[0], bg), sep))
     lo, hi = ax.get_ylim()
     tol = 1e-6 * max(abs(hi - lo), 1e-12)
-    return sum(1 for a in layers for b in layers if a is not b and a[1] != b[1] and not (a[2] or b[2])
-               and sits_on(b[0], a[0], tol))
+    return sum(
+        1
+        for a in layers
+        for b in layers
+        if a is not b
+        and a[1] != b[1]
+        and not (a[2] or b[2])
+        and sits_on(b[0], a[0], tol)
+    )
 
 
 def check_segment_edges(c: Ctx):
-    disp = DEST_WIDTH_PX[c.dest] / (c.fig.get_figwidth() * c.fig.dpi)  # display px per figure px
+    disp = DEST_WIDTH_PX[c.dest] / (
+        c.fig.get_figwidth() * c.fig.dpi
+    )  # display px per figure px
     min_px = SEGMENT_MIN_PX / disp
     for i, ax in data_axes(c.fig):
         if getattr(ax, "name", "") != "rectilinear" or not has_data(ax):
             continue
         bg = axes_bg(c, ax)
         edge = '"white"' if bg == "#ffffff" else f'"{bg}"'
-        for kind, fn in (("bar", touching_rects), ("wedge", touching_wedges), ("area", stacked_layers)):
+        for kind, fn in (
+            ("bar", touching_rects),
+            ("wedge", touching_wedges),
+            ("area", stacked_layers),
+        ):
             n = fn(c, ax, bg, disp, min_px)
             if n:
-                c.add("segment-edges", c.where(ax), f"{n} {'boundary' if n == 1 else 'boundaries'} between "
-                      f"differently colored {SEGMENT_NAME[kind]} {'has' if n == 1 else 'have'} no background-colored "
-                      "edge",
-                      f"Separate them at the call site: {SEGMENT_FIX[kind].format(bg=edge)}; never a global patch "
-                      "edge, which erases narrow bars.")
+                c.add(
+                    "segment-edges",
+                    c.where(ax),
+                    f"{n} {'boundary' if n == 1 else 'boundaries'} between "
+                    f"differently colored {SEGMENT_NAME[kind]} {'has' if n == 1 else 'have'} no background-colored "
+                    "edge",
+                    f"Separate them at the call site: {SEGMENT_FIX[kind].format(bg=edge)}; never a global patch "
+                    "edge, which erases narrow bars.",
+                )
 
 
 def check_invisible_arrow(c: Ctx):
@@ -2238,14 +3099,22 @@ def check_invisible_arrow(c: Ctx):
         if ap is None or not (t.get_visible() and ap.get_visible()):
             continue
         bg = axes_bg(c, t.axes)
-        stroke = (ap.get_linewidth() * c.px_per_pt >= ARROW_MIN_PX
-                  and contrast(over(ap.get_edgecolor(), bg), bg) >= INVISIBLE)
-        body = (type(ap.get_arrowstyle()).__name__ in ARROW_FILLED and ap.get_fill()
-                and contrast(over(ap.get_facecolor(), bg), bg) >= INVISIBLE)
+        stroke = (
+            ap.get_linewidth() * c.px_per_pt >= ARROW_MIN_PX
+            and contrast(over(ap.get_edgecolor(), bg), bg) >= INVISIBLE
+        )
+        body = (
+            type(ap.get_arrowstyle()).__name__ in ARROW_FILLED
+            and ap.get_fill()
+            and contrast(over(ap.get_facecolor(), bg), bg) >= INVISIBLE
+        )
         if not (stroke or body):
-            c.add("invisible-arrow", c.where(t.axes, f"annotation {snip(t.get_text())}"),
-                  "arrow has no visible stroke or fill",
-                  'Style it: arrowprops=dict(arrowstyle="->", color="#595959", lw=ev.size("grid")).')
+            c.add(
+                "invisible-arrow",
+                c.where(t.axes, f"annotation {snip(t.get_text())}"),
+                "arrow has no visible stroke or fill",
+                'Style it: arrowprops=dict(arrowstyle="->", color="#595959", lw=ev.size("grid")).',
+            )
 
 
 def check_stacked_area(c: Ctx):
@@ -2256,8 +3125,12 @@ def check_stacked_area(c: Ctx):
         lo, hi = ax.get_ylim()
         n = stack_depth(layers, 1e-6 * max(abs(hi - lo), 1e-12))
         if n > STACK_MAX_LAYERS:
-            c.add("stacked-area", c.where(ax), f"stacked area with {n} layers",
-                  "Use small multiples or lines for each series; keep a stack for 2 layers or a total that matters.")
+            c.add(
+                "stacked-area",
+                c.where(ax),
+                f"stacked area with {n} layers",
+                "Use small multiples or lines for each series; keep a stack for 2 layers or a total that matters.",
+            )
 
 
 def only_rises(y) -> bool:
@@ -2268,14 +3141,19 @@ def only_rises(y) -> bool:
         return False
     d = np.diff(y)
     span = max(np.abs(y).max(), 1e-12)
-    return bool(np.all(d >= -1e-9 * span) and np.mean(d > 1e-9 * span) >= CUMULATIVE_STEP_FRAC
-                and 0 <= y[0] <= CUMULATIVE_START_MULT / len(y) * y[-1])
+    return bool(
+        np.all(d >= -1e-9 * span)
+        and np.mean(d > 1e-9 * span) >= CUMULATIVE_STEP_FRAC
+        and 0 <= y[0] <= CUMULATIVE_START_MULT / len(y) * y[-1]
+    )
 
 
 def check_cumulative_as_rate(c: Ctx):
     titles = " ".join(r.label for r in title_like_texts(c))
     for i, ax in data_axes(c.fig):
-        words = " ".join([ax.yaxis.label.get_text(), ax.get_title(), ax.get_title("left"), titles])
+        words = " ".join(
+            [ax.yaxis.label.get_text(), ax.get_title(), ax.get_title("left"), titles]
+        )
         if not RATE_RE.search(words) or CUMULATIVE_RE.search(words):
             continue
         series = []
@@ -2287,18 +3165,31 @@ def check_cumulative_as_rate(c: Ctx):
         layers = area_layers(ax)
         lo_, hi_ = ax.get_ylim()
         tol = 1e-6 * max(abs(hi_ - lo_), 1e-12)
-        for k, (xs, lo, hi) in enumerate(layers):  # areas to zero or stacked on another area: their own values
-            if np.all(np.abs(lo) <= tol) or any(sits_on((xs, lo, hi), a, tol) for j, a in enumerate(layers) if j != k):
+        for k, (xs, lo, hi) in enumerate(
+            layers
+        ):  # areas to zero or stacked on another area: their own values
+            if np.all(np.abs(lo) <= tol) or any(
+                sits_on((xs, lo, hi), a, tol) for j, a in enumerate(layers) if j != k
+            ):
                 series.append((f"area layer {k + 1}", hi - lo))
         hits = [name for name, y in series if only_rises(y)]
         if hits:
-            ylab = " ".join([ax.yaxis.label.get_text()] + [r.label for r in c.texts
-                                                           if r.kind == "tick" and r.ax is ax and r.axis == "y"])
-            c.add("cumulative-as-rate", c.where(ax, ", ".join(hits)[:80]),
-                  f"{len(hits)} series only ever rise, like a running total, under a rate/share/% label",
-                  "If the data is a running total, plot per-period values (np.diff) for a rate or say 'Cumulative' "
-                  "in the label; leave a rate or share that truly only rose as it is.",
-                  severity="warn" if SHARE_RE.search(ylab) else None)
+            ylab = " ".join(
+                [ax.yaxis.label.get_text()]
+                + [
+                    r.label
+                    for r in c.texts
+                    if r.kind == "tick" and r.ax is ax and r.axis == "y"
+                ]
+            )
+            c.add(
+                "cumulative-as-rate",
+                c.where(ax, ", ".join(hits)[:80]),
+                f"{len(hits)} series only ever rise, like a running total, under a rate/share/% label",
+                "If the data is a running total, plot per-period values (np.diff) for a rate or say 'Cumulative' "
+                "in the label; leave a rate or share that truly only rose as it is.",
+                severity="warn" if SHARE_RE.search(ylab) else None,
+            )
 
 
 def check_plot_area_tiny(c: Ctx):
@@ -2309,19 +3200,36 @@ def check_plot_area_tiny(c: Ctx):
             continue  # insets and hand-placed axes are small on purpose
         nrows, ncols = spec.get_gridspec().get_geometry()
         box = ax.get_position(original=True)
-        min_w, min_h = PLOT_TINY_FRAC * min(1, 3 / ncols), PLOT_TINY_FRAC * min(1, 3 / nrows)
-        small = [f"{name} {v:.0%} < {m:.0%}" for name, v, m in (("width", box.width, min_w), ("height", box.height, min_h))
-                 if v < m]
+        min_w, min_h = (
+            PLOT_TINY_FRAC * min(1, 3 / ncols),
+            PLOT_TINY_FRAC * min(1, 3 / nrows),
+        )
+        small = [
+            f"{name} {v:.0%} < {m:.0%}"
+            for name, v, m in (
+                ("width", box.width, min_w),
+                ("height", box.height, min_h),
+            )
+            if v < m
+        ]
         if small:
-            c.add("plot-area-tiny", c.where(ax), f"plot area {' and '.join(small)} of the figure "
-                  f"({box.width * fw / c.px_per_pt:.0f} x {box.height * fh / c.px_per_pt:.0f} pt)",
-                  "Shorten or wrap long tick labels, cut the title block, or give panels more room (fewer columns).")
+            c.add(
+                "plot-area-tiny",
+                c.where(ax),
+                f"plot area {' and '.join(small)} of the figure "
+                f"({box.width * fw / c.px_per_pt:.0f} x {box.height * fh / c.px_per_pt:.0f} pt)",
+                "Shorten or wrap long tick labels, cut the title block, or give panels more room (fewer columns).",
+            )
 
 
 def check_plot_area_underused(c: Ctx):
     if c.dest not in NARROW_DESTS:
         return
-    axes = [ax for _, ax in data_axes(c.fig) if has_data(ax) and getattr(ax, "get_subplotspec", lambda: None)()]
+    axes = [
+        ax
+        for _, ax in data_axes(c.fig)
+        if has_data(ax) and getattr(ax, "get_subplotspec", lambda: None)()
+    ]
     if len(axes) != 1:
         return
     ax, fw = axes[0], c.fig.bbox.width
@@ -2330,15 +3238,21 @@ def check_plot_area_underused(c: Ctx):
     box, tight = ax.get_window_extent(c.renderer), ax.get_tightbbox(c.renderer)
     empty = max(0.0, tight.x0 - ml * fw) + max(0.0, fw * (1 - mr) - tight.x1)
     if box.width < PLOT_UNDERUSED_FRAC * usable and empty >= PLOT_EMPTY_FRAC * usable:
-        c.add("plot-area-underused", c.where(ax), f"plot box {box.width / usable:.0%} of the usable width; "
-              f"{empty / usable:.0%} left empty beside the axes",
-              "Let the plot take the full width: drop set_box_aspect/set_aspect('equal') on narrow canvases and let "
-              "ev.save refit the margins.")
+        c.add(
+            "plot-area-underused",
+            c.where(ax),
+            f"plot box {box.width / usable:.0%} of the usable width; "
+            f"{empty / usable:.0%} left empty beside the axes",
+            "Let the plot take the full width: drop set_box_aspect/set_aspect('equal') on narrow canvases and let "
+            "ev.save refit the margins.",
+        )
 
 
 def check_plot_aspect(c: Ctx):
     main = main_title(c)
-    if main is not None and any(value_tick(r.label) and r.size > main.size for r in title_like_texts(c)):
+    if main is not None and any(
+        value_tick(r.label) and r.size > main.size for r in title_like_texts(c)
+    ):
         return  # big-number card: its visual is small by design (LY-6)
     got = plot_aspect(c.fig)
     if not got or not got[2]:
@@ -2348,24 +3262,34 @@ def check_plot_aspect(c: Ctx):
     if verdict == "tall":
         fix = "Use a shorter canvas (ev.figure(dest, height=...)) or turn it into horizontal bars."
     elif c.dest in DEST_FIXED_HEIGHT:
-        fix = (f"{c.dest} has a fixed height: cut the title and subtitle to one line each (ev.fits_title(text, dest, "
-               "lines=1), ev.fits_subtitle), or export the chart without them (ev.titles(fig, None, source=...)) and "
-               "put the title in the slide's title placeholder or the post text.")
+        fix = (
+            f"{c.dest} has a fixed height: cut the title and subtitle to one line each (ev.fits_title(text, dest, "
+            "lines=1), ev.fits_subtitle), or export the chart without them (ev.titles(fig, None, source=...)) and "
+            "put the title in the slide's title placeholder or the post text."
+        )
     else:
         fix = "Cut the title block or give the canvas more height (ev.figure(dest, height=...))."
-    c.add("plot-aspect", c.where(ax), f"plot area {shape} (width:height), outside the "
-          f"{ASPECT['widest']:g}:1 to 1:{1 / ASPECT['tallest']:g} band", fix)
+    c.add(
+        "plot-aspect",
+        c.where(ax),
+        f"plot area {shape} (width:height), outside the "
+        f"{ASPECT['widest']:g}:1 to 1:{1 / ASPECT['tallest']:g} band",
+        fix,
+    )
 
 
 # ---------------------------------------------------------------------------
 # Color: cvd, contrast, text-on-area
 # ---------------------------------------------------------------------------
 
+
 def over(color, under) -> str:
     """Hex of an RGBA color painted over an opaque backdrop."""
     r, g, b, a = to_rgba(color)
     u = to_rgba(under)
-    return to_hex((r * a + u[0] * (1 - a), g * a + u[1] * (1 - a), b * a + u[2] * (1 - a)))
+    return to_hex(
+        (r * a + u[0] * (1 - a), g * a + u[1] * (1 - a), b * a + u[2] * (1 - a))
+    )
 
 
 def figure_bg(c) -> str:
@@ -2389,11 +3313,15 @@ def dense(pts, step=1.5):
     seg = seg[np.all(np.isfinite(seg), axis=1)]
     if not len(seg):
         return pts[np.all(np.isfinite(pts), axis=1)]
-    n = np.maximum((np.hypot(seg[:, 2] - seg[:, 0], seg[:, 3] - seg[:, 1]) / step).astype(int), 1)
+    n = np.maximum(
+        (np.hypot(seg[:, 2] - seg[:, 0], seg[:, 3] - seg[:, 1]) / step).astype(int), 1
+    )
     n = np.minimum(n, 2000)
     counts = n + 1
     idx = np.repeat(np.arange(len(seg)), counts)
-    t = (np.arange(counts.sum()) - np.repeat(np.cumsum(counts) - counts, counts)) / np.repeat(n, counts)
+    t = (
+        np.arange(counts.sum()) - np.repeat(np.cumsum(counts) - counts, counts)
+    ) / np.repeat(n, counts)
     return seg[idx, :2] + (seg[idx, 2:] - seg[idx, :2]) * t[:, None]
 
 
@@ -2419,19 +3347,26 @@ def hue_gap(a, b) -> float:
 @dataclass
 class Series:
     """One data color in an axes: every artist drawn in the same opaque hex is one series (a line and its band)."""
+
     hex: str
     alpha: float = 0.0
-    marks: set = field(default_factory=set)     # line, point, bar, area
-    names: set = field(default_factory=set)     # artist labels
-    styles: set = field(default_factory=set)    # (mark, dash, marker, hatch) per artist
-    bars: set = field(default_factory=set)      # ids of the bar containers holding it
-    pts: list = field(default_factory=list)     # display px along its marks, then one array
+    marks: set = field(default_factory=set)  # line, point, bar, area
+    names: set = field(default_factory=set)  # artist labels
+    styles: set = field(default_factory=set)  # (mark, dash, marker, hatch) per artist
+    bars: set = field(default_factory=set)  # ids of the bar containers holding it
+    pts: list = field(
+        default_factory=list
+    )  # display px along its marks, then one array
     rads: list = field(default_factory=list)
-    paths: list = field(default_factory=list)   # display-px filled outlines
-    edge_cr: float = 0.0                        # best outline contrast against the background
+    paths: list = field(default_factory=list)  # display-px filled outlines
+    edge_cr: float = 0.0  # best outline contrast against the background
 
     def name(self) -> str:
-        return snip(sorted(self.names)[0], 30) if self.names else f"{'/'.join(sorted(self.marks))} {self.hex}"
+        return (
+            snip(sorted(self.names)[0], 30)
+            if self.names
+            else f"{'/'.join(sorted(self.marks))} {self.hex}"
+        )
 
 
 def color_series(c, ax) -> list:
@@ -2462,31 +3397,63 @@ def color_series(c, ax) -> list:
 
     grid = (ax.get_xaxis_transform(which="grid"), ax.get_yaxis_transform(which="grid"))
     for ln in ax.lines:
-        if not ln.get_visible() or ln.get_transform() in grid or type(ln).__name__ == "_AxLine":
+        if (
+            not ln.get_visible()
+            or ln.get_transform() in grid
+            or type(ln).__name__ == "_AxLine"
+        ):
             continue
         xy = np.asarray(ln.get_xydata(), dtype=float)
-        mk = ln.get_marker() if ln.get_marker() not in (None, "None", "none", "", " ") and ln.get_markersize() > 0 \
+        mk = (
+            ln.get_marker()
+            if ln.get_marker() not in (None, "None", "none", "", " ")
+            and ln.get_markersize() > 0
             else None
+        )
         mpath = None
         if mk is not None:
             ms = MarkerStyle(mk)
             mpath = ms.get_path().transformed(ms.get_transform())
         pts = ln.get_transform().transform(xy)
-        if ln.get_linestyle() not in ("None", "none", " ", "") and ln.get_linewidth() > 0:
+        if (
+            ln.get_linestyle() not in ("None", "none", " ", "")
+            and ln.get_linewidth() > 0
+        ):
             if len(xy) < 2 or is_reference_line(ln, ax):
                 continue
             ds = ln.get_drawstyle()
             if ds and ds != "default" and ds in STEP_LOOKUP_MAP:
-                pts = ln.get_transform().transform(np.column_stack(STEP_LOOKUP_MAP[ds](xy[:, 0], xy[:, 1])))
-            add(to_rgba(ln.get_color(), ln.get_alpha()), "line", ln.get_label(),
-                (dash_key(getattr(ln, "_unscaled_dash_pattern", None)), marker_key(mpath), None), dense(pts))
+                pts = ln.get_transform().transform(
+                    np.column_stack(STEP_LOOKUP_MAP[ds](xy[:, 0], xy[:, 1]))
+                )
+            add(
+                to_rgba(ln.get_color(), ln.get_alpha()),
+                "line",
+                ln.get_label(),
+                (
+                    dash_key(getattr(ln, "_unscaled_dash_pattern", None)),
+                    marker_key(mpath),
+                    None,
+                ),
+                dense(pts),
+            )
         elif mk is not None and to_rgba(ln.get_color(), ln.get_alpha())[3] >= 0.2:
             fc = ln.get_markerfacecolor()
             fc = fc if to_rgba(fc)[3] > 0 else ln.get_markeredgecolor()
-            add(to_rgba(fc, ln.get_alpha()), "point", ln.get_label(), (None, marker_key(mpath), None), pts,
-                ln.get_markersize() / 2 * px)
+            add(
+                to_rgba(fc, ln.get_alpha()),
+                "point",
+                ln.get_label(),
+                (None, marker_key(mpath), None),
+                pts,
+                ln.get_markersize() / 2 * px,
+            )
     for coll in ax.collections:
-        if not coll.get_visible() or type(coll).__name__ == "Poly3DCollection" or coll.get_array() is not None:
+        if (
+            not coll.get_visible()
+            or type(coll).__name__ == "Poly3DCollection"
+            or coll.get_array() is not None
+        ):
             continue
         if isinstance(coll, PathCollection):
             off = np.asarray(coll.get_offsets(), dtype=float)
@@ -2504,13 +3471,23 @@ def color_series(c, ax) -> list:
             if len(uniq) > MAX_CATEGORICAL_COLORS:
                 continue
             sizes = np.atleast_1d(coll.get_sizes()).astype(float)
-            sizes = sizes if len(sizes) else np.array([plt.rcParams["lines.markersize"] ** 2])
+            sizes = (
+                sizes
+                if len(sizes)
+                else np.array([plt.rcParams["lines.markersize"] ** 2])
+            )
             r = np.sqrt(np.resize(sizes, len(xy))) / 2 * px
             mpath = coll.get_paths()[0] if coll.get_paths() else None
             for k in uniq:
                 m = keys == k
-                add(fcs[np.argmax(m)], "point", coll.get_label() if len(uniq) == 1 else None,
-                    (None, marker_key(mpath), None), xy[m], r[m])
+                add(
+                    fcs[np.argmax(m)],
+                    "point",
+                    coll.get_label() if len(uniq) == 1 else None,
+                    (None, marker_key(mpath), None),
+                    xy[m],
+                    r[m],
+                )
         elif isinstance(coll, LineCollection):
             ecs, segs = coll.get_edgecolors(), coll.get_segments()
             if not len(ecs) or not segs:
@@ -2520,17 +3497,36 @@ def color_series(c, ax) -> list:
             for k, seg in enumerate(segs):
                 ec = ecs[k % len(ecs)]
                 if len(seg) >= 2 and ec[3] >= (0.6 if dashed else 0.2):
-                    add(ec, "line", coll.get_label(), (dashed, None, None), dense(tr.transform(np.asarray(seg))))
+                    add(
+                        ec,
+                        "line",
+                        coll.get_label(),
+                        (dashed, None, None),
+                        dense(tr.transform(np.asarray(seg))),
+                    )
         elif isinstance(coll, PolyCollection) and len(coll.get_offsets()) <= 1:
-            fcs, ecs, tr = coll.get_facecolors(), coll.get_edgecolors(), coll.get_transform()
+            fcs, ecs, tr = (
+                coll.get_facecolors(),
+                coll.get_edgecolors(),
+                coll.get_transform(),
+            )
             lw = np.atleast_1d(coll.get_linewidths())
             for k, path in enumerate(coll.get_paths()):
                 if not len(fcs):
                     break
                 dp = tr.transform_path(path)
                 edge = ecs[k % len(ecs)] if len(ecs) and lw[k % len(lw)] > 0 else None
-                add(fcs[k % len(fcs)], "area", coll.get_label(), (None, None, coll.get_hatch()),
-                    np.vstack([dense(q) for q in dp.to_polygons()] or [np.zeros((0, 2))]), paths=[dp], edge=edge)
+                add(
+                    fcs[k % len(fcs)],
+                    "area",
+                    coll.get_label(),
+                    (None, None, coll.get_hatch()),
+                    np.vstack(
+                        [dense(q) for q in dp.to_polygons()] or [np.zeros((0, 2))]
+                    ),
+                    paths=[dp],
+                    edge=edge,
+                )
     for cont in ax.containers:
         if not isinstance(cont, BarContainer):
             continue
@@ -2538,15 +3534,35 @@ def color_series(c, ax) -> list:
             if not drawn_bar(p):
                 continue
             b = p.get_window_extent(c.renderer)
-            ring = [(b.x0, b.y0), (b.x1, b.y0), (b.x1, b.y1), (b.x0, b.y1), (b.x0, b.y0)]
+            ring = [
+                (b.x0, b.y0),
+                (b.x1, b.y0),
+                (b.x1, b.y1),
+                (b.x0, b.y1),
+                (b.x0, b.y0),
+            ]
             fc = p.get_facecolor() if p.get_facecolor()[3] > 0 else p.get_edgecolor()
-            add(fc, "bar", cont.get_label(), (None, None, p.get_hatch()), dense(ring), paths=[MplPath(ring)],
-                bar=id(cont), edge=p.get_edgecolor() if p.get_linewidth() > 0 else None)
+            add(
+                fc,
+                "bar",
+                cont.get_label(),
+                (None, None, p.get_hatch()),
+                dense(ring),
+                paths=[MplPath(ring)],
+                bar=id(cont),
+                edge=p.get_edgecolor() if p.get_linewidth() > 0 else None,
+            )
     for p in data_patches(ax):
         dp = p.get_transform().transform_path(p.get_path())
-        add(p.get_facecolor(), "area", p.get_label(), (None, None, p.get_hatch()),
-            np.vstack([dense(q) for q in dp.to_polygons()] or [np.zeros((0, 2))]), paths=[dp],
-            edge=p.get_edgecolor() if p.get_linewidth() > 0 else None)
+        add(
+            p.get_facecolor(),
+            "area",
+            p.get_label(),
+            (None, None, p.get_hatch()),
+            np.vstack([dense(q) for q in dp.to_polygons()] or [np.zeros((0, 2))]),
+            paths=[dp],
+            edge=p.get_edgecolor() if p.get_linewidth() > 0 else None,
+        )
     for s in out.values():
         s.pts, s.rads = np.concatenate(s.pts), np.concatenate(s.rads)
     c.series[id(ax)] = list(out.values())
@@ -2555,8 +3571,14 @@ def color_series(c, ax) -> list:
 
 def data_patches(ax) -> list:
     """Filled data shapes other than bars: pie wedges and data-space polygons (ax.fill), not spans or arrows."""
-    return [p for p in ax.patches if p.get_visible() and p.get_fill() and isinstance(p, (Wedge, Polygon, PathPatch))
-            and p.get_data_transform() is ax.transData]
+    return [
+        p
+        for p in ax.patches
+        if p.get_visible()
+        and p.get_fill()
+        and isinstance(p, (Wedge, Polygon, PathPatch))
+        and p.get_data_transform() is ax.transData
+    ]
 
 
 def series_gap(r: TextRec, s: Series) -> float:
@@ -2579,8 +3601,11 @@ def names_series(r: TextRec, s: Series, rival: Series | None) -> bool:
     if any(re.search(rf"(?<!\w){re.escape(n.lower())}(?!\w)", text) for n in s.names):
         return True
     tc = r.obj.get_color()
-    return not is_neutral(tc) and hue_gap(tc, s.hex) <= HUE_MATCH_DEG and (
-        rival is None or hue_gap(tc, rival.hex) > HUE_MATCH_DEG)
+    return (
+        not is_neutral(tc)
+        and hue_gap(tc, s.hex) <= HUE_MATCH_DEG
+        and (rival is None or hue_gap(tc, rival.hex) > HUE_MATCH_DEG)
+    )
 
 
 def direct_labeled(c, ax, s: Series, rival: Series | None = None) -> bool:
@@ -2593,12 +3618,16 @@ def direct_labeled(c, ax, s: Series, rival: Series | None = None) -> bool:
         if isinstance(r.obj, Annotation) and len(s.pts):
             try:
                 a = r.obj._get_xy(c.renderer, r.obj.xy, r.obj.xycoords)
-                if (np.hypot(s.pts[:, 0] - a[0], s.pts[:, 1] - a[1]) - s.rads).min() <= LEADER_TOL_PT * c.px_per_pt:
+                if (
+                    np.hypot(s.pts[:, 0] - a[0], s.pts[:, 1] - a[1]) - s.rads
+                ).min() <= LEADER_TOL_PT * c.px_per_pt:
                     return True
             except Exception:
                 pass
         g = series_gap(r, s)
-        if g <= DIRECT_LABEL_REACH_LINES * r.h / max(len(r.lines), 1) and (rival is None or g <= series_gap(r, rival)):
+        if g <= DIRECT_LABEL_REACH_LINES * r.h / max(len(r.lines), 1) and (
+            rival is None or g <= series_gap(r, rival)
+        ):
             return True
     return False
 
@@ -2608,8 +3637,12 @@ def redundant_cue(c, ax, a: Series, b: Series) -> str | None:
     if a.bars & b.bars:
         return "bar position in one bar series"
     shared = a.marks & b.marks
-    if not shared or any({st for st in a.styles if st[0] == m}.isdisjoint({st for st in b.styles if st[0] == m})
-                         for m in shared):
+    if not shared or any(
+        {st for st in a.styles if st[0] == m}.isdisjoint(
+            {st for st in b.styles if st[0] == m}
+        )
+        for m in shared
+    ):
         return "dash, marker, hatch, or mark type"
     if direct_labeled(c, ax, a, b) and direct_labeled(c, ax, b, a):
         return "direct labels"
@@ -2622,7 +3655,7 @@ def check_cvd(c: Ctx):
         series = color_series(c, ax)
         cols = {id(s): Color(over((*to_rgba(s.hex)[:3], s.alpha), bg)) for s in series}
         for n, a in enumerate(series):
-            for b in series[n + 1:]:
+            for b in series[n + 1 :]:
                 ca, cb = cols[id(a)], cols[id(b)]
                 floor = max(DE_FLOOR[m] for m in a.marks | b.marks) * CVD_FACTOR
                 d = {v: de(ca, cb, v) for v in ("protan", "deutan", "tritan")}
@@ -2633,30 +3666,66 @@ def check_cvd(c: Ctx):
                 if cue and not red_green:
                     continue  # tritan-only and redundantly encoded
                 v = min(red_green or ["tritan"], key=d.get)
-                detail = (f"{ca.hex}~{cb.hex} dE00 {d[v]:.1f} under {v} (floor {floor:.1f}; normal {de(ca, cb):.1f})"
-                          + (f"; told apart only by {cue}" if cue else "; color is the only cue"))
-                fix = ("Direct-label each series at its mark (ev.label_lines), or vary dash or marker; better, use "
-                       "palettes.json slots that stay distinct (blue #0072B2 vs vermillion #D55E00).")
-                c.add("cvd", c.where(ax, f"{a.name()} x {b.name()}"), detail, fix,
-                      severity="fail" if red_green and not cue else "warn")
+                detail = (
+                    f"{ca.hex}~{cb.hex} dE00 {d[v]:.1f} under {v} (floor {floor:.1f}; normal {de(ca, cb):.1f})"
+                    + (
+                        f"; told apart only by {cue}"
+                        if cue
+                        else "; color is the only cue"
+                    )
+                )
+                fix = (
+                    "Direct-label each series at its mark (ev.label_lines), or vary dash or marker; better, use "
+                    "palettes.json slots that stay distinct (blue #0072B2 vs vermillion #D55E00)."
+                )
+                c.add(
+                    "cvd",
+                    c.where(ax, f"{a.name()} x {b.name()}"),
+                    detail,
+                    fix,
+                    severity="fail" if red_green and not cue else "warn",
+                )
 
 
 def is_large(r: TextRec) -> bool:
     w = r.obj.get_fontweight()
-    w = w if isinstance(w, (int, float)) else {"semibold": 600, "demibold": 600, "demi": 600, "bold": 700,
-                                               "heavy": 800, "extra bold": 800, "black": 900}.get(str(w), 400)
+    w = (
+        w
+        if isinstance(w, (int, float))
+        else {
+            "semibold": 600,
+            "demibold": 600,
+            "demi": 600,
+            "bold": 700,
+            "heavy": 800,
+            "extra bold": 800,
+            "black": 900,
+        }.get(str(w), 400)
+    )
     return r.size >= LARGE_TEXT_PT or (w >= 700 and r.size >= LARGE_BOLD_PT)
 
 
 def text_backdrop(c, r: TextRec, frames: dict) -> str:
     """Color behind text r: its box, halo, or legend frame; else a bar under its center; else axes or figure."""
     t = r.obj
-    ax = next((a for _, a in data_axes(c.fig) if a.get_window_extent(c.renderer).contains(r.cx, r.cy)), None)
+    ax = next(
+        (
+            a
+            for _, a in data_axes(c.fig)
+            if a.get_window_extent(c.renderer).contains(r.cx, r.cy)
+        ),
+        None,
+    )
     base = axes_bg(c, ax) if ax is not None else figure_bg(c)
     if id(t) in frames:
         return over(frames[id(t)], base)
     patch = t.get_bbox_patch()
-    if patch is not None and patch.get_visible() and patch.get_fill() and patch.get_facecolor()[3] > 0:
+    if (
+        patch is not None
+        and patch.get_visible()
+        and patch.get_fill()
+        and patch.get_facecolor()[3] > 0
+    ):
         return over(patch.get_facecolor(), base)
     for pe in t.get_path_effects() or []:
         if isinstance(pe, patheffects.Stroke) and pe._gc.get("foreground") is not None:
@@ -2667,20 +3736,38 @@ def text_backdrop(c, r: TextRec, frames: dict) -> str:
     for cont in ax.containers:
         if isinstance(cont, BarContainer):
             for p in cont.patches:
-                if p.get_visible() and p.get_zorder() <= r.zorder and \
-                        p.get_window_extent(c.renderer).contains(r.cx, r.cy) and p.get_facecolor()[3] > 0:
+                if (
+                    p.get_visible()
+                    and p.get_zorder() <= r.zorder
+                    and p.get_window_extent(c.renderer).contains(r.cx, r.cy)
+                    and p.get_facecolor()[3] > 0
+                ):
                     under = p.get_facecolor()
     for coll in ax.collections:  # a number inside a bubble
-        if not (isinstance(coll, PathCollection) and coll.get_visible() and coll.get_zorder() <= r.zorder):
+        if not (
+            isinstance(coll, PathCollection)
+            and coll.get_visible()
+            and coll.get_zorder() <= r.zorder
+        ):
             continue
         off, fcs = np.asarray(coll.get_offsets(), dtype=float), coll.get_facecolors()
         if not off.size or not len(fcs):
             continue
         xy = coll.get_offset_transform().transform(off)
         sizes = np.atleast_1d(coll.get_sizes()).astype(float)
-        rad = np.sqrt(np.resize(sizes if len(sizes) else [plt.rcParams["lines.markersize"] ** 2], len(xy))) / 2 \
+        rad = (
+            np.sqrt(
+                np.resize(
+                    sizes if len(sizes) else [plt.rcParams["lines.markersize"] ** 2],
+                    len(xy),
+                )
+            )
+            / 2
             * c.px_per_pt
-        hit = np.nonzero((np.hypot(xy[:, 0] - r.cx, xy[:, 1] - r.cy) <= rad) & (2 * rad >= r.w))[0]
+        )
+        hit = np.nonzero(
+            (np.hypot(xy[:, 0] - r.cx, xy[:, 1] - r.cy) <= rad) & (2 * rad >= r.w)
+        )[0]
         if len(hit) and fcs[hit[-1] % len(fcs)][3] > 0:
             under = fcs[hit[-1] % len(fcs)]
     return over(under, base) if under is not None else base
@@ -2688,26 +3775,42 @@ def text_backdrop(c, r: TextRec, frames: dict) -> str:
 
 def check_contrast(c: Ctx):
     frames = {}
-    for leg in [ax.get_legend() for ax in c.fig.axes if ax.get_legend()] + list(c.fig.legends):
+    for leg in [ax.get_legend() for ax in c.fig.axes if ax.get_legend()] + list(
+        c.fig.legends
+    ):
         if legend_has_frame(leg):
-            frames.update({id(t): leg.get_frame().get_facecolor() for t in leg.get_texts() + [leg.get_title()]})
+            frames.update(
+                {
+                    id(t): leg.get_frame().get_facecolor()
+                    for t in leg.get_texts() + [leg.get_title()]
+                }
+            )
     low = {}  # one finding per text, or per axis for tick labels
     for r in c.texts:
         if id(r.obj) in c.on_area:
             continue
         back = text_backdrop(c, r, frames)
         cr = contrast(over(to_rgba(r.obj.get_color(), r.obj.get_alpha()), back), back)
-        glyph = not any(ch.isalnum() for ch in r.obj.get_text())  # a symbol used as a color key is a mark
+        glyph = not any(
+            ch.isalnum() for ch in r.obj.get_text()
+        )  # a symbol used as a color key is a mark
         floor = MARK_MIN if glyph else TEXT_MIN_LARGE if is_large(r) else TEXT_MIN
         if cr < floor:
             key = (id(r.ax), r.axis) if r.kind == "tick" else id(r.obj)
             low.setdefault(key, []).append((cr, floor, back, r))
     for rows in low.values():
         cr, floor, back, r = min(rows, key=lambda t: t[0])
-        what = f"{len(rows)} {r.axis}-axis tick labels" if r.kind == "tick" else f"{r.kind} {snip(r.label, 30)}"
-        c.add("contrast", c.where(r.ax, what),
-              f"text {color_key(r.obj.get_color())} on {back} is {cr:.2f}:1; floor {floor:g}:1",
-              "Darken the text (ev.text_color gives a 4.5:1 variant of a mark color) or lighten what is behind it.")
+        what = (
+            f"{len(rows)} {r.axis}-axis tick labels"
+            if r.kind == "tick"
+            else f"{r.kind} {snip(r.label, 30)}"
+        )
+        c.add(
+            "contrast",
+            c.where(r.ax, what),
+            f"text {color_key(r.obj.get_color())} on {back} is {cr:.2f}:1; floor {floor:g}:1",
+            "Darken the text (ev.text_color gives a 4.5:1 variant of a mark color) or lighten what is behind it.",
+        )
     for i, ax in data_axes(c.fig):
         bg = axes_bg(c, ax)
         for s in color_series(c, ax):
@@ -2715,24 +3818,41 @@ def check_contrast(c: Ctx):
             where = c.where(ax, s.name())
             if s.marks & {"line", "point"}:
                 if cr < INVISIBLE:
-                    c.add("contrast", where, f"{s.hex} lines/points {cr:.2f}:1 on {bg}; below {INVISIBLE}:1 they "
-                          "vanish", "Use a darker slot (palettes.json use notes) for thin marks.")
+                    c.add(
+                        "contrast",
+                        where,
+                        f"{s.hex} lines/points {cr:.2f}:1 on {bg}; below {INVISIBLE}:1 they "
+                        "vanish",
+                        "Use a darker slot (palettes.json use notes) for thin marks.",
+                    )
                 elif cr < MARK_MIN and not direct_labeled(c, ax, s):
-                    c.add("contrast", where, f"{s.hex} lines/points {cr:.2f}:1 on {bg}; floor {MARK_MIN}:1",
-                          "Direct-label the series or use a darker slot.", severity="warn")
+                    c.add(
+                        "contrast",
+                        where,
+                        f"{s.hex} lines/points {cr:.2f}:1 on {bg}; floor {MARK_MIN}:1",
+                        "Direct-label the series or use a darker slot.",
+                        severity="warn",
+                    )
             elif cr < INVISIBLE and s.edge_cr < MARK_MIN:
-                c.add("contrast", where, f"{s.hex} fill {cr:.2f}:1 on {bg} with no outline",
-                      "Outline the fill in a darker color or use a darker slot.", severity="warn")
+                c.add(
+                    "contrast",
+                    where,
+                    f"{s.hex} fill {cr:.2f}:1 on {bg} with no outline",
+                    "Outline the fill in a darker color or use a darker slot.",
+                    severity="warn",
+                )
 
 
 def fill_surfaces(c, ax, bg) -> list:
     """Data fills in ax at least FILL_MIN_ALPHA opaque, bottom to top, as (zorder, lookup): lookup(pts px [N, 2])
     returns the fill's color over bg per point, or None. Bars are left to check_text_on_bars."""
+
     def poly(path, color):
         def look(pts):
             out = np.full(len(pts), None, dtype=object)
             out[path.contains_points(pts)] = color
             return out
+
         return look
 
     def cells(inv, color_at):
@@ -2742,6 +3862,7 @@ def fill_surfaces(c, ax, bg) -> list:
                 if fc is not None and fc[3] >= FILL_MIN_ALPHA:
                     out[k] = over(fc, bg)
             return out
+
         return look
 
     def edges_index(edges, v):
@@ -2763,14 +3884,24 @@ def fill_surfaces(c, ax, bg) -> list:
             xe, ye = xy[0, :, 0], xy[:, 0, 1]
             fcs = art.get_facecolors()
             nx, ny = len(xe) - 1, len(ye) - 1
-            if not (np.allclose(xy[..., 0], xe[None, :]) and np.allclose(xy[..., 1], ye[:, None])) or \
-                    len(fcs) not in (1, nx * ny):
+            if not (
+                np.allclose(xy[..., 0], xe[None, :])
+                and np.allclose(xy[..., 1], ye[:, None])
+            ) or len(fcs) not in (1, nx * ny):
                 continue
 
             def at(d, xe=xe, ye=ye, fcs=fcs, nx=nx):
                 ix, iy = edges_index(xe, d[:, 0]), edges_index(ye, d[:, 1])
-                return [(k, fcs[(iy[k] * nx + ix[k]) % len(fcs)] if ix[k] >= 0 and iy[k] >= 0 else None)
-                        for k in range(len(d))]
+                return [
+                    (
+                        k,
+                        fcs[(iy[k] * nx + ix[k]) % len(fcs)]
+                        if ix[k] >= 0 and iy[k] >= 0
+                        else None,
+                    )
+                    for k in range(len(d))
+                ]
+
             found.append((z, order, cells(art.get_transform().inverted(), at)))
         elif isinstance(art, AxesImage):
             arr = art.get_array()
@@ -2794,18 +3925,45 @@ def fill_surfaces(c, ax, bg) -> list:
                 fy = (d[:, 1] - ext[2]) / (ext[3] - ext[2])
                 col = np.floor(fx * nx).astype(int)
                 row = np.floor(((1 - fy) if upper else fy) * ny).astype(int)
-                return [(k, rgba[row[k], col[k]] if 0 <= col[k] < nx and 0 <= row[k] < ny else None)
-                        for k in range(len(d))]
+                return [
+                    (
+                        k,
+                        rgba[row[k], col[k]]
+                        if 0 <= col[k] < nx and 0 <= row[k] < ny
+                        else None,
+                    )
+                    for k in range(len(d))
+                ]
+
             found.append((z, order, cells(art.get_transform().inverted(), at)))
-        elif isinstance(art, PolyCollection) and type(art).__name__ != "Poly3DCollection" \
-                and len(art.get_offsets()) <= 1 or isinstance(art, ContourSet) and art.filled:
+        elif (
+            isinstance(art, PolyCollection)
+            and type(art).__name__ != "Poly3DCollection"
+            and len(art.get_offsets()) <= 1
+            or isinstance(art, ContourSet)
+            and art.filled
+        ):
             fcs, tr = art.get_facecolors(), art.get_transform()
             for k, path in enumerate(art.get_paths()):
                 if len(fcs) and fcs[k % len(fcs)][3] >= FILL_MIN_ALPHA:
-                    found.append((z, order, poly(tr.transform_path(path), over(fcs[k % len(fcs)], bg))))
+                    found.append(
+                        (
+                            z,
+                            order,
+                            poly(tr.transform_path(path), over(fcs[k % len(fcs)], bg)),
+                        )
+                    )
         elif id(art) in patches and art.get_facecolor()[3] >= FILL_MIN_ALPHA:
-            found.append((z, order, poly(art.get_transform().transform_path(art.get_path()),
-                                         over(art.get_facecolor(), bg))))
+            found.append(
+                (
+                    z,
+                    order,
+                    poly(
+                        art.get_transform().transform_path(art.get_path()),
+                        over(art.get_facecolor(), bg),
+                    ),
+                )
+            )
     return [(z, look) for z, _, look in sorted(found, key=lambda f: (f[0], f[1]))]
 
 
@@ -2824,8 +3982,13 @@ def check_text_on_area(c: Ctx):
     """Text over data fills must sit wholly inside one fill with text contrast, or carry an opaque box or halo."""
     pad = TEXT_LINE_PAD_PT * c.px_per_pt
     cache = {}
-    clabels = {id(t) for ax in c.fig.axes for cs in ax.collections if isinstance(cs, ContourSet)
-               for t in getattr(cs, "labelTexts", [])}
+    clabels = {
+        id(t)
+        for ax in c.fig.axes
+        for cs in ax.collections
+        if isinstance(cs, ContourSet)
+        for t in getattr(cs, "labelTexts", [])
+    }
     for r in c.texts:
         if r.kind not in ("text", "annotation", "figtext") or id(r.obj) in clabels:
             continue
@@ -2835,11 +3998,20 @@ def check_text_on_area(c: Ctx):
         for ax in [r.ax] if r.ax is not None else [a for _, a in data_axes(c.fig)]:
             if id(ax) not in cache:
                 bg = axes_bg(c, ax)
-                cache[id(ax)] = bg, fill_surfaces(c, ax, bg), ax.get_window_extent(c.renderer)
+                cache[id(ax)] = (
+                    bg,
+                    fill_surfaces(c, ax, bg),
+                    ax.get_window_extent(c.renderer),
+                )
             bg, surfaces, box = cache[id(ax)]
             if not surfaces:
                 continue
-            inside = (pts[:, 0] >= box.x0) & (pts[:, 0] <= box.x1) & (pts[:, 1] >= box.y0) & (pts[:, 1] <= box.y1)
+            inside = (
+                (pts[:, 0] >= box.x0)
+                & (pts[:, 0] <= box.x1)
+                & (pts[:, 1] >= box.y0)
+                & (pts[:, 1] <= box.y1)
+            )
             backs = np.where(inside, bg, figure_bg(c)).astype(object)
             on = np.zeros(len(pts), bool)
             for z, look in surfaces:
@@ -2854,31 +4026,73 @@ def check_text_on_area(c: Ctx):
                 break
             c.on_area.add(id(r.obj))
             uniq = sorted(set(backs))
-            spread = max((de(Color(a), Color(b)) for n, a in enumerate(uniq) for b in uniq[n + 1:]), default=0.0)
+            spread = max(
+                (
+                    de(Color(a), Color(b))
+                    for n, a in enumerate(uniq)
+                    for b in uniq[n + 1 :]
+                ),
+                default=0.0,
+            )
             where = c.where(ax, f"{r.kind} {snip(r.label, 30)}")
             if spread >= DE_FLOOR["area"]:
-                c.add("text-on-area", where, f"text straddles an edge between fills ({len(uniq)} backdrops, "
-                      f"dE00 up to {spread:.0f})",
-                      "Put the label wholly inside one fill (a stack label inside its own layer) or in open space, "
-                      "or give it an opaque bbox or a halo.")
+                c.add(
+                    "text-on-area",
+                    where,
+                    f"text straddles an edge between fills ({len(uniq)} backdrops, "
+                    f"dE00 up to {spread:.0f})",
+                    "Put the label wholly inside one fill (a stack label inside its own layer) or in open space, "
+                    "or give it an opaque bbox or a halo.",
+                )
             else:
                 tc = to_rgba(r.obj.get_color(), r.obj.get_alpha())
                 cr, back = min((contrast(over(tc, b), b), b) for b in uniq)
                 floor = TEXT_MIN_LARGE if is_large(r) else TEXT_MIN
                 if cr < floor:
-                    c.add("text-on-area", where, f"text inside a {back} fill at {cr:.2f}:1; floor {floor:g}:1",
-                          "Use dark text on light fills and white on dark ones (4.5:1), or move the label out.")
+                    c.add(
+                        "text-on-area",
+                        where,
+                        f"text inside a {back} fill at {cr:.2f}:1; floor {floor:g}:1",
+                        "Use dark text on light fills and white on dark ones (4.5:1), or move the label out.",
+                    )
             break
 
 
 CHECK_FUNCS = [
-    check_text_overlap, check_text_on_line, check_text_on_area, check_text_clipped, check_bar_baseline, check_dual_axis,
-    check_pie, check_rainbow, check_3d, check_legend, check_missing_axis_label, check_default_title,
-    check_small_text, check_tick_crowding, check_too_many_series, check_spines_gridlines, check_label_ambiguous,
-    check_process_note, check_missing_source, check_value_labels_and_axis, check_number_format, check_category_order,
-    check_title_too_long, check_inverted_axis,
-    check_log_unlabeled, check_cumulative_as_rate, check_stacked_area, check_segment_edges, check_invisible_arrow, check_plot_area_tiny,
-    check_plot_area_underused, check_plot_aspect, check_cvd, check_contrast,
+    check_text_overlap,
+    check_text_on_line,
+    check_text_on_area,
+    check_text_clipped,
+    check_bar_baseline,
+    check_dual_axis,
+    check_pie,
+    check_rainbow,
+    check_3d,
+    check_legend,
+    check_missing_axis_label,
+    check_default_title,
+    check_small_text,
+    check_tick_crowding,
+    check_too_many_series,
+    check_spines_gridlines,
+    check_label_ambiguous,
+    check_process_note,
+    check_missing_source,
+    check_value_labels_and_axis,
+    check_number_format,
+    check_category_order,
+    check_title_too_long,
+    check_inverted_axis,
+    check_log_unlabeled,
+    check_cumulative_as_rate,
+    check_stacked_area,
+    check_segment_edges,
+    check_invisible_arrow,
+    check_plot_area_tiny,
+    check_plot_area_underused,
+    check_plot_aspect,
+    check_cvd,
+    check_contrast,
 ]
 
 
@@ -2895,8 +4109,13 @@ def lint_figure(fig, fi, dest="blog", save_kwargs=None):
             fn(c)
     except Exception:
         raise ScriptError(f"check_chart crashed on fig{fi}:\n{traceback_tail()}")
-    inventory = {"figure": fi, "axes": len(fig.axes), "texts": len(c.texts),
-                 "segments": int(len(c.segs)), "size_in": [round(v, 2) for v in fig.get_size_inches()]}
+    inventory = {
+        "figure": fi,
+        "axes": len(fig.axes),
+        "texts": len(c.texts),
+        "segments": int(len(c.segs)),
+        "size_in": [round(v, 2) for v in fig.get_size_inches()],
+    }
     return c.findings, inventory
 
 
@@ -2909,7 +4128,9 @@ def run_checks(chart, cwd=None, dest="blog", verbose=False) -> dict:
             raise ScriptError("script produced no matplotlib figures")
         try:
             for fi, fig in enumerate(figs):
-                f, inv = lint_figure(fig, fi, dest, canvas_save(save_kwargs.get(id(fig))))
+                f, inv = lint_figure(
+                    fig, fi, dest, canvas_save(save_kwargs.get(id(fig)))
+                )
                 findings += f
                 inventory.append(inv)
         finally:
@@ -2928,18 +4149,36 @@ def run_checks(chart, cwd=None, dest="blog", verbose=False) -> dict:
 
 
 def main(argv=None):
-    ap = argparse.ArgumentParser(description="Lint a matplotlib chart script for explanatory-chart problems. Executes "
-                                 "the script: savefig is blocked, but any file it writes another way (data exports, "
-                                 "PIL images, even its own PNG) is really written, so lint a scratch copy.")
+    ap = argparse.ArgumentParser(
+        description="Lint a matplotlib chart script for explanatory-chart problems. Executes "
+        "the script: savefig is blocked, but any file it writes another way (data exports, "
+        "PIL images, even its own PNG) is really written, so lint a scratch copy."
+    )
     ap.add_argument("chart", nargs="?", type=Path, help="Path to the chart .py script.")
-    ap.add_argument("--cwd", type=Path, default=None, help="Directory to run the script in (default: its folder).")
+    ap.add_argument(
+        "--cwd",
+        type=Path,
+        default=None,
+        help="Directory to run the script in (default: its folder).",
+    )
     ap.add_argument("--json", action="store_true", help="Print JSON only.")
-    ap.add_argument("--dest", choices=sorted(DEST_WIDTH_PX), default="blog",
-                    help="Display target for small-text and title-too-long.")
-    ap.add_argument("--verbose", action="store_true", help="Show script stdout and per-figure inventory.")
+    ap.add_argument(
+        "--dest",
+        choices=sorted(DEST_WIDTH_PX),
+        default="blog",
+        help="Display target for small-text and title-too-long.",
+    )
+    ap.add_argument(
+        "--verbose",
+        action="store_true",
+        help="Show script stdout and per-figure inventory.",
+    )
     ap.add_argument("--list-checks", action="store_true", help="List checks and exit.")
     args = ap.parse_args(argv)
-    for stream in (sys.stdout, sys.stderr):  # chart text (U+2212 minus, ...) must not crash a cp1252 console
+    for stream in (
+        sys.stdout,
+        sys.stderr,
+    ):  # chart text (U+2212 minus, ...) must not crash a cp1252 console
         if hasattr(stream, "reconfigure"):
             stream.reconfigure(errors="replace")
 
@@ -2975,12 +4214,18 @@ def main(argv=None):
     else:
         if args.verbose:
             for inv in res["inventory"]:
-                print(f"INFO fig{inv['figure']}: {inv['axes']} axes, {inv['texts']} texts, "
-                      f"{inv['segments']} line segments, {inv['size_in'][0]}x{inv['size_in'][1]} in")
+                print(
+                    f"INFO fig{inv['figure']}: {inv['axes']} axes, {inv['texts']} texts, "
+                    f"{inv['segments']} line segments, {inv['size_in'][0]}x{inv['size_in'][1]} in"
+                )
         for f in res["findings"]:
-            print(f"{f['severity'].upper()} {f['check']} | {f['where']} | {f['detail']} | fix: {f['fix']}")
-        print(f"RESULT {res['result'].upper()}: {res['fails']} fail, {res['warns']} warn, "
-              f"{res['figures']} figure(s), dest={res['dest']}")
+            print(
+                f"{f['severity'].upper()} {f['check']} | {f['where']} | {f['detail']} | fix: {f['fix']}"
+            )
+        print(
+            f"RESULT {res['result'].upper()}: {res['fails']} fail, {res['warns']} warn, "
+            f"{res['figures']} figure(s), dest={res['dest']}"
+        )
     return 1 if res["fails"] else 0
 
 

@@ -1,5 +1,5 @@
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
 fig = plt.figure(figsize=(6, 5))
 ax = fig.add_subplot(projection="3d")

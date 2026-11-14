@@ -14,8 +14,16 @@ fig1, ax1 = new()
 bars = ax1.barh([0, 1, 2, 3], [40, 60, 30, np.nan], height=0.7, color="C0")
 ax1.bar_label(bars, padding=4, fontsize=12)
 ax1.text(30, 1, "Inside", ha="center", va="center", fontsize=12, color="white")
-ax1.text(20, 0, "Boxed note", ha="center", va="center", fontsize=12, zorder=5,
-         bbox=dict(boxstyle="square,pad=0.2", fc="white", ec="none"))
+ax1.text(
+    20,
+    0,
+    "Boxed note",
+    ha="center",
+    va="center",
+    fontsize=12,
+    zorder=5,
+    bbox=dict(boxstyle="square,pad=0.2", fc="white", ec="none"),
+)
 ax1.set_xlim(0, 80)
 ax1.set_xlabel("Units (k)")
 fig.savefig("a.png")

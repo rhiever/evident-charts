@@ -1,4 +1,5 @@
 """Shared helpers for fixtures: a clean baseline style."""
+
 import matplotlib.pyplot as plt
 
 

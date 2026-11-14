@@ -3,6 +3,7 @@
 
 Usage: python side_by_side.py a.png b.png [c.png ...] -o out.png [--labels Before After]
 """
+
 import argparse
 from pathlib import Path
 
@@ -18,19 +19,43 @@ def compose(images, labels, width=7.0):
     """Figure with each image `width` inches wide, all top-aligned under one row of left-aligned labels."""
     imgs = [mpimg.imread(p) for p in images]
     n = len(imgs)
-    pad, gap, band = 0.1, 0.25, 0.6  # inches: outer margin, gap between panels, label band above the images
-    heights = [width * im.shape[0] / im.shape[1] for im in imgs]  # each panel's height follows its own aspect
+    pad, gap, band = (
+        0.1,
+        0.25,
+        0.6,
+    )  # inches: outer margin, gap between panels, label band above the images
+    heights = [
+        width * im.shape[0] / im.shape[1] for im in imgs
+    ]  # each panel's height follows its own aspect
     fig_w, fig_h = 2 * pad + n * width + (n - 1) * gap, band + max(heights) + pad
     fig = plt.figure(figsize=(fig_w, fig_h), dpi=150)
-    top = (fig_h - band) / fig_h  # labels and images share one top line whatever their aspect ratios
+    top = (
+        fig_h - band
+    ) / fig_h  # labels and images share one top line whatever their aspect ratios
     for i, (im, h, label) in enumerate(zip(imgs, heights, labels)):
         x = (pad + i * (width + gap)) / fig_w
         ax = fig.add_axes((x, top - h / fig_h, width / fig_w, h / fig_h))
-        gray = {} if im.ndim == 3 else {"cmap": "gray", "vmin": 0,  # 2-D PNGs are grayscale, not data for viridis
-                                        "vmax": 1 if im.dtype.kind == "f" else np.iinfo(im.dtype).max}
+        gray = (
+            {}
+            if im.ndim == 3
+            else {
+                "cmap": "gray",
+                "vmin": 0,  # 2-D PNGs are grayscale, not data for viridis
+                "vmax": 1 if im.dtype.kind == "f" else np.iinfo(im.dtype).max,
+            }
+        )
         ax.imshow(im, **gray)
         ax.set_axis_off()
-        fig.text(x, 1 - pad / fig_h, label, fontsize=16, fontweight="bold", color="#333333", ha="left", va="top")
+        fig.text(
+            x,
+            1 - pad / fig_h,
+            label,
+            fontsize=16,
+            fontweight="bold",
+            color="#333333",
+            ha="left",
+            va="top",
+        )
     return fig
 
 

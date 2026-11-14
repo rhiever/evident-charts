@@ -1,5 +1,5 @@
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 from _clean import clean
 
 # Figure 0: the chart title is ax.set_title on the top panel only (no suptitle), a legitimate overall title.

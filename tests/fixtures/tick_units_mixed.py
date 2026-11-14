@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
-from matplotlib.ticker import FixedFormatter, FixedLocator, PercentFormatter
 from _clean import new
+from matplotlib.ticker import FixedFormatter, FixedLocator, PercentFormatter
 
 # Axis 0 puts "%" on the top tick only (0, 3, 6, 9%): a unit on some ticks reads as two scales even with a
 # subtitle that states the unit. Axis 1 formats every tick with the unit and passes.

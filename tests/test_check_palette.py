@@ -14,7 +14,17 @@ cp = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(cp)
 
 OKABE = ["#0072B2", "#D55E00", "#009E73", "#CC79A7", "#E69F00", "#56B4E9", "#F0E442"]
-JET = ["#00007F", "#0000FF", "#007FFF", "#00FFFF", "#7FFF7F", "#FFFF00", "#FF7F00", "#FF0000", "#7F0000"]
+JET = [
+    "#00007F",
+    "#0000FF",
+    "#007FFF",
+    "#00FFFF",
+    "#7FFF7F",
+    "#FFFF00",
+    "#FF7F00",
+    "#FF0000",
+    "#7F0000",
+]
 RDBU = ["#B2182B", "#EF8A62", "#FDDBC7", "#F7F7F7", "#D1E5F0", "#67A9CF", "#2166AC"]
 PUOR = ["#B35806", "#F1A340", "#FEE0B6", "#F7F7F7", "#D8DAEB", "#998EC3", "#542788"]
 
@@ -104,7 +114,11 @@ def test_bad_hex_exits_2():
 
 
 if __name__ == "__main__":
-    tests = [(k, v) for k, v in sorted(globals().items()) if k.startswith("test_") and callable(v)]
+    tests = [
+        (k, v)
+        for k, v in sorted(globals().items())
+        if k.startswith("test_") and callable(v)
+    ]
     failed = 0
     for name, fn in tests:
         try:

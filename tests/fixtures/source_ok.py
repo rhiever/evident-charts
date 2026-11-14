@@ -6,8 +6,12 @@ ax.plot([2021, 2022, 2023, 2024], [10, 24, 12, 8], color="C0", lw=2)
 ax.set_xticks([2021, 2022, 2023, 2024])
 ax.set_ylabel("Confirmed cases (k)")
 fig.subplots_adjust(bottom=0.2)
-fig.text(0.02, 0.02, "Note: 2024 is provisional.\nSource: CDC, National Notifiable Diseases Surveillance System",
-         fontsize=11)
+fig.text(
+    0.02,
+    0.02,
+    "Note: 2024 is provisional.\nSource: CDC, National Notifiable Diseases Surveillance System",
+    fontsize=11,
+)
 fig.text(0.98, 0.02, "Dr. Jane Doe | janedoe.com", fontsize=11, ha="right")
 # "Data:" also opens a source line.
 fig2, ax2 = new("Confirmed cases peaked in January")

@@ -1,5 +1,4 @@
 import numpy as np
-
 from _clean import new
 
 # Value labels with the value axis hidden: one readout.

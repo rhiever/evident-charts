@@ -1,5 +1,5 @@
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 from _clean import clean
 
 # A phone-width canvas (mobile preset, 360 x 450) with a tall title block: figure 0 forces a square plot box,
@@ -17,6 +17,13 @@ for square in (True, False):
     ax.set_xlabel("Rate A (%)", fontsize=12)
     ax.set_ylabel("Rate B (%)", fontsize=12)
     ax.tick_params(labelsize=12)
-    fig.suptitle("Places high on A are\nhigh on B too", x=0.05, y=0.95, ha="left", va="top", fontsize=15)
+    fig.suptitle(
+        "Places high on A are\nhigh on B too",
+        x=0.05,
+        y=0.95,
+        ha="left",
+        va="top",
+        fontsize=15,
+    )
     fig.text(0.05, 0.02, "Source: Example Survey", fontsize=12)
     fig.savefig(f"out-{square}.png")
