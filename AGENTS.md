@@ -6,7 +6,7 @@ evident-charts is an agent skill for explanatory charts. The installable skill i
 
 - Setup: `uv sync --locked` (uv 0.13.7 or newer, Python 3.14.10 by default).
 - Ruff pre-commit checks: `prek run --all-files`. Keep the managed Gitleaks hook when enabling prek.
-- Python lint and format: `uv run --locked ruff check .` and `uv run --locked ruff format --check .`. Pre-commit and CI report findings during the rollout.
+- Python lint and format: `uv run --locked ruff check .` and `uv run --locked ruff format --check .`. Pre-commit and CI require formatting to pass and report lint findings as advisory.
 - Tests: `uv run --locked python -m pytest -q tests`. Set `CHROME_PATH` to a Chrome or Chromium binary for SVG layout tests. The suite also tests spec checks without Chrome.
 - Audit automation changes: `python3 scripts/check-zizmor.py --local-changes`.
 - Lint a matplotlib chart: `python skills/evident-charts/scripts/check_chart.py <chart.py> --dest <preset>` (`--list-checks` for names)

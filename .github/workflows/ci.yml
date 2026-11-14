@@ -78,12 +78,12 @@ jobs:
           python-version: ${{ matrix.python-version }}
           enable-cache: false
       - run: uv sync --locked
-      - name: Ruff lint (advisory during rollout)
+      - name: Ruff lint (advisory)
         if: matrix.python-version == '3.14.10'
         run: uv run --locked ruff check --exit-zero --output-format concise .
-      - name: Ruff format (advisory during rollout)
+      - name: Ruff format
         if: matrix.python-version == '3.14.10'
-        run: uv run --locked sh -c 'ruff format --check --output-format concise . || [ "$?" -eq 1 ]'
+        run: uv run --locked ruff format --check --output-format concise .
       - name: Test with Chrome
         run: |
           CHROME_PATH="$(command -v google-chrome)"
