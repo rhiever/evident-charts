@@ -7,7 +7,7 @@ sys.path.insert(
     0,
     str(Path(__file__).resolve().parents[2] / "skills" / "evident-charts" / "scripts"),
 )
-import evident as ev  # noqa: E402
+import evident as ev
 
 # House palette charts: no cvd or contrast findings.
 years = np.arange(2016, 2024)

@@ -74,7 +74,7 @@ def release_files(root):
     match = re.search(
         r'^\s+version:\s*"?([^"\n]+)"?',
         content["skills/evident-charts/SKILL.md"].decode(),
-        re.M,
+        re.MULTILINE,
     )
     if not match:
         raise ValueError("missing skill version")

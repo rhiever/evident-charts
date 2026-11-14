@@ -39,39 +39,39 @@ from pathlib import Path
 
 os.environ["MPLBACKEND"] = "Agg"
 try:  # --list-checks and the missing-dependency error (exit 2) need only the standard library
-    import matplotlib  # noqa: E402
+    import matplotlib
 
     matplotlib.use("Agg")
-    import matplotlib.figure  # noqa: E402
-    import matplotlib.patches  # noqa: E402
-    import matplotlib.pyplot as plt  # noqa: E402
-    import matplotlib.text  # noqa: E402
-    import numpy as np  # noqa: E402
-    from matplotlib import patheffects  # noqa: E402
-    from matplotlib.backends.backend_agg import FigureCanvasAgg  # noqa: E402
-    from matplotlib.cbook import STEP_LOOKUP_MAP  # noqa: E402
-    from matplotlib.collections import (  # noqa: E402
+    import matplotlib.figure
+    import matplotlib.patches
+    import matplotlib.pyplot as plt
+    import matplotlib.text
+    import numpy as np
+    from matplotlib import patheffects
+    from matplotlib.backends.backend_agg import FigureCanvasAgg
+    from matplotlib.cbook import STEP_LOOKUP_MAP
+    from matplotlib.collections import (
         LineCollection,
         PathCollection,
         PolyCollection,
         QuadMesh,
     )
-    from matplotlib.colors import CenteredNorm, TwoSlopeNorm, to_hex, to_rgba  # noqa: E402
-    from matplotlib.container import BarContainer  # noqa: E402
-    from matplotlib.contour import ContourSet  # noqa: E402
-    from matplotlib.image import AxesImage  # noqa: E402
-    from matplotlib.legend import Legend  # noqa: E402
-    from matplotlib.lines import Line2D  # noqa: E402
-    from matplotlib.markers import MarkerStyle  # noqa: E402
-    from matplotlib.patches import FancyArrowPatch, PathPatch, Polygon, Rectangle, Wedge  # noqa: E402
-    from matplotlib.path import Path as MplPath  # noqa: E402
-    from matplotlib.text import Annotation, Text  # noqa: E402
-    from matplotlib.ticker import ScalarFormatter  # noqa: E402
+    from matplotlib.colors import CenteredNorm, TwoSlopeNorm, to_hex, to_rgba
+    from matplotlib.container import BarContainer
+    from matplotlib.contour import ContourSet
+    from matplotlib.image import AxesImage
+    from matplotlib.legend import Legend
+    from matplotlib.lines import Line2D
+    from matplotlib.markers import MarkerStyle
+    from matplotlib.patches import FancyArrowPatch, PathPatch, Polygon, Rectangle, Wedge
+    from matplotlib.path import Path as MplPath
+    from matplotlib.text import Annotation, Text
+    from matplotlib.ticker import ScalarFormatter
 
     # title-too-long measures with evident.fits_title, the same 2-line fit ev.titles() wraps with; plot-aspect uses
     # evident.plot_aspect and the presets.json plot_aspect band, as ev.titles() warns with.
     sys.path.insert(0, str(Path(__file__).resolve().parent))
-    from evident import ASPECT, fits_title, plot_aspect  # noqa: E402
+    from evident import ASPECT, fits_title, plot_aspect
 
     MISSING = None
 except ModuleNotFoundError as e:
@@ -126,7 +126,7 @@ except (OSError, ValueError):
     pass
 # cvd, contrast, and text-on-area reuse check_palette's color math and floors: CVD pairs must differ by
 # CVD_FACTOR x the mark's DE_FLOOR (V6), text meets TEXT_MIN (V2), marks MARK_MIN / INVISIBLE (V3).
-from check_palette import (  # noqa: E402
+from check_palette import (
     CVD_FACTOR,
     DE_FLOOR,
     INVISIBLE,
@@ -179,20 +179,21 @@ VALUE_LABEL_MIN_FRAC = 0.5
 # cases" or "verified accounts" are reader-facing and allowed.
 PROCESS_RE = re.compile(
     r"\b(confirm|to be confirmed|inferred|add before publishing|todo|tbd|placeholder|verify|not stated in)\b",
-    re.I,
+    re.IGNORECASE,
 )
-DATA_FILE_RE = re.compile(r"\b[\w.-]+\.(csv|tsv|xlsx?|json|parquet)\b", re.I)
+DATA_FILE_RE = re.compile(r"\b[\w.-]+\.(csv|tsv|xlsx?|json|parquet)\b", re.IGNORECASE)
 # missing-source: "Source:" anywhere in a text, or a line (or a " | "-separated part) starting "Source" or "Data:".
 SOURCE_RE = re.compile(
-    r"\bsources?\s*:|(^\s*|[|\u00b7\u2022]\s*)(sources?\b|data\s*:)", re.I | re.M
+    r"\bsources?\s*:|(^\s*|[|\u00b7\u2022]\s*)(sources?\b|data\s*:)",
+    re.IGNORECASE | re.MULTILINE,
 )
 # cumulative-as-rate: a series that only rises (a running total) under a label that promises a rate or share; only a
 # warn on a share or % axis, since a share can truly only grow.
-RATE_RE = re.compile(r"%|\b(rates?|share|per|percent(age)?)\b", re.I)
-SHARE_RE = re.compile(r"%|\b(share|percent(age)?)\b", re.I)
+RATE_RE = re.compile(r"%|\b(rates?|share|per|percent(age)?)\b", re.IGNORECASE)
+SHARE_RE = re.compile(r"%|\b(share|percent(age)?)\b", re.IGNORECASE)
 CUMULATIVE_RE = re.compile(
     r"\b(cumulative|to date|year-to-date|ytd|ever|all-time|so far|running total|accumulated)\b",
-    re.I,
+    re.IGNORECASE,
 )
 CUMULATIVE_MIN_POINTS = 6  # shorter series rise monotonically by chance
 CUMULATIVE_START_MULT = 2.0  # a running total of n similar periods starts near 1/n of its end: allow this multiple
@@ -220,9 +221,9 @@ LARGE_TEXT_PT, LARGE_BOLD_PT = (
 # on the fills when this share of its glyph box is; backdrops differing by DE_FLOOR["area"] or more are an edge.
 FILL_MIN_ALPHA = 0.3
 AREA_OVERLAP_FRAC = TEXT_OVERLAP_MIN_FRAC
-LOG_WORD_RE = re.compile(r"\blog(arithmic)?(?![a-z])", re.I)
+LOG_WORD_RE = re.compile(r"\blog(arithmic)?(?![a-z])", re.IGNORECASE)
 RANK_RE = re.compile(
-    r"\b(rank|depth)|\b\d+(st|nd|rd|th)\b", re.I
+    r"\b(rank|depth)|\b\d+(st|nd|rd|th)\b", re.IGNORECASE
 )  # H5 escape hatches: ranks, ordinals, depth
 # number-format: scientific tick text (1e6, 2.5x10^3), and numeric ticks on a non-value axis read as years: all within
 # YEAR_MIN..YEAR_MAX at a median step of at most YEAR_MAX_STEP.
@@ -244,11 +245,11 @@ CATEGORY_ORDINAL_RE = re.compile(
     r"level|tier|stage|phase|step|round|wave|week|day|month|year|quarter|beginner|intermediate|advanced|expert|"
     r"junior|senior|freshman|sophomore|infant|child|teen|adult|school|college|bachelor'?s?|master'?s?|doctorate|phd|"
     r"graduate|degree)\b",
-    re.I,
+    re.IGNORECASE,
 )
 CATEGORY_TAIL_RE = re.compile(
     r"\b(other|others|rest|all|total|average|avg|median|overall|national|world|eu|us)\b",
-    re.I,
+    re.IGNORECASE,
 )
 CATEGORY_MIN_BARS = 4
 CATEGORY_GAP_STEPS = 1.3
@@ -1753,12 +1754,13 @@ def check_legend(c: Ctx):
 
 NUM_RE = re.compile(r"^[-+]?(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?[kKMBT]?$")
 UNIT_SYMBOL_RE = re.compile(
-    r"[%$€£¥°]|\b(kg|km|mi|mph|ppm|kwh|mwh|gwh|twh|usd|lbs?|hrs?|yrs?|min|sec)\b", re.I
+    r"[%$€£¥°]|\b(kg|km|mi|mph|ppm|kwh|mwh|gwh|twh|usd|lbs?|hrs?|yrs?|min|sec)\b",
+    re.IGNORECASE,
 )
 UNIT_CUE_RE = re.compile(
     r"\(.*[a-z%$].*\)|%|\$|€|£|°|\bper\b|\bin (thousands|millions|billions|trillions|percent|dollars|"
     r"hours|days|minutes|seconds|years|miles|kilometers|tons|tonnes)\b|\b(usd|kwh|mwh|gwh|twh|mph|ppm|kg|km|lbs?)\b",
-    re.I,
+    re.IGNORECASE,
 )
 
 
@@ -1881,11 +1883,11 @@ TAKEAWAY_CUE_RE = re.compile(
     r"remains?|outpaces?|overtook|overtakes?|peaks?|lags?|dominates?|flips?|makes?|made|gets?|got|became|"
     r"becomes?|keeps?|kept|takes?|took|than|never|only|still|record|most|least|nearly|twice|half|now|"
     r"can|could|will|would|should|did|does|do|don't|isn't|aren't|wasn't)\b|\b\w{3,}ed\b",
-    re.I,
+    re.IGNORECASE,
 )
 DESCRIPTIVE_RE = re.compile(
     r"\b(by|vs\.?|versus|over time|over the (years|decades)|across|trends?|distribution|breakdown|comparison|overview)\b",
-    re.I,
+    re.IGNORECASE,
 )
 
 
@@ -2842,7 +2844,7 @@ def check_label_ambiguous(c: Ctx):
         closer = bool(
             known and eff[k] * LABEL_AMBIG_RATIO < eff[own]
         )  # else "about equally"
-        at = lambda i: data_coords(r.ax, xy[i])  # noqa: E731
+        at = lambda i: data_coords(r.ax, xy[i])
         go, gk = gaps[own] / c.px_per_pt, gaps[k] / c.px_per_pt
         detail = (
             f"nearer the dot at {at(k)} ({gk:.0f} pt) than its own at {at(own)} ({go:.0f} pt)"

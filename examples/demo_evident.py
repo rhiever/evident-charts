@@ -16,7 +16,7 @@ SKILL = next(
     if (p / "scripts" / "evident.py").exists()
 )
 sys.path.insert(0, str(SKILL / "scripts"))
-import evident as ev  # noqa: E402
+import evident as ev
 
 OUT = HERE / "output"
 SOURCE = "Source: illustrative data generated for this demo"

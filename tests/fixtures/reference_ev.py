@@ -5,7 +5,7 @@ sys.path.insert(
     0,
     str(Path(__file__).resolve().parents[2] / "skills" / "evident-charts" / "scripts"),
 )
-import evident as ev  # noqa: E402
+import evident as ev
 
 # A labeled average line crosses the value-labeled bars without running through any value label.
 fig, ax = ev.figure("blog")

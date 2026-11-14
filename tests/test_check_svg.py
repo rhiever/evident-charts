@@ -20,7 +20,7 @@ SCRIPT = SCRIPTS / "check_svg.py"
 FIX = Path(__file__).resolve().parent / "fixtures_svg"
 sys.path.insert(0, str(SCRIPTS))
 
-import check_svg  # noqa: E402
+import check_svg
 
 CHROME = check_svg.find_chrome()
 needs_chrome = pytest.mark.skipif(
@@ -385,7 +385,7 @@ def test_plotly_rainbow():
     heat = lambda cs: {
         "data": [{"type": "heatmap", "z": [[1, 2]], "colorscale": cs}],
         "layout": {},
-    }  # noqa: E731
+    }
     assert [c for c, _, _ in plotly(heat(jet))] == ["rainbow-cmap"]
     assert plotly(heat(viridis)) == [] and plotly(heat(rdbu)) == []
 

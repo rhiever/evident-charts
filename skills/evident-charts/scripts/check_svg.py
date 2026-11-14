@@ -57,7 +57,7 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 # Color math and floors come from check_palette, as in check_chart: CVD pairs must differ by CVD_FACTOR x the
 # mark's DE_FLOOR (V6), text meets TEXT_MIN (V2), marks MARK_MIN / INVISIBLE (V3).
-from check_palette import (  # noqa: E402
+from check_palette import (
     CVD_FACTOR,
     DE_FLOOR,
     INVISIBLE,
@@ -108,8 +108,8 @@ UNKNOWN_FILL_MIN_CR = (
     1.25  # unclassed fills lighter than this vs white are backgrounds, not data
 )
 UNKNOWN_FILL_MAX_FRAC = 0.4  # unclassed fills covering more of the canvas are panels
-LOG_WORD_RE = re.compile(r"\blog(arithmic)?(?![a-z])", re.I)
-RANK_RE = re.compile(r"\b(rank|depth)|\b\d+(st|nd|rd|th)\b", re.I)
+LOG_WORD_RE = re.compile(r"\blog(arithmic)?(?![a-z])", re.IGNORECASE)
+RANK_RE = re.compile(r"\b(rank|depth)|\b\d+(st|nd|rd|th)\b", re.IGNORECASE)
 VEGA_RAINBOW = {"rainbow", "sinebow", "turbo"}
 
 CHECKS = {
@@ -330,7 +330,7 @@ def measure(svg_text: str, chrome: str, timeout: float = 90.0) -> dict:
     m = re.search(
         f'<pre id="evident-measure" data-nonce="{nonce}">(.*?)</pre>',
         out.decode("utf-8", "replace"),
-        re.S,
+        re.DOTALL,
     )
     if not m:
         raise CheckError(
@@ -1235,7 +1235,7 @@ def _title(obj) -> str:
 
 def plotly_checks(fig: dict, texts: list, add):
     lay = fig.get("layout", {})
-    axis = lambda ref: lay.get(ref[0] + "axis" + ref[1:], {})  # noqa: E731
+    axis = lambda ref: lay.get(ref[0] + "axis" + ref[1:], {})
     traces = [t for t in fig.get("data", []) if t.get("visible", True) is True]
     used, value_axes = set(), {}
     for tr in traces:
@@ -1617,7 +1617,7 @@ def run_checks(
         findings = []
         texts = [
             SimpleNamespace(text=html.unescape(re.sub(r"<[^>]+>", "", t)))
-            for t in re.findall(r"<text\b[^>]*>(.*?)</text>", svg_text, re.S)
+            for t in re.findall(r"<text\b[^>]*>(.*?)</text>", svg_text, re.DOTALL)
         ]
 
         def add(check, where, detail, fix, severity=None):

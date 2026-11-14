@@ -16,7 +16,7 @@ SCRIPT = ROOT / "skills" / "evident-charts" / "scripts" / "check_chart.py"
 FIX = Path(__file__).resolve().parent / "fixtures"
 sys.path.insert(0, str(SCRIPT.parent))
 
-import check_chart  # noqa: E402
+import check_chart
 
 
 def lint(name, dest="blog"):

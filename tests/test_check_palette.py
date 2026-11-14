@@ -124,7 +124,7 @@ if __name__ == "__main__":
         try:
             fn()
             print(f"PASS {name}")
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             failed += 1
             print(f"FAIL {name}: {e!r}")
     print(f"{len(tests) - failed} passed, {failed} failed")

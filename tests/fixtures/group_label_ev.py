@@ -7,7 +7,7 @@ sys.path.insert(
     0,
     str(Path(__file__).resolve().parents[2] / "skills" / "evident-charts" / "scripts"),
 )
-import evident as ev  # noqa: E402
+import evident as ev
 
 # Four context lines share one group label; the provisional last point gets a boxed callout without a second dot.
 fig, ax = ev.figure("blog")

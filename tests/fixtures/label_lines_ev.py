@@ -7,7 +7,7 @@ sys.path.insert(
     0,
     str(Path(__file__).resolve().parents[2] / "skills" / "evident-charts" / "scripts"),
 )
-import evident as ev  # noqa: E402
+import evident as ev
 
 # Three series end within a label height of each other: their labels spread apart with leaders.
 fig, ax = ev.figure("blog")

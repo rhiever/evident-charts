@@ -86,7 +86,7 @@ def test_archive_is_complete_and_reproducible(source, tmp_path):
         assert 0 < len(interface["longDescription"]) <= 4000
         skill_ui = archive.read("skills/evident-charts/agents/openai.yaml").decode()
         skill_subtitle = re.search(
-            r'^\s+short_description:\s*"([^"]+)"', skill_ui, re.M
+            r'^\s+short_description:\s*"([^"]+)"', skill_ui, re.MULTILINE
         ).group(1)
         assert 25 <= len(skill_subtitle) <= 64
         for field in ("logo", "composerIcon"):

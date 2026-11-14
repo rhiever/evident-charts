@@ -5,7 +5,7 @@ sys.path.insert(
     0,
     str(Path(__file__).resolve().parents[2] / "skills" / "evident-charts" / "scripts"),
 )
-import evident as ev  # noqa: E402
+import evident as ev
 
 # Grouped bars with value labels: ev.value_labels draws a zero baseline, and a group header runs across it.
 fig, ax = ev.figure("blog")

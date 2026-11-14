@@ -9,7 +9,7 @@ plt.style.use(
     / "assets"
     / "evident.mplstyle"
 )
-from _clean import new  # noqa: E402
+from _clean import new
 
 fig, ax = new()
 ax.plot([0, 10], [0, 8])

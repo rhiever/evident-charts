@@ -5,7 +5,7 @@ sys.path.insert(
     0,
     str(Path(__file__).resolve().parents[2] / "skills" / "evident-charts" / "scripts"),
 )
-import evident as ev  # noqa: E402
+import evident as ev
 
 fig, ax = ev.figure("blog")
 x = [1400, 1470, 1600, 1750, 1900, 1520]

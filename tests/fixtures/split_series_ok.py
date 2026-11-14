@@ -5,7 +5,7 @@ sys.path.insert(
     0,
     str(Path(__file__).resolve().parents[2] / "skills" / "evident-charts" / "scripts"),
 )
-import evident as ev  # noqa: E402
+import evident as ev
 
 # The same split series with the callout beside the junction and a direct label at the true series end.
 fig, ax = ev.figure("blog")

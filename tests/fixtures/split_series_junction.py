@@ -5,7 +5,7 @@ sys.path.insert(
     0,
     str(Path(__file__).resolve().parents[2] / "skills" / "evident-charts" / "scripts"),
 )
-import evident as ev  # noqa: E402
+import evident as ev
 
 # One series drawn as a gray context line meeting an accent highlight line; the callout is centered on the
 # junction, so the continuous visible line runs through it even though both pieces end there.

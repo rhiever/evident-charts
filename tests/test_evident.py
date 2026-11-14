@@ -14,8 +14,8 @@ sys.path.insert(
     str(Path(__file__).resolve().parents[1] / "skills" / "evident-charts" / "scripts"),
 )
 
-import check_chart  # noqa: E402
-import evident as ev  # noqa: E402
+import check_chart
+import evident as ev
 
 
 @pytest.fixture
@@ -178,11 +178,11 @@ def test_style_uses_true_minus_sign():
 
 # --- v0.3: type scale, font, layout, escaping, new helpers --------------------------------------
 
-import json  # noqa: E402
-import logging  # noqa: E402
-import re  # noqa: E402
+import json
+import logging
+import re
 
-from matplotlib import font_manager  # noqa: E402
+from matplotlib import font_manager
 
 PRESETS = json.loads((ev.ASSETS / "presets.json").read_text())
 SAMPLE = (
@@ -535,7 +535,7 @@ def test_theme_files_mirror_the_preset_type_scale():
                 key,
             )
         vec = re.search(
-            rf"^\s*{dest}\s*= list\([^\n]*type = c\(([^)]*)\)", r, re.M
+            rf"^\s*{dest}\s*= list\([^\n]*type = c\(([^)]*)\)", r, re.MULTILINE
         ).group(1)
         assert [float(v) for v in vec.split(",")] == [t[k] for k in roles], dest
     # blog-sized files: CSS, Plotly and Vega-Lite in px at 800 wide, the mplstyle in pt at 8 in wide
