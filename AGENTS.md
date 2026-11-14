@@ -14,6 +14,10 @@ evident-charts is an agent skill for explanatory charts. The installable skill i
 - Acceptance: use `docs/acceptance.md` from the unpacked ZIP; record results and skipped checks in `.local/`. Check user-facing prose with writing-humanizer; instructions and code are excluded by that skill.
 - Publish only when explicitly requested: push and run `gh skill publish --tag vX.Y.Z`, or upload the ZIP to the OpenAI dashboard. Developer verification, hosted scans, review, and approval happen outside this repo.
 
+## Reviewing pull requests
+
+- Review `Code scanning results / CodeQL` in PR Checks and inline annotations before merging, even when the check is advisory. Fix confirmed findings introduced by the PR and report any unresolved findings with the reason.
+
 ## Writing the skill
 
 - The audience is agents. Be concise; use minimal formatting.
