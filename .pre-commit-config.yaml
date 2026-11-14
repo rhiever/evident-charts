@@ -1,0 +1,19 @@
+repos:
+  - repo: local
+    hooks:
+      - id: ruff-check
+        name: ruff check (advisory during rollout)
+        entry: uv run --frozen ruff check --exit-zero --output-format concise --force-exclude
+        language: system
+        types: [python]
+        verbose: true
+        stages: [pre-commit]
+      - id: ruff-format
+        name: ruff format check (advisory during rollout)
+        entry: >-
+          uv run --frozen sh -c
+          'ruff format --check --output-format concise --force-exclude "$@" || [ "$?" -eq 1 ]' --
+        language: system
+        types: [python]
+        verbose: true
+        stages: [pre-commit]
