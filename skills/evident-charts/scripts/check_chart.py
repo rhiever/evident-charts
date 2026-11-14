@@ -1130,11 +1130,15 @@ def collect_segments(fig, renderer):
     ]
     for ap, ann_id in arrows:
         try:
-            polys = (
-                ap.get_transform()
-                .transform_path(ap.get_path())
-                .to_polygons(closed_only=False)
-            )
+            try:
+                path = ap.get_transform().transform_path(ap.get_path())
+            except np.linalg.LinAlgError:
+                # FancyArrowPatch draws in display coordinates. Its public get_path()
+                # inverts the transform, which fails for an arrow flattened onto a line.
+                path, fillable = ap._get_path_in_displaycoord()
+                if np.iterable(fillable):
+                    path = MplPath.make_compound_path(*path)
+            polys = path.to_polygons(closed_only=False)
         except Exception:
             continue
         if not polys or len(polys[0]) < 2:
