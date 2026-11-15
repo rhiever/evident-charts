@@ -9,6 +9,7 @@
   },
   "homepage": "https://github.com/rhiever/evident-charts",
   "repository": "https://github.com/rhiever/evident-charts",
+  "supportUrl": "https://github.com/rhiever/evident-charts/issues",
   "license": "MIT",
   "keywords": [
     "data-visualization",
