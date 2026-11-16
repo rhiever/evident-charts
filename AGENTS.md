@@ -56,4 +56,12 @@ evident-charts is an agent skill for explanatory charts. The installable skill i
 - Keep private inputs, credentials, and artifacts out of Git and cloud setup. Use synthetic fixtures and disposable services in CI. Scan for secrets and minimize CI permissions.
 - Keep dependency changes focused. Test public compatibility floors separately from the dev runtime.
 - Follow the repo's release rules. Treat a merge that deploys as a release. Verify the live revision and record the rollback target.
+
+### Scope, implement, and review
+
+- For a small, low-risk edit, confirm scope, inspect the diff, and run targeted checks.
+- For behavior changes, scope and design with `superpowers:brainstorming` when available. Use test-driven development. For multi-step work, keep a short implementation checklist of outcomes, dependencies, and acceptance checks. Write down the design for complex or risky changes.
+- Use inline execution for cohesive work. Use `superpowers:subagent-driven-development` when the tasks benefit from separate spec and code-quality reviews.
+- Before a behavior change lands on `main`, have a fresh subagent that did no implementation review the final diff against the agreed scope. Fix blocking findings, review the fixes, and verify the final change. If delegation is unavailable, do a separate self-review and record it as such.
+- For planning, implementation, and review, use Opus in Claude Code and the current GPT Sol workhorse in Codex. Resolve the family from the live harness. If it is unavailable, use the configured day-to-day coding model. When delegating, choose an appropriate reasoning effort and set it explicitly when supported. Use premium tiers such as Astra or Fable only when the user explicitly selects them.
 <!-- shared-dev-standards:end -->
