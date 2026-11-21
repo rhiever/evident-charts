@@ -202,7 +202,7 @@ def test_claude_directory_edition_ships_only_allowed_files(source, tmp_path):
         for path in re.findall(r"`((?:references|assets)/[\w./-]+\.\w+)`", text):
             assert f"skills/evident-charts/{path}" in files, (name, path)
     manifest = json.loads(files[".claude-plugin/plugin.json"])
-    assert "supportUrl" not in manifest
+    assert manifest["supportUrl"] == "https://github.com/rhiever/evident-charts/issues"
     assert manifest["description"] == spec["plugin"]["description"]
     skill = files["skills/evident-charts/SKILL.md"].decode()
     version = re.search(r'^\s+version:\s*"([^"]+)"', skill, re.MULTILINE).group(1)
