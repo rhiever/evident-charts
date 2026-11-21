@@ -140,3 +140,98 @@ def test_symlink_resource_is_rejected(source, tmp_path):
     assert result.returncode != 0
     assert "symlink" in result.stderr.lower()
     assert not output.exists()
+
+
+def build_directory(source, output):
+    return subprocess.run(
+        [
+            sys.executable,
+            str(source / "scripts/build_release.py"),
+            "--claude-directory",
+            str(output),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+
+def tree(path):
+    return {
+        p.relative_to(path).as_posix(): p.read_bytes()
+        for p in sorted(path.rglob("*"))
+        if p.is_file() and ".git" not in p.relative_to(path).parts
+    }
+
+
+def test_claude_directory_edition_ships_only_allowed_files(source, tmp_path):
+    spec = json.loads((source / "editions/claude-directory/edition.json").read_text())
+    first, second = tmp_path / "first", tmp_path / "second"
+    result = build_directory(source, first)
+    assert result.returncode == 0, result.stderr
+    assert build_directory(source, second).returncode == 0
+    files = tree(first)
+    assert files == tree(second)
+    assert {
+        ".claude-plugin/plugin.json",
+        "LICENSE",
+        "README.md",
+        "skills/evident-charts/SKILL.md",
+        "skills/evident-charts/references/themes.md",
+    } <= set(files)
+    for name, data in files.items():
+        assert name == "LICENSE" or Path(name).suffix in spec["allowed_suffixes"]
+        if name.endswith(".png"):
+            continue
+        text = data.decode()
+        for pattern in spec["banned"]:
+            assert not re.search(pattern, text, re.MULTILINE), (name, pattern)
+        if name.endswith(".json"):
+            json.loads(text)
+    manifest = json.loads(files[".claude-plugin/plugin.json"])
+    assert "supportUrl" not in manifest
+    assert manifest["description"] == spec["plugin"]["description"]
+    skill = files["skills/evident-charts/SKILL.md"].decode()
+    version = re.search(r'^\s+version:\s*"([^"]+)"', skill, re.MULTILINE).group(1)
+    assert manifest["version"] == version
+    readme = files["README.md"].decode()
+    assert len(readme.split()) >= 40
+    for link in re.findall(r"\]\(([^\s)]+)\)", readme):
+        assert "://" in link or link in files, link
+    themes = files["skills/evident-charts/references/themes.md"].decode()
+    for theme in spec["themes"]:
+        body = (source / theme).read_text().strip()
+        assert body.splitlines()[-1] in themes
+
+
+def test_claude_directory_overlay_drift_fails(source, tmp_path):
+    skill = source / "skills/evident-charts/SKILL.md"
+    skill.write_text(skill.read_text() + "\nNew rule.\n")
+    output = tmp_path / "edition"
+    result = build_directory(source, output)
+    assert result.returncode != 0
+    assert "stale overlay" in result.stderr.lower()
+    assert not output.exists()
+
+
+def test_claude_directory_replacement_drift_fails(source, tmp_path):
+    critique = source / "skills/evident-charts/references/critique.md"
+    critique.write_text(critique.read_text().replace("scripts/side_by_side.py", "x"))
+    output = tmp_path / "edition"
+    result = build_directory(source, output)
+    assert result.returncode != 0
+    assert "replacement not found" in result.stderr.lower()
+    assert not output.exists()
+
+
+def test_claude_directory_refuses_nonempty_output(source, tmp_path):
+    output = tmp_path / "edition"
+    output.mkdir()
+    (output / ".git").write_text("gitdir: elsewhere")
+    (output / "stale.md").write_text("stale")
+    result = build_directory(source, output)
+    assert result.returncode != 0
+    assert "must be empty" in result.stderr.lower()
+    (output / "stale.md").unlink()
+    assert build_directory(source, output).returncode == 0
+    assert (output / ".git").read_text() == "gitdir: elsewhere"
