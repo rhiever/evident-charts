@@ -113,8 +113,9 @@ def themes_markdown(root, names):
         (
             "# Themes\n\n"
             "House look for stacks without a JSON theme. Write a block to a file in "
-            "a scratch folder, then use it as its header comment shows. Sizes "
-            "mirror `assets/presets.json`.\n"
+            "a scratch folder and load it by absolute path, as its header comment "
+            "shows. A D3 page that ships inlines the CSS and keeps the tokens module "
+            "beside the page. Sizes mirror `assets/presets.json`.\n"
         )
     ]
     for name in names:
