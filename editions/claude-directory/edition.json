@@ -1,5 +1,5 @@
 {
- "_doc": "Claude plugin directory edition: no scripts, only file types an unverified publisher may ship. build_release.py --claude-directory OUT applies this. Overlays replace a file and pin the source's SHA-256; replacements must each match exactly once. Both fail the build on drift.",
+ "_doc": "Claude plugin directory edition: no scripts, only file types an unverified publisher may ship. build_release.py --claude-directory OUT applies this. Every release file is copied, overlaid, rendered into themes.md, or excluded. Overlays pin their source's SHA-256 and each replacement must match exactly once, so source edits fail the build instead of drifting.",
  "plugin": {
   "drop": [
    "supportUrl"
@@ -24,7 +24,8 @@
  ],
  "overlays": {
   "README.md": {
-   "from": "editions/claude-directory/README.md"
+   "from": "editions/claude-directory/README.md",
+   "source_sha256": "fdf46d12b4a361d107c4d0d02cdcf512a41542e9052813895985a0befba16635"
   },
   "skills/evident-charts/SKILL.md": {
    "from": "editions/claude-directory/SKILL.md",
@@ -57,7 +58,11 @@
   "skills/evident-charts/references/color.md": [
    [
     "check_chart.py (matplotlib) and check_svg.py (other stacks) run cvd, contrast, and text-on-area on the colors actually drawn; without an SVG, run check_palette.py on any color outside the house tokens. Fix every FAIL; resolve each WARN with direct labels or a data table, or say in one line why it is acceptable.",
-    "House tokens in `assets/palettes.json` have precomputed contrast and color-vision results; use them as drawn. Report any other color's contrast and color-vision safety as not checkable, and back it with direct labels or a data table so color is never the only cue."
+    "House tokens and Okabe-Ito slots in `assets/palettes.json`, used within their use notes, have precomputed contrast against white (`cr`), and Okabe-Ito is color-blind safe by design. Report C12 and C14 as palette-based, not measured. Contrast of other colors and of text on colored fills is not checkable here: back them with direct labels or a data table so color is never the only cue."
+   ],
+   [
+    "; simulate protan, deutan, and tritan before shipping.",
+    "; without simulation here, rely on the palette slots and direct labels."
    ]
   ],
   "skills/evident-charts/references/critique.md": [
@@ -76,6 +81,18 @@
    [
     ", rerun the checks, show both versions with `python <skill-dir>/scripts/side_by_side.py <before.png> <after.png> -o <compare.png> --labels Before After`, and print absolute paths.",
     ", review again, show both versions, and print absolute paths."
+   ],
+   [
+    "message first, then measurements, then binary checks",
+    "message first, then binary checks"
+   ],
+   [
+    "text-overlap and text-clipped clean;",
+    "no text overlaps or clips (by eye);"
+   ],
+   [
+    "C12 and C14 pass CVD and contrast;",
+    "C12 and C14 palette colors within their use notes (not measured);"
    ]
   ],
   "skills/evident-charts/references/text.md": [
@@ -134,6 +151,14 @@
    [
     " evident.titles warns and check_chart's plot-aspect flags a plot outside it.",
     ""
+   ],
+   [
+    " (evident.fits_subtitle).",
+    "."
+   ],
+   [
+    ", measured with evident.figure and titles.",
+    "."
    ]
   ],
   "skills/evident-charts/references/libraries.md": [
@@ -147,7 +172,7 @@
    ],
    [
     "- Helper `scripts/evident.py` (optional; the rules hold without it): its module docstring is the usage example. Also `ev.size(role)` (points for any preset role), `ev.text_color(c)` (text-safe variant of a mark color); each docstring gives the arguments.\n- `ev.titles()` wraps the title and subtitle to 2 lines at a phrase boundary and warns when any text block needs more; force a break with `\\n`; `ev.save()` refits the layout.\n- Layout fit covers grid subplots only. Colorbars: prefer `ax.inset_axes` or a direct-labeled legend strip.\n- Without the helper: `plt.style.use(f\"{SKILL_DIR}/assets/evident.mplstyle\")` (blog sizes), set `figsize` and font sizes from the preset, place the title block with `fig.text(..., va=\"top\")`, and reserve room with `fig.subplots_adjust(...)`. On macOS with matplotlib < 3.11, put Arial first in `font.sans-serif` (Helvetica has no bold there).",
-    "- Style: write the `evident.mplstyle` block from `references/themes.md` to a file in the working folder and `plt.style.use()` it (blog sizes). For other presets set `figsize` and font sizes from `assets/presets.json`. Place the title block with `fig.text(..., va=\"top\")` and reserve room with `fig.subplots_adjust(...)`. On macOS with matplotlib < 3.11, put Arial first in `font.sans-serif` (Helvetica has no bold there).\n- Wrap the title and subtitle to 2 lines at a phrase boundary; force a break with `\\n`.\n- Colorbars: prefer `ax.inset_axes` or a direct-labeled legend strip."
+    "- Style: write the `evident.mplstyle` block from `references/themes.md` to a scratch folder (or the chart script's folder when the user wants it kept) and `plt.style.use()` it (blog sizes). For other presets set `figsize` and font sizes from `assets/presets.json`. Place the title block with `fig.text(..., va=\"top\")` and reserve room with `fig.subplots_adjust(...)`. On macOS with matplotlib < 3.11, put Arial first in `font.sans-serif` (Helvetica has no bold there).\n- Wrap the title and subtitle to 2 lines at a phrase boundary; force a break with `\\n`.\n- Colorbars: prefer `ax.inset_axes` or a direct-labeled legend strip."
    ],
    [
     "Reserve margins with `subplots_adjust` (or `ev.save`).",
@@ -158,8 +183,8 @@
     "until the render shows no overlapping labels,"
    ],
    [
-    "linewidth=ev.size(\"grid\")",
-    "linewidth=0.8"
+    "linewidth=ev.size(\"grid\")` on",
+    "linewidth=0.8` (blog; scale with the preset) on"
    ],
    [
     "create axes with `ev.figure`, pass",
@@ -167,7 +192,7 @@
    ],
    [
     "`assets/themes/theme_evident.R`: `source()` it,",
-    "The `theme_evident.R` block in `references/themes.md`: write it to a file, `source()` it,"
+    "The `theme_evident.R` block in `references/themes.md`: write it to a scratch folder, `source()` it,"
    ],
    [
     "- Check: `ggsave(\"chart.svg\", p, device = svglite::svglite)`, then check_svg.py; bar baselines and twin axes need checking by eye.",
@@ -198,6 +223,14 @@
    [
     "<skill>/assets/themes/theme_evident.R",
     "theme_evident.R"
+   ],
+   [
+    "type and strokes mirror ../presets.json",
+    "type and strokes mirror assets/presets.json"
+   ],
+   [
+    "# Sizes mirror ../presets.json",
+    "# Sizes mirror assets/presets.json"
    ]
   ]
  },
@@ -217,6 +250,29 @@
   "--list-checks",
   "\\$\\{SKILL_DIR\\}",
   "assets/evident\\.mplstyle",
-  "assets/themes/(theme_evident|evident_d3)"
+  "assets/themes/(theme_evident|evident_d3)",
+  "\\bevident\\.(?!mplstyle\\b)\\w",
+  "\\bfits_(title|subtitle)\\b"
+ ],
+ "copy_as": {
+  ".claude-plugin/icon.png": "assets/logo.png"
+ },
+ "exclude": [
+  ".claude-plugin/plugin.json",
+  ".claude-plugin/marketplace.json",
+  ".codex-plugin/plugin.json",
+  "plugin.json",
+  "gemini-extension.json",
+  "CHANGELOG.md",
+  "docs/acceptance.md",
+  "assets/composer-icon.png",
+  "assets/logo.svg",
+  "skills/evident-charts/agents/openai.yaml",
+  "skills/evident-charts/scripts/check_chart.py",
+  "skills/evident-charts/scripts/check_palette.py",
+  "skills/evident-charts/scripts/check_svg.py",
+  "skills/evident-charts/scripts/evident.py",
+  "skills/evident-charts/scripts/measure_svg.js",
+  "skills/evident-charts/scripts/side_by_side.py"
  ]
 }

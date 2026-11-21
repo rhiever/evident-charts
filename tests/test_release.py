@@ -164,6 +164,16 @@ def tree(path):
     }
 
 
+DIRECTORY_BANNED = (
+    r"scripts/",
+    r"check_(chart|svg|palette)",
+    r"side_by_side",
+    r"\bev\.",
+    r"\bevident\.(?!mplstyle\b)\w",
+    r"\bcheck: ",
+)
+
+
 def test_claude_directory_edition_ships_only_allowed_files(source, tmp_path):
     spec = json.loads((source / "editions/claude-directory/edition.json").read_text())
     first, second = tmp_path / "first", tmp_path / "second"
@@ -179,15 +189,18 @@ def test_claude_directory_edition_ships_only_allowed_files(source, tmp_path):
         "skills/evident-charts/SKILL.md",
         "skills/evident-charts/references/themes.md",
     } <= set(files)
+    assert ".claude-plugin/icon.png" in files
     for name, data in files.items():
-        assert name == "LICENSE" or Path(name).suffix in spec["allowed_suffixes"]
+        assert name == "LICENSE" or Path(name).suffix in {".md", ".json", ".png"}
         if name.endswith(".png"):
             continue
         text = data.decode()
-        for pattern in spec["banned"]:
-            assert not re.search(pattern, text, re.MULTILINE), (name, pattern)
+        for pattern in DIRECTORY_BANNED:
+            assert not re.search(pattern, text), (name, pattern)
         if name.endswith(".json"):
             json.loads(text)
+        for path in re.findall(r"`((?:references|assets)/[\w./-]+\.\w+)`", text):
+            assert f"skills/evident-charts/{path}" in files, (name, path)
     manifest = json.loads(files[".claude-plugin/plugin.json"])
     assert "supportUrl" not in manifest
     assert manifest["description"] == spec["plugin"]["description"]
@@ -235,3 +248,25 @@ def test_claude_directory_refuses_nonempty_output(source, tmp_path):
     (output / "stale.md").unlink()
     assert build_directory(source, output).returncode == 0
     assert (output / ".git").read_text() == "gitdir: elsewhere"
+
+
+def test_claude_directory_rejects_script_mentions(source, tmp_path):
+    libraries = source / "skills/evident-charts/references/libraries.md"
+    libraries.write_text(libraries.read_text() + "\nRun check_chart.py --dest blog.\n")
+    output = tmp_path / "edition"
+    result = build_directory(source, output)
+    assert result.returncode != 0
+    assert "banned text" in result.stderr.lower()
+    assert not output.exists()
+
+
+def test_claude_directory_accounts_for_every_release_file(source, tmp_path):
+    path = source / "editions/claude-directory/edition.json"
+    spec = json.loads(path.read_text())
+    spec["copy"].remove("skills/evident-charts/references/sources.md")
+    path.write_text(json.dumps(spec))
+    output = tmp_path / "edition"
+    result = build_directory(source, output)
+    assert result.returncode != 0
+    assert "must copy or exclude" in result.stderr.lower()
+    assert not output.exists()

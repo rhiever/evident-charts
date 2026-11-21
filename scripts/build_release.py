@@ -52,7 +52,7 @@ FILES = (
 )
 EDITION = "editions/claude-directory/edition.json"
 THEMES_MD = "skills/evident-charts/references/themes.md"
-CHECK_ENDING = re.compile(r" check: [^\n]*$", re.MULTILINE)
+CHECK_ENDING = re.compile(r"(?<=\.) check: [a-z0-9, -]+$", re.MULTILINE)
 FENCES = {".mplstyle": "text", ".R": "r", ".css": "css", ".js": "js"}
 
 
@@ -113,7 +113,7 @@ def themes_markdown(root, names):
         (
             "# Themes\n\n"
             "House look for stacks without a JSON theme. Write a block to a file in "
-            "the working folder, then use it as its header comment shows. Sizes "
+            "a scratch folder, then use it as its header comment shows. Sizes "
             "mirror `assets/presets.json`.\n"
         )
     ]
@@ -121,7 +121,9 @@ def themes_markdown(root, names):
         body = read_file(root, name).decode().strip()
         if "```" in body:
             raise ValueError(f"theme contains a code fence: {name}")
-        fence = FENCES[Path(name).suffix]
+        fence = FENCES.get(Path(name).suffix)
+        if fence is None:
+            raise ValueError(f"no code fence for theme type: {name}")
         parts.append(f"\n## {Path(name).name}\n\n```{fence}\n{body}\n```\n")
     return "".join(parts)
 
@@ -130,11 +132,22 @@ def directory_files(root):
     """Return the Claude directory edition as {path: bytes}, validated."""
     _, content = release_files(root)
     spec = json.loads(read_file(root, EDITION))
+    named = [*spec["copy"], *spec["copy_as"], *spec["copy_as"].values()]
+    named += [*spec["overlays"], *spec["themes"], *spec["exclude"], *spec["replace"]]
+    named += [overlay["from"] for overlay in spec["overlays"].values()]
+    for name in named:
+        if Path(name).is_absolute() or ".." in Path(name).parts:
+            raise ValueError(f"edition path must stay inside the repo: {name}")
+    sources = {*spec["copy"], *spec["copy_as"].values(), *spec["overlays"]}
+    accounted = sources | {*spec["themes"], *spec["exclude"]}
+    if missing := sorted(set(FILES) - accounted):
+        raise ValueError(f"edition.json must copy or exclude: {', '.join(missing)}")
     copied = {name: read_file(root, name) for name in spec["copy"]}
+    copied |= {dest: read_file(root, src) for dest, src in spec["copy_as"].items()}
     text = {n: d.decode() for n, d in copied.items() if not n.endswith(".png")}
     for name, overlay in spec["overlays"].items():
         expected = overlay.get("source_sha256")
-        if expected and hashlib.sha256(content[name]).hexdigest() != expected:
+        if hashlib.sha256(content[name]).hexdigest() != expected:
             raise ValueError(
                 f"stale overlay for {name}: update {overlay['from']} to match, "
                 "then set its source_sha256"
@@ -184,12 +197,13 @@ def write_directory(root, output):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
+    target = parser.add_mutually_exclusive_group()
+    target.add_argument(
         "--output",
         type=Path,
         help="ZIP path (default: dist/evident-charts-VERSION.zip)",
     )
-    parser.add_argument(
+    target.add_argument(
         "--claude-directory",
         type=Path,
         metavar="DIR",
