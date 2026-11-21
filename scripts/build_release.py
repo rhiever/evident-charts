@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Build a reproducible plugin ZIP from an explicit file list. Python 3.12+."""
+"""Build a reproducible plugin ZIP from an explicit file list, or the script-free
+Claude plugin directory edition (editions/claude-directory/edition.json). Python 3.12+."""
 
 import argparse
 import hashlib
@@ -49,18 +50,24 @@ FILES = (
     "skills/evident-charts/scripts/measure_svg.js",
     "skills/evident-charts/scripts/side_by_side.py",
 )
+EDITION = "editions/claude-directory/edition.json"
+THEMES_MD = "skills/evident-charts/references/themes.md"
+CHECK_ENDING = re.compile(r"(?<=\.) check: [a-z0-9, -]+$", re.MULTILINE)
+FENCES = {".mplstyle": "text", ".R": "r", ".css": "css", ".js": "js"}
+
+
+def read_file(root, name):
+    path = root / name
+    if path.is_symlink() or any(p.is_symlink() for p in path.parents if p != root):
+        raise ValueError(f"symlink resource: {name}")
+    if not path.is_file():
+        raise ValueError(f"missing release file: {name}")
+    return path.read_bytes()
 
 
 def release_files(root):
     """Validate before writing; return the version and frozen package bytes."""
-    content = {}
-    for name in FILES:
-        path = root / name
-        if path.is_symlink() or any(p.is_symlink() for p in path.parents if p != root):
-            raise ValueError(f"symlink resource: {name}")
-        if not path.is_file():
-            raise ValueError(f"missing release file: {name}")
-        content[name] = path.read_bytes()
+    content = {name: read_file(root, name) for name in FILES}
     versions = {}
     manifests = {}
     for name in (
@@ -101,15 +108,113 @@ def release_files(root):
     return version, content
 
 
+def themes_markdown(root, names):
+    parts = [
+        (
+            "# Themes\n\n"
+            "House look for stacks without a JSON theme. Write a block to a file in "
+            "a scratch folder and load it by absolute path, as its header comment "
+            "shows. A D3 page that ships inlines the CSS and keeps the tokens module "
+            "beside the page. Sizes mirror `assets/presets.json`.\n"
+        )
+    ]
+    for name in names:
+        body = read_file(root, name).decode().strip()
+        if "```" in body:
+            raise ValueError(f"theme contains a code fence: {name}")
+        fence = FENCES.get(Path(name).suffix)
+        if fence is None:
+            raise ValueError(f"no code fence for theme type: {name}")
+        parts.append(f"\n## {Path(name).name}\n\n```{fence}\n{body}\n```\n")
+    return "".join(parts)
+
+
+def directory_files(root):
+    """Return the Claude directory edition as {path: bytes}, validated."""
+    _, content = release_files(root)
+    spec = json.loads(read_file(root, EDITION))
+    named = [*spec["copy"], *spec["copy_as"], *spec["copy_as"].values()]
+    named += [*spec["overlays"], *spec["themes"], *spec["exclude"], *spec["replace"]]
+    named += [overlay["from"] for overlay in spec["overlays"].values()]
+    for name in named:
+        if Path(name).is_absolute() or ".." in Path(name).parts:
+            raise ValueError(f"edition path must stay inside the repo: {name}")
+    sources = {*spec["copy"], *spec["copy_as"].values(), *spec["overlays"]}
+    accounted = sources | {*spec["themes"], *spec["exclude"]}
+    if missing := sorted(set(FILES) - accounted):
+        raise ValueError(f"edition.json must copy or exclude: {', '.join(missing)}")
+    copied = {name: read_file(root, name) for name in spec["copy"]}
+    copied |= {dest: read_file(root, src) for dest, src in spec["copy_as"].items()}
+    text = {n: d.decode() for n, d in copied.items() if not n.endswith(".png")}
+    for name, overlay in spec["overlays"].items():
+        expected = overlay.get("source_sha256")
+        if hashlib.sha256(content[name]).hexdigest() != expected:
+            raise ValueError(
+                f"stale overlay for {name}: update {overlay['from']} to match, "
+                "then set its source_sha256"
+            )
+        text[name] = read_file(root, overlay["from"]).decode()
+    text[THEMES_MD] = themes_markdown(root, spec["themes"])
+    for name in spec["strip_checks"]:
+        text[name] = CHECK_ENDING.sub("", text[name])
+    for name, pairs in spec["replace"].items():
+        for old, new in pairs:
+            if text[name].count(old) != 1:
+                raise ValueError(f"replacement not found once in {name}: {old[:60]!r}")
+            text[name] = text[name].replace(old, new)
+    manifest = json.loads(content[".claude-plugin/plugin.json"])
+    for field in spec["plugin"]["drop"]:
+        manifest.pop(field, None)
+    manifest["description"] = spec["plugin"]["description"]
+    text[".claude-plugin/plugin.json"] = json.dumps(manifest, indent=2) + "\n"
+    skill = text["skills/evident-charts/SKILL.md"]
+    match = re.search(r'^\s+version:\s*"?([^"\n]+)"?', skill, re.MULTILINE)
+    if not match or match.group(1).strip() != manifest["version"]:
+        raise ValueError("edition SKILL.md version must match plugin.json")
+    files = copied | {name: data.encode() for name, data in text.items()}
+    for name, data in files.items():
+        if name != "LICENSE" and Path(name).suffix not in spec["allowed_suffixes"]:
+            raise ValueError(f"file type not allowed in the edition: {name}")
+        if name.endswith(".png"):
+            continue
+        for pattern in spec["banned"]:
+            if re.search(pattern, data.decode(), re.MULTILINE):
+                raise ValueError(f"banned text {pattern!r} in {name}")
+        if name.endswith(".json"):
+            json.loads(data)
+    return files
+
+
+def write_directory(root, output):
+    files = directory_files(root)
+    if output.exists() and any(p.name != ".git" for p in output.iterdir()):
+        raise ValueError(f"output must be empty apart from .git: {output}")
+    for name in sorted(files):
+        path = output / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(files[name])
+    print(f"{output.resolve()} ({len(files)} files)")
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
+    target = parser.add_mutually_exclusive_group()
+    target.add_argument(
         "--output",
         type=Path,
         help="ZIP path (default: dist/evident-charts-VERSION.zip)",
     )
+    target.add_argument(
+        "--claude-directory",
+        type=Path,
+        metavar="DIR",
+        help="write the script-free Claude directory edition to DIR (empty or .git only)",
+    )
     args = parser.parse_args()
     try:
+        if args.claude_directory:
+            write_directory(ROOT, args.claude_directory)
+            return 0
         version, content = release_files(ROOT)
         output = args.output or ROOT / "dist" / f"evident-charts-{version}.zip"
         if output.resolve() in {(ROOT / name).resolve() for name in FILES}:

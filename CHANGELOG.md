@@ -3,6 +3,7 @@
 ## Unreleased
 
 - README: install and update commands for GitHub Copilot CLI, which VS Code also reads.
+- Claude plugin directory edition: `build_release.py --claude-directory` builds a copy without scripts, because the directory accepts only instructions, data, and images from unverified publishers. Claude reviews the rendered chart instead of running the checks.
 
 ## 0.2.4
 
