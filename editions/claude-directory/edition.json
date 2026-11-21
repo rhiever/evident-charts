@@ -1,9 +1,7 @@
 {
  "_doc": "Claude plugin directory edition: no scripts, only file types an unverified publisher may ship. build_release.py --claude-directory OUT applies this. Every release file is copied, overlaid, rendered into themes.md, or excluded. Overlays pin their source's SHA-256 and each replacement must match exactly once, so source edits fail the build instead of drifting.",
  "plugin": {
-  "drop": [
-   "supportUrl"
-  ],
+  "drop": [],
   "description": "Makes clear, honest charts that state their point, and critiques charts you share. Reviews the rendered chart against a checklist when Claude can view images. Scripted checks are in the full version on GitHub."
  },
  "copy": [
